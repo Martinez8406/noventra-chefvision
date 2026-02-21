@@ -1,0 +1,8 @@
+{
+  "name": "Chefvision - Profesjonalna Wizualizacja Dań",
+  "description": "Narzędzie dla branży gastro do wizualizacji dań AI, zarządzania standardami operacyjnymi kuchni oraz cyfrowego menu dla gości.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
