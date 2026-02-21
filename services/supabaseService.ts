@@ -47,13 +47,25 @@ export const db = {
     return getLocalDishes().filter(d => d.restaurantId === restaurantId);
   },
 
-  /** Pobiera wszystkie dania z isOnline = true (dla widoku publicznego bez logowania). Do testów w incognito – tymczasowo bez filtra restaurantId. */
-  async getPublicDishes(): Promise<Dish[]> {
+  /** Pobiera dania menu publicznego – tylko dania danego użytkownika (user_id / restaurantId) z isOnline = true. */
+  async getDishesForPublicMenu(userId: string): Promise<Dish[]> {
     if (supabase) {
-      const { data, error } = await supabase.from('dishes').select('*').eq('isOnline', true).order('createdAt', { ascending: false });
+      const { data, error } = await supabase
+        .from('dishes')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('isOnline', true)
+        .order('createdAt', { ascending: false });
       if (!error) return data || [];
+      const { data: fallback, error: err2 } = await supabase
+        .from('dishes')
+        .select('*')
+        .eq('restaurantId', userId)
+        .eq('isOnline', true)
+        .order('createdAt', { ascending: false });
+      if (!err2) return fallback || [];
     }
-    return getLocalDishes().filter(d => d.isOnline);
+    return getLocalDishes().filter(d => (d.restaurantId === userId || (d as any).user_id === userId) && d.isOnline);
   },
 
   async saveDish(dish: Partial<Dish>): Promise<Dish | null> {

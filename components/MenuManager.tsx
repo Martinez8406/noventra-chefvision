@@ -9,9 +9,10 @@ interface Props {
   onUpdateVideo: (id: string, url: string) => void;
   onDelete: (id: string) => void;
   onSelect: (id: string) => void;
+  menuUserId: string | null;
 }
 
-export const MenuManager: React.FC<Props> = ({ dishes, onToggleOnline, onUpdateVideo, onDelete, onSelect }) => {
+export const MenuManager: React.FC<Props> = ({ dishes, onToggleOnline, onUpdateVideo, onDelete, onSelect, menuUserId }) => {
   const [justToggledId, setJustToggledId] = useState<string | null>(null);
 
   const handleToggleClick = (id: string) => {
@@ -19,9 +20,8 @@ export const MenuManager: React.FC<Props> = ({ dishes, onToggleOnline, onUpdateV
     setJustToggledId(id);
     setTimeout(() => setJustToggledId(null), 400);
   };
-  const getBaseUrl = () => {
-    return window.location.origin + window.location.pathname;
-  };
+  const getBaseUrl = () => `${window.location.origin}${(window.location.pathname || '/').replace(/\/+$/, '') || ''}`;
+  const menuUrl = menuUserId ? `${getBaseUrl()}/#/menu/${menuUserId}` : '';
 
   return (
     <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
@@ -31,8 +31,9 @@ export const MenuManager: React.FC<Props> = ({ dishes, onToggleOnline, onUpdateV
           <p className="text-slate-500 text-sm">Decyduj co widzą Twoi goście w czasie rzeczywistym</p>
         </div>
         <button 
-          onClick={() => window.open(`${getBaseUrl()}#/public-menu`, '_blank')}
-          className="bg-slate-900 text-white px-5 py-2.5 rounded-2xl text-sm font-bold flex items-center gap-2 hover:bg-slate-800 transition-all"
+          onClick={() => window.open(menuUrl, '_blank')}
+          disabled={!menuUserId}
+          className="bg-slate-900 text-white px-5 py-2.5 rounded-2xl text-sm font-bold flex items-center gap-2 hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <QrCode size={18} /> Podgląd Menu Live
         </button>
@@ -99,8 +100,9 @@ export const MenuManager: React.FC<Props> = ({ dishes, onToggleOnline, onUpdateV
                       <Edit size={18} />
                     </button>
                     <button 
-                      onClick={() => window.open(`${getBaseUrl()}#/public-menu/dish/${dish.id}`, '_blank')}
-                      className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
+                      onClick={() => menuUrl && window.open(`${menuUrl}/dish/${dish.id}`, '_blank')}
+                      disabled={!menuUserId}
+                      className="p-2 text-slate-400 hover:text-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Podgląd w menu"
                     >
                       <ExternalLink size={18} />

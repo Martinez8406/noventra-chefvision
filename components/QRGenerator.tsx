@@ -3,17 +3,16 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { QrCode, Download, Share2, Image } from 'lucide-react';
 
 interface Props {
-  restaurantSlug: string;
+  userId: string | null;
 }
 
-const PUBLIC_MENU_HASH = 'public-menu';
-
-export const QRGenerator: React.FC<Props> = () => {
+export const QRGenerator: React.FC<Props> = ({ userId }) => {
   const qrContainerRef = useRef<HTMLDivElement>(null);
 
-  const menuUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}${window.location.pathname || '/'}`.replace(/\/+$/, '') + `/#/${PUBLIC_MENU_HASH}`
+  const baseUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}${(window.location.pathname || '/').replace(/\/+$/, '') || ''}`
     : '';
+  const menuUrl = userId && baseUrl ? `${baseUrl}/#/menu/${userId}` : '';
 
   const handleDownloadPng = () => {
     const canvas = qrContainerRef.current?.querySelector('canvas');
@@ -50,10 +49,12 @@ export const QRGenerator: React.FC<Props> = () => {
 
         <div className="flex-1 space-y-4">
           <p className="text-white/80 text-sm">
-            Zeskanuj kod powyżej lub udostępnij ten link swoim gościom, aby mogli przeglądać Twoje menu online.
+            {userId
+              ? 'Zeskanuj kod powyżej lub udostępnij ten link swoim gościom, aby mogli przeglądać Twoje menu online.'
+              : 'Zaloguj się, aby wygenerować unikalny link i kod QR do Twojego menu.'}
           </p>
           <div className="bg-black/20 px-4 py-2 rounded-xl text-xs font-mono break-all border border-white/10">
-            {menuUrl || 'Ładowanie...'}
+            {menuUrl || (userId ? 'Ładowanie...' : 'Brak linku – zaloguj się')}
           </div>
           <div className="flex flex-wrap gap-2">
             <button

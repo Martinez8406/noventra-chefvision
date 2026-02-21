@@ -5,13 +5,20 @@ import { Youtube, AlertTriangle, ChefHat, Info } from 'lucide-react';
 
 interface Props {
   dish: Dish;
-  /** Hash bazowy menu publicznego, np. #/public-menu */
+  basePath?: string;
   baseHash?: string;
+  usePathRouting?: boolean;
+  onPathChange?: () => void;
 }
 
-export const PublicDishCard: React.FC<Props> = ({ dish, baseHash = '#/public-menu' }) => {
+export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo', baseHash = '#/menu/demo', usePathRouting, onPathChange }) => {
   const openDetail = () => {
-    window.location.hash = `${baseHash}/dish/${dish.id}`;
+    if (usePathRouting) {
+      history.pushState({}, '', `${basePath}/dish/${dish.id}`);
+      onPathChange?.();
+    } else {
+      window.location.hash = `${baseHash}/dish/${dish.id}`;
+    }
   };
 
   return (

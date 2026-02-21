@@ -41,6 +41,7 @@ const App: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [hash, setHash] = useState(window.location.hash);
+  const [pathname, setPathname] = useState(window.location.pathname);
   const [savedBackdrops, setSavedBackdrops] = useState<Backdrop[]>([]);
   const [statusToast, setStatusToast] = useState<string | null>(null);
   
@@ -60,20 +61,26 @@ const App: React.FC = () => {
     }
 
     const handleHashChange = () => setHash(window.location.hash);
+    const handlePopState = () => {
+      setHash(window.location.hash);
+      setPathname(window.location.pathname);
+    };
     window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handlePopState);
 
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handlePopState);
       if (subscription) subscription.unsubscribe();
     };
   }, []);
 
   useEffect(() => {
-    const isPublic = hash.includes('#/'); 
+    const isPublic = hash.includes('#/') || pathname.startsWith('/menu/');
     if (session || isPublic) {
       syncData();
     }
-  }, [session, hash]);
+  }, [session, hash, pathname]);
 
   const syncData = async () => {
     setIsSyncing(true);
@@ -81,9 +88,11 @@ const App: React.FC = () => {
       const profile = await authService.getCurrentProfile();
       setCurrentUser(profile);
 
-      if (hash.includes('#/public-menu')) {
-        // Widok publiczny (incognito / goście): pobierz wszystkie dania online, bez filtra po użytkowniku
-        const data = await db.getPublicDishes();
+      const hashMatch = hash.match(/#\/menu\/([^/?#]+)(?:\/dish\/([^/?#]+))?/);
+      const pathMatch = pathname.match(/^\/menu\/([^/]+)(?:\/dish\/([^/]+))?\/?$/);
+      const publicMenuUserId = hashMatch?.[1] ?? pathMatch?.[1] ?? null;
+      if (publicMenuUserId) {
+        const data = await db.getDishesForPublicMenu(publicMenuUserId);
         setDishes(data);
       } else {
         const restaurantId = profile ? profile.id : 'local-chef';
@@ -112,8 +121,11 @@ const App: React.FC = () => {
     setSavedBackdrops(prev => [newBackdrop, ...prev]);
   };
 
-  const isPublicMenu = hash.includes('#/public-menu');
-  const publicDishId = hash.includes('#/public-menu/dish/') ? hash.split('/dish/')[1]?.split('/')[0] ?? null : null;
+  const hashMatch = hash.match(/#\/menu\/([^/?#]+)(?:\/dish\/([^/?#]+))?/);
+  const pathMatch = pathname.match(/^\/menu\/([^/]+)(?:\/dish\/([^/]+))?\/?$/);
+  const publicMenuUserId = hashMatch?.[1] ?? pathMatch?.[1] ?? null;
+  const publicDishId = hashMatch?.[2] ?? pathMatch?.[2] ?? null;
+  const isPublicMenu = !!publicMenuUserId;
   const isSuccessPage = hash.includes('#/success');
 
   const handleGenerationSuccess = async () => {
@@ -289,10 +301,14 @@ const App: React.FC = () => {
   }
 
   if (isPublicMenu) {
+    const usePathRouting = pathname.startsWith('/menu/');
     return (
       <PublicMenu
         dishes={dishes.filter(d => d.isOnline === true)}
         dishId={publicDishId}
+        userId={publicMenuUserId}
+        usePathRouting={usePathRouting}
+        onPathChange={() => setPathname(window.location.pathname)}
       />
     );
   }
@@ -445,7 +461,8 @@ const App: React.FC = () => {
               onToggleOnline={toggleStatus} 
               onUpdateVideo={() => {}} 
               onDelete={() => {}} 
-              onSelect={setSelectedDishId} 
+              onSelect={setSelectedDishId}
+              menuUserId={currentUser?.id ?? null}
             />
           )}
           {activeTab === 'insights' && (
@@ -462,7 +479,7 @@ const App: React.FC = () => {
               </div>
             ) : <Insights dishes={dishes} />
           )}
-          {activeTab === 'qr' && <QRGenerator restaurantSlug={currentUser?.id || 'demo'} />}
+          {activeTab === 'qr' && <QRGenerator userId={currentUser?.id ?? null} />}
         </div>
       </main>
 
