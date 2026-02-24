@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { LIGHTING_OPTIONS, PLATE_OPTIONS, ANGLE_OPTIONS, STYLE_OPTIONS } from '../constants';
 import { generateDishImageWithAI, AiDishSettings } from '../services/aiService';
+import { compressImageForUpload } from '../services/imageService';
 import { GeneratorParams, Backdrop } from '../types';
 import { 
   Loader2, 
@@ -55,7 +56,9 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
   const [customBaseImage, setCustomBaseImage] = useState<string | null>(null);
   const [customTablewareImage, setCustomTablewareImage] = useState<string | null>(null);
   const [isBackdropSelectorOpen, setIsBackdropSelectorOpen] = useState(false);
+  const [isUploadingCustom, setIsUploadingCustom] = useState(false);
   const tablewareInputRef = useRef<HTMLInputElement>(null);
+  const customPhotoInputRef = useRef<HTMLInputElement>(null);
 
   const isFreeTrialOver = !isSubscribed && generationsUsed >= 5;
   const hasNoCredits = !isSubscribed && credits <= 0;
@@ -120,6 +123,22 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
     reader.onload = () => setCustomTablewareImage(reader.result as string);
     reader.readAsDataURL(file);
     e.target.value = '';
+  };
+
+  const handleCustomPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    e.target.value = '';
+    setIsUploadingCustom(true);
+    setError(null);
+    try {
+      const dataUrl = await compressImageForUpload(file);
+      setGeneratedImages([dataUrl]);
+    } catch (err: any) {
+      setError(err.message || 'Błąd przetwarzania zdjęcia.');
+    } finally {
+      setIsUploadingCustom(false);
+    }
   };
 
   const handleGenerate = async () => {
@@ -275,9 +294,26 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
             </div>
           </div>
 
-          <button onClick={handleGenerate} disabled={isGenerating || hasNoCredits} className="w-full py-6 bg-slate-900 text-white rounded-[30px] font-black text-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[0.99] transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
-            {isGenerating ? <Loader2 className="animate-spin" /> : <Wand2 />} {isGenerating ? 'MIKSUJĘ...' : hasNoCredits ? 'BRAK KREDYTÓW – PLAN PREMIUM' : 'STWÓRZ WIZUALIZACJĘ'}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button onClick={handleGenerate} disabled={isGenerating || hasNoCredits} className="flex-1 py-6 bg-slate-900 text-white rounded-[30px] font-black text-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[0.99] transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
+              {isGenerating ? <Loader2 className="animate-spin" /> : <Wand2 />} {isGenerating ? 'MIKSUJĘ...' : hasNoCredits ? 'BRAK KREDYTÓW' : 'STWÓRZ AI'}
+            </button>
+            <input
+              ref={customPhotoInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleCustomPhotoUpload}
+            />
+            <button
+              type="button"
+              onClick={() => customPhotoInputRef.current?.click()}
+              disabled={isUploadingCustom}
+              className="flex-1 py-6 bg-white text-slate-900 rounded-[30px] font-black text-xl flex items-center justify-center gap-3 border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all disabled:opacity-50"
+            >
+              {isUploadingCustom ? <Loader2 className="animate-spin" /> : <Camera />} Wgraj własne zdjęcie
+            </button>
+          </div>
         </div>
       </div>
 

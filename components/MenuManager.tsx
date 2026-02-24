@@ -109,7 +109,7 @@ export const MenuManager: React.FC<Props> = ({ dishes, onToggleOnline, onUpdateV
                     </button>
                     <button 
                       onClick={() => {
-                        if (confirm(`Czy na pewno chcesz usunąć "${dish.name}"?`)) {
+                        if (confirm('Czy na pewno chcesz usunąć to danie?')) {
                           onDelete(dish.id);
                         }
                       }}

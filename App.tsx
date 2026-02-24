@@ -204,6 +204,17 @@ const App: React.FC = () => {
     }
   };
 
+  const handleDeleteDish = async (id: string) => {
+    const dish = dishes.find(d => d.id === id);
+    if (!dish) return;
+    const ok = await db.deleteDishWithImage(dish);
+    if (ok) {
+      setDishes(prev => prev.filter(d => d.id !== id));
+    } else {
+      alert('Nie udało się usunąć dania. Spróbuj ponownie.');
+    }
+  };
+
   const handleBuyPremium = async () => {
     try {
       // Upewnij się, że mamy aktualne userId z Supabase
@@ -460,7 +471,7 @@ const App: React.FC = () => {
               dishes={dishes} 
               onToggleOnline={toggleStatus} 
               onUpdateVideo={() => {}} 
-              onDelete={() => {}} 
+              onDelete={handleDeleteDish} 
               onSelect={setSelectedDishId}
               menuUserId={currentUser?.id ?? null}
             />

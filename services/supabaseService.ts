@@ -11,6 +11,7 @@ export const supabase = isRealSupabase ? createClient(SUPABASE_URL, SUPABASE_KEY
 const LOCAL_STORAGE_KEY = 'chefvision_dishes_v1';
 const USER_GENS_KEY = 'chefvision_user_gens';
 const FOOD_IMAGES_BUCKET = 'food-images';
+const DISH_IMAGES_BUCKET = 'dish-images';
 
 const getLocalDishes = (): Dish[] => {
   const data = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -18,6 +19,21 @@ const getLocalDishes = (): Dish[] => {
 };
 
 const saveLocalDishes = (dishes: Dish[]) => localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dishes));
+
+const STORAGE_PUBLIC_PREFIX = SUPABASE_URL
+  ? `${SUPABASE_URL}/storage/v1/object/public/`
+  : '';
+
+function getBucketAndPathFromImageUrl(imageUrl: string): { bucket: string; path: string } | null {
+  if (!supabase || !STORAGE_PUBLIC_PREFIX) return null;
+  if (!imageUrl.startsWith(STORAGE_PUBLIC_PREFIX)) return null;
+  const rest = imageUrl.slice(STORAGE_PUBLIC_PREFIX.length); // e.g. "dish-images/userId/file.jpg"
+  const [bucket, ...pathParts] = rest.split('/');
+  if (!bucket || pathParts.length === 0) return null;
+  const path = pathParts.join('/');
+  if (bucket !== DISH_IMAGES_BUCKET && bucket !== FOOD_IMAGES_BUCKET) return null;
+  return { bucket, path };
+}
 
 /** Przesyła obraz (data URL) do bucketu food-images i zwraca publiczny URL. */
 export async function uploadDishImage(dataUrl: string, userId: string): Promise<string> {
@@ -29,12 +45,21 @@ export async function uploadDishImage(dataUrl: string, userId: string): Promise<
   const ext = mimeType === 'image/png' ? 'png' : 'jpg';
   const path = `${userId}/${crypto.randomUUID()}.${ext}`;
   const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-  const { error } = await supabase.storage.from(FOOD_IMAGES_BUCKET).upload(path, binary, {
+  const bucket = DISH_IMAGES_BUCKET;
+  const { error } = await supabase.storage.from(bucket).upload(path, binary, {
     contentType: mimeType,
     upsert: false,
   });
-  if (error) throw new Error(error.message || 'Błąd przesyłania obrazu.');
-  const { data } = supabase.storage.from(FOOD_IMAGES_BUCKET).getPublicUrl(path);
+  if (error) {
+    const fallback = await supabase.storage.from(FOOD_IMAGES_BUCKET).upload(path, binary, {
+      contentType: mimeType,
+      upsert: false,
+    });
+    if (fallback.error) throw new Error(fallback.error.message || 'Błąd przesyłania obrazu.');
+    const { data } = supabase.storage.from(FOOD_IMAGES_BUCKET).getPublicUrl(path);
+    return data.publicUrl;
+  }
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
 }
 
@@ -91,6 +116,39 @@ export const db = {
       const { error } = await supabase.from('dishes').delete().eq('id', id);
       return !error;
     }
+    saveLocalDishes(getLocalDishes().filter(d => d.id !== id));
+    return true;
+  },
+
+  /**
+   * Usuwa danie wraz z plikiem obrazu w Supabase Storage (jeśli pochodzi z bucketa food-images / dish-images).
+   * Jeśli usuwanie pliku się nie uda, mimo to usuwa rekord z bazy.
+   */
+  async deleteDishWithImage(dish: Dish): Promise<boolean> {
+    const { id, imageUrl } = dish;
+
+    if (supabase && imageUrl) {
+      const info = getBucketAndPathFromImageUrl(imageUrl);
+      if (info) {
+        try {
+          const { bucket, path } = info;
+          const { error: storageError } = await supabase.storage.from(bucket).remove([path]);
+          if (storageError) {
+            console.warn('Błąd usuwania obrazu ze Storage:', storageError.message || storageError);
+          }
+        } catch (e) {
+          console.warn('Wyjątek podczas usuwania obrazu ze Storage:', e);
+        }
+      }
+    }
+
+    // Zawsze próbujemy usunąć rekord z bazy, nawet jeśli storage się nie udał
+    if (supabase) {
+      const { error } = await supabase.from('dishes').delete().eq('id', id);
+      return !error;
+    }
+
+    // Tryb lokalny (bez Supabase)
     saveLocalDishes(getLocalDishes().filter(d => d.id !== id));
     return true;
   },

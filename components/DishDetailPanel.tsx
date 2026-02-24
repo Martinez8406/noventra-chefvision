@@ -1,18 +1,20 @@
 
-import React, { useState, useEffect } from 'react';
-import { Dish, Allergen, DishStatus } from '../types';
+import React, { useState, useRef } from 'react';
+import { Dish, Allergen } from '../types';
 import { ALLERGENS_LIST } from '../constants';
-import { 
-  X, 
-  Save, 
-  Plus, 
-  Trash2, 
-  Info, 
-  Utensils, 
-  BookOpen, 
+import { compressImageForUpload } from '../services/imageService';
+import { uploadDishImage } from '../services/supabaseService';
+import {
+  X,
+  Save,
+  Plus,
+  Info,
+  Utensils,
+  BookOpen,
   AlertTriangle,
   CheckCircle2,
-  Video
+  Camera,
+  Loader2
 } from 'lucide-react';
 
 interface Props {
@@ -24,6 +26,27 @@ interface Props {
 export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave }) => {
   const [editedDish, setEditedDish] = useState<Dish>({ ...dish });
   const [newIngredient, setNewIngredient] = useState('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const customImageInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCustomImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    e.target.value = '';
+    const userId = dish.restaurantId || dish.authorId;
+    if (!userId) return;
+    setIsUploadingImage(true);
+    try {
+      const dataUrl = await compressImageForUpload(file);
+      const imageUrl = await uploadDishImage(dataUrl, userId);
+      setEditedDish((prev) => ({ ...prev, imageUrl }));
+    } catch (err) {
+      console.error('Błąd wgrywania zdjęcia:', err);
+      alert(err instanceof Error ? err.message : 'Nie udało się wgrać zdjęcia.');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   const toggleAllergen = (allergen: Allergen) => {
     const next = editedDish.allergens.includes(allergen)
@@ -66,9 +89,27 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave }) => {
       </div>
 
       <div className="flex-1 overflow-y-auto p-8 space-y-8">
-        {/* Header Preview - Removed overlay button */}
-        <div className="relative h-48 rounded-[30px] overflow-hidden border-4 border-slate-50 shadow-inner group">
-          <img src={dish.imageUrl} className="w-full h-full object-cover" />
+        {/* Header Preview + Wgraj własne zdjęcie */}
+        <div className="space-y-4">
+          <div className="relative h-48 rounded-[30px] overflow-hidden border-4 border-slate-50 shadow-inner group">
+            <img src={editedDish.imageUrl} alt={editedDish.name} className="w-full h-full object-cover" />
+          </div>
+          <input
+            ref={customImageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleCustomImageUpload}
+          />
+          <button
+            type="button"
+            onClick={() => customImageInputRef.current?.click()}
+            disabled={isUploadingImage}
+            className="w-full py-3 rounded-2xl border-2 border-dashed border-slate-200 text-slate-600 font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-indigo-300 transition-colors disabled:opacity-50"
+          >
+            {isUploadingImage ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
+            Wgraj własne zdjęcie {isUploadingImage ? '(kompresuję...)' : ''}
+          </button>
         </div>
 
         {/* Basic Info */}
