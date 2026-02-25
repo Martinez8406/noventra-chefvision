@@ -26,7 +26,7 @@ const stylePrompts: Record<string, string> = {
 // Opisy perspektyw kamery
 const anglePrompts: Record<string, string> = {
   'Top-down (Flatlay)':
-    "Bird's eye view, directly from above, geometric composition, centered dish, all ingredients visible from the top",
+    "Bird's eye view, camera directly above the plate at a perfect 90 degree angle, lens perfectly parallel to the table, no perspective tilt or distortion, geometric composition, centered dish, all ingredients visible from the top",
   'Eye-level':
     'Camera at table height, looking directly at the side of the food, emphasizes height and layers, shallow depth of field',
   'Makro (Zbliżenie)':
