@@ -244,6 +244,29 @@ export const authService = {
     } catch (e) { return null; }
   },
 
+  async getProfileById(id: string): Promise<UserProfile | null> {
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error || !data) return null;
+      return {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        subscriptionStatus: (data.subscription_status as SubscriptionStatus) ?? 'trial',
+        generationsUsed: data.generations_used ?? 0,
+        credits: data.credits ?? 5
+      };
+    } catch (e) {
+      console.error('Błąd pobierania profilu po ID:', e);
+      return null;
+    }
+  },
+
   /** Zapisuje użycie generacji i odejmuje 1 kredyt (dla użytkowników nie-Premium). Zwraca nową liczbę kredytów i generationsUsed. */
   async incrementGenerations(userId: string): Promise<{ generationsUsed: number; credits: number }> {
     const current = parseInt(localStorage.getItem(USER_GENS_KEY) || '0');

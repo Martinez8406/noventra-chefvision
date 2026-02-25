@@ -44,6 +44,7 @@ const App: React.FC = () => {
   const [pathname, setPathname] = useState(window.location.pathname);
   const [savedBackdrops, setSavedBackdrops] = useState<Backdrop[]>([]);
   const [statusToast, setStatusToast] = useState<string | null>(null);
+  const [publicHasWatermark, setPublicHasWatermark] = useState<boolean>(false);
   
   useEffect(() => {
     const initAuth = async () => {
@@ -85,16 +86,22 @@ const App: React.FC = () => {
   const syncData = async () => {
     setIsSyncing(true);
     try {
-      const profile = await authService.getCurrentProfile();
-      setCurrentUser(profile);
-
       const hashMatch = hash.match(/#\/menu\/([^/?#]+)(?:\/dish\/([^/?#]+))?/);
       const pathMatch = pathname.match(/^\/menu\/([^/]+)(?:\/dish\/([^/]+))?\/?$/);
       const publicMenuUserId = hashMatch?.[1] ?? pathMatch?.[1] ?? null;
       if (publicMenuUserId) {
+        const ownerProfile = await authService.getProfileById(publicMenuUserId);
+        if (ownerProfile) {
+          setPublicHasWatermark(ownerProfile.subscriptionStatus !== 'premium');
+        } else {
+          // Domyślnie traktuj jako wersję darmową – lepiej pokazać znak wodny niż go pominąć
+          setPublicHasWatermark(true);
+        }
         const data = await db.getDishesForPublicMenu(publicMenuUserId);
         setDishes(data);
       } else {
+        const profile = await authService.getCurrentProfile();
+        setCurrentUser(profile);
         const restaurantId = profile ? profile.id : 'local-chef';
         const data = await db.getDishes(restaurantId);
         setDishes(data);
@@ -110,8 +117,8 @@ const App: React.FC = () => {
   const isTrial = currentUser?.subscriptionStatus === 'trial';
   const isLimited = currentUser?.subscriptionStatus === 'free_limited';
   
-  // Dostęp do Insights i Backdrops tylko dla Premium
-  const canAccessProtected = isPremium;
+  // Dostęp do Insights tylko dla Premium
+  const canAccessInsights = isPremium;
 
   const handleSaveBackdrop = (imageUrl: string) => {
     const newBackdrop: Backdrop = {
@@ -320,6 +327,7 @@ const App: React.FC = () => {
         userId={publicMenuUserId}
         usePathRouting={usePathRouting}
         onPathChange={() => setPathname(window.location.pathname)}
+        showWatermark={publicHasWatermark}
       />
     );
   }
@@ -339,7 +347,7 @@ const App: React.FC = () => {
   const navItems = [
     { id: 'kuchnia', label: 'Dashboard', icon: LayoutDashboard, protected: false },
     { id: 'studio', label: 'Chef’s Studio', icon: Zap, protected: false },
-    { id: 'backdrops', label: 'Studio Tła', icon: Layers, protected: true },
+    { id: 'backdrops', label: 'Studio Tła', icon: Layers, protected: false },
     { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen, protected: false },
     { id: 'insights', label: 'Analityka', icon: PieChart, protected: true },
     { id: 'qr', label: 'Kod QR', icon: MenuIcon, protected: false },
@@ -368,7 +376,7 @@ const App: React.FC = () => {
                 <div className="flex items-center gap-4">
                   <tab.icon size={20} /> {tab.label}
                 </div>
-                {tab.protected && !isPremium && <Lock size={14} className="opacity-40" />}
+                {tab.id === 'insights' && !isPremium && <Lock size={14} className="opacity-40" />}
               </button>
             ))}
           </nav>
@@ -453,18 +461,7 @@ const App: React.FC = () => {
             />
           )}
           {activeTab === 'backdrops' && (
-            !canAccessProtected ? (
-              <div className="h-[70vh] flex flex-col items-center justify-center text-center p-8 bg-white rounded-[40px] border border-slate-100 shadow-xl space-y-8">
-                <div className="w-24 h-24 bg-amber-500/10 rounded-3xl flex items-center justify-center text-amber-500"><Lock size={48} /></div>
-                <div className="space-y-4 max-w-md">
-                  <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">Studio Tła Premium</h2>
-                  <p className="text-slate-500 font-medium text-sm">Prześlij własne tło restauracji i twórz 100% realistyczne wizualizacje. Funkcja dostępna w pakiecie Premium.</p>
-                </div>
-                <button onClick={handleBuyPremium} className="bg-amber-500 text-white px-8 py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:bg-amber-600 shadow-xl shadow-amber-500/20 transition-all">
-                  <Crown size={24} /> ODBLOKUJ PEŁNĄ MOC
-                </button>
-              </div>
-            ) : <BackdropLab onSaveBackdrop={handleSaveBackdrop} />
+            <BackdropLab onSaveBackdrop={handleSaveBackdrop} isTrial={!isPremium} />
           )}
           {activeTab === 'menu' && (
             <MenuManager 
@@ -477,7 +474,7 @@ const App: React.FC = () => {
             />
           )}
           {activeTab === 'insights' && (
-            !canAccessProtected ? (
+            !canAccessInsights ? (
               <div className="h-[70vh] flex flex-col items-center justify-center text-center p-8 bg-white rounded-[40px] border border-slate-100 shadow-xl space-y-8">
                 <div className="w-24 h-24 bg-amber-500/10 rounded-3xl flex items-center justify-center text-amber-500"><PieChart size={48} /></div>
                 <div className="space-y-4 max-w-md">

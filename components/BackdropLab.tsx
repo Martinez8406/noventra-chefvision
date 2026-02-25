@@ -19,9 +19,10 @@ import {
 
 interface Props {
   onSaveBackdrop: (imageUrl: string) => void;
+  isTrial?: boolean;
 }
 
-export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop }) => {
+export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -107,6 +108,11 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop }) => {
           <h2 className="text-4xl font-black italic tracking-tighter">Studio Tła (Backdrop Lab)</h2>
           <p className="text-slate-400 max-w-xl text-lg">Przygotuj realistyczne tło swojej restauracji, które będzie bazą dla wszystkich Twoich dań.</p>
         </div>
+        {isTrial && (
+          <div className="relative z-10 mt-6 max-w-xl text-xs text-slate-300 font-medium">
+            Wersja darmowa: Twoje grafiki zawierają znak wodny. Przejdź na PRO, aby generować czyste zdjęcia.
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -196,7 +202,14 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop }) => {
                   <p className="text-slate-400 font-black uppercase tracking-widest text-xs">AI precyzyjnie rozmywa Twoją restaurację...</p>
                 </div>
               ) : processedImage ? (
-                <img src={processedImage} className="w-full h-full object-cover" alt="Processed Backdrop" />
+                <>
+                  <img src={processedImage} className="w-full h-full object-cover" alt="Processed Backdrop" />
+                  {isTrial && (
+                    <div className="absolute bottom-4 right-4 text-[10px] font-semibold text-white/60 drop-shadow-md">
+                      Powered by <span className="font-bold">noventralabs.com</span>
+                    </div>
+                  )}
+                </>
               ) : sourceImage ? (
                 <div className="relative w-full h-full">
                   <img src={sourceImage} className="w-full h-full object-cover opacity-40 grayscale" alt="Source" />

@@ -2,55 +2,59 @@
 import React from 'react';
 import { Dish } from '../types';
 import { Youtube, ChevronLeft, AlertCircle, Utensils, Info } from 'lucide-react';
+import { WatermarkWrapper } from './WatermarkWrapper';
 
 interface Props {
   dish: Dish;
   onBack: () => void;
+  showWatermark?: boolean;
 }
 
-export const PublicDishDetail: React.FC<Props> = ({ dish, onBack }) => {
+export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark }) => {
   return (
     <div className="min-h-screen bg-white animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Hero Image Section */}
-      <div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
-        <img src={dish.imageUrl} alt={dish.name} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        
-        <button 
-          onClick={onBack}
-          className="absolute top-6 left-6 p-3 bg-white/90 backdrop-blur-xl rounded-2xl text-slate-900 shadow-xl hover:scale-105 transition-transform"
-        >
-          <ChevronLeft size={24} />
-        </button>
+      {/* Hero Image Section – wysokość tak, by całe danie + znak wodny były widoczne */}
+      <WatermarkWrapper show={!!showWatermark} className="h-[75vh] md:h-[85vh] min-h-[400px] overflow-hidden">
+        <>
+          <img src={dish.imageUrl} alt={dish.name} className="w-full h-full object-cover object-bottom" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          
+          <button 
+            onClick={onBack}
+            className="absolute top-6 left-6 p-3 bg-white/90 backdrop-blur-xl rounded-2xl text-slate-900 shadow-xl hover:scale-105 transition-transform"
+          >
+            <ChevronLeft size={24} />
+          </button>
 
-        <div className="absolute bottom-8 left-8 right-8 text-white">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="bg-amber-500 text-white text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full">
-              Chef Signature
-            </span>
+          <div className="absolute bottom-8 left-8 right-8 text-white">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="bg-amber-500 text-white text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full">
+                Chef Signature
+              </span>
+            </div>
+            <h1 className="text-4xl md:text-6xl font-serif italic mb-2 tracking-tight">{dish.name}</h1>
           </div>
-          <h1 className="text-4xl md:text-6xl font-serif italic mb-2 tracking-tight">{dish.name}</h1>
-        </div>
-      </div>
+        </>
+      </WatermarkWrapper>
 
-      {/* Content Section */}
-      <div className="max-w-3xl mx-auto px-6 py-12 space-y-12">
-        <div className="space-y-6">
+      {/* Content Section – zwarty blok, żeby nie zasłaniał zdjęcia */}
+      <div className="max-w-2xl mx-auto px-6 py-6 space-y-6">
+        <div className="space-y-3">
           <h2 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] flex items-center gap-2">
             <Info size={14} className="text-amber-500" /> O daniu
           </h2>
-          <p className="text-xl text-slate-700 leading-relaxed font-medium">
+          <p className="text-base text-slate-700 leading-relaxed font-medium">
             {dish.description}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Ingredients */}
-          <div className="space-y-6">
+          <div className="space-y-3">
             <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] flex items-center gap-2">
               <Utensils size={14} className="text-amber-500" /> Składniki
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {dish.ingredients.map((ing, i) => (
                 <li key={i} className="flex items-center gap-3 text-slate-600 font-bold border-b border-slate-50 pb-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
@@ -61,7 +65,7 @@ export const PublicDishDetail: React.FC<Props> = ({ dish, onBack }) => {
           </div>
 
           {/* Allergens */}
-          <div className="space-y-6">
+          <div className="space-y-3">
             <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] flex items-center gap-2 text-red-500">
               <AlertCircle size={14} /> Alergeny
             </h3>

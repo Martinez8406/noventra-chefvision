@@ -9,6 +9,7 @@ interface Props {
   userId: string;
   usePathRouting?: boolean;
   onPathChange?: () => void;
+  showWatermark?: boolean;
 }
 
 /**
@@ -16,7 +17,7 @@ interface Props {
  * Wyświetla listę dań (isOnline) lub szczegóły dania.
  * Link: /menu/[userId] (path) lub #/menu/[userId] (hash)
  */
-export const PublicMenu: React.FC<Props> = ({ dishes, dishId, userId, usePathRouting, onPathChange }) => {
+export const PublicMenu: React.FC<Props> = ({ dishes, dishId, userId, usePathRouting, onPathChange, showWatermark }) => {
   const menuBasePath = `/menu/${userId}`;
   const menuBaseHash = `#/menu/${userId}`;
 
@@ -40,6 +41,7 @@ export const PublicMenu: React.FC<Props> = ({ dishes, dishId, userId, usePathRou
         <PublicDishDetail
           dish={dish}
           onBack={goBack}
+          showWatermark={showWatermark}
         />
       );
     }
@@ -59,6 +61,7 @@ export const PublicMenu: React.FC<Props> = ({ dishes, dishId, userId, usePathRou
             baseHash={menuBaseHash}
             usePathRouting={!!usePathRouting}
             onPathChange={onPathChange}
+            showWatermark={showWatermark}
           />
         ))}
       </main>

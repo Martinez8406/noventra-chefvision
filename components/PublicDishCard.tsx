@@ -2,6 +2,7 @@
 import React from 'react';
 import { Dish } from '../types';
 import { Youtube, AlertTriangle, ChefHat, Info } from 'lucide-react';
+import { WatermarkWrapper } from './WatermarkWrapper';
 
 interface Props {
   dish: Dish;
@@ -9,9 +10,10 @@ interface Props {
   baseHash?: string;
   usePathRouting?: boolean;
   onPathChange?: () => void;
+  showWatermark?: boolean;
 }
 
-export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo', baseHash = '#/menu/demo', usePathRouting, onPathChange }) => {
+export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo', baseHash = '#/menu/demo', usePathRouting, onPathChange, showWatermark }) => {
   const openDetail = () => {
     if (usePathRouting) {
       history.pushState({}, '', `${basePath}/dish/${dish.id}`);
@@ -27,12 +29,14 @@ export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo',
       className="bg-white rounded-3xl overflow-hidden shadow-xl border border-slate-100 max-w-sm mx-auto transition-all hover:scale-[1.02] cursor-pointer group"
     >
       {/* Hero Image */}
-      <div className="relative h-64 overflow-hidden">
-        <img src={dish.imageUrl} alt={dish.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest text-slate-800 shadow-sm border border-slate-100">
-          Chef Signature
-        </div>
-      </div>
+      <WatermarkWrapper show={!!showWatermark} className="h-64 overflow-hidden">
+        <>
+          <img src={dish.imageUrl} alt={dish.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest text-slate-800 shadow-sm border border-slate-100">
+            Chef Signature
+          </div>
+        </>
+      </WatermarkWrapper>
 
       <div className="p-6">
         <h3 className="font-serif text-2xl text-slate-900 mb-2 leading-tight">{dish.name}</h3>

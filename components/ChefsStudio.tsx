@@ -4,6 +4,7 @@ import { LIGHTING_OPTIONS, PLATE_OPTIONS, ANGLE_OPTIONS, STYLE_OPTIONS } from '.
 import { generateDishImageWithAI, AiDishSettings } from '../services/aiService';
 import { compressImageForUpload } from '../services/imageService';
 import { GeneratorParams, Backdrop } from '../types';
+import { WatermarkWrapper } from './WatermarkWrapper';
 import { 
   Loader2, 
   Wand2, 
@@ -319,12 +320,17 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
 
       {generatedImages.length > 0 && (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8">
-          <div className="relative rounded-[60px] overflow-hidden border-8 border-white shadow-2xl">
-            <img src={generatedImages[0]} className="w-full h-auto" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent p-12 flex flex-col justify-end">
-              <h4 className="text-4xl font-serif italic text-white mb-2">{params.dishName}</h4>
-            </div>
-          </div>
+          <WatermarkWrapper
+            show={!isSubscribed}
+            className="rounded-[60px] overflow-hidden border-8 border-white shadow-2xl"
+          >
+            <>
+              <img src={generatedImages[0]} className="w-full h-auto" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent p-12 flex flex-col justify-end">
+                <h4 className="text-4xl font-serif italic text-white mb-2">{params.dishName}</h4>
+              </div>
+            </>
+          </WatermarkWrapper>
           <button onClick={() => onSaveStandard(generatedImages[0], params)} className="w-full py-6 bg-amber-500 text-white rounded-full font-black text-2xl flex items-center justify-center gap-3 shadow-2xl hover:bg-amber-600 transition-all">
             <CheckCircle size={32} /> ZAPISZ JAKO STANDARD
           </button>
