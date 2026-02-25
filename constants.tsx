@@ -15,7 +15,7 @@ export const PLATE_OPTIONS = [
 
 export const ANGLE_OPTIONS = [
   { label: 'Top-down (Flatlay)', value: 'Top-down flatlay' },
-  { label: 'Kąt 45°', value: '45-degree professional food photography' },
+  { label: 'Makro (Zbliżenie)', value: 'Macro extreme close-up' },
   { label: 'Eye-level', value: 'Eye-level front view' },
 ];
 

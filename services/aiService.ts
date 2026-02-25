@@ -11,6 +11,31 @@ export interface AiDishSettings {
   hasCustomTableware: boolean;
 }
 
+// Dodatkowe opisy stylów – dokładne, wizualne słowa kluczowe
+const stylePrompts: Record<string, string> = {
+  'Fine Dining':
+    'dark moody background, elegant plating, marble table, soft bokeh, luxury lighting, expensive atmosphere, minimalist garnish, microgreens, precise plating, dark slate or marble, rim light, sophisticated atmosphere',
+  'Rustic':
+    'wooden table, warm natural sunlight, linen napkins, ceramic plates, herbs scattered around, cozy home-style lighting, handcrafted ceramics, crumbs, natural linen, slightly messy but appetizing, soft window light',
+  'Street Food':
+    'vibrant colors, neon lights background, paper wrapping, casual setting, urban atmosphere, high contrast, dynamic close-up, flash photography style, greasy textures, paper bags, high energy, saturated colors',
+  'Bistro':
+    'classic cafe setting, white tablecloth or bright wood, daylight, silverware, casual but clean look',
+};
+
+// Opisy perspektyw kamery
+const anglePrompts: Record<string, string> = {
+  'Top-down (Flatlay)':
+    "Bird's eye view, directly from above, geometric composition, centered dish, all ingredients visible from the top",
+  'Eye-level':
+    'Camera at table height, looking directly at the side of the food, emphasizes height and layers, shallow depth of field',
+  'Makro (Zbliżenie)':
+    'Extreme close-up, macro photography, focus on texture and details, glistening sauce, steam, soft bokeh background, very shallow depth of field, intimate view',
+};
+
+const NEGATIVE_PROMPT =
+  'Avoid: blurry image, low resolution, distorted hands or cutlery, unnatural proportions, cartoon or illustration style, over-saturated colors, text or logos on the image, extra objects that distract from the dish.';
+
 /** Buduje bogaty prompt dla Geminiego na podstawie aktualnych ustawień studia. */
 export function buildDishPrompt(settings: AiDishSettings): string {
   const {
@@ -25,7 +50,8 @@ export function buildDishPrompt(settings: AiDishSettings): string {
 
   const stylePhrase = styleLabel.toLowerCase();
   const lightingPhrase = lightingLabel.toLowerCase();
-  const anglePhrase = angleLabel.toLowerCase();
+  const angleDetails = anglePrompts[angleLabel];
+  const styleDetails = stylePrompts[styleLabel] ?? '';
 
   const backdropInstruction = hasCustomBackdrop
     ? 'First reference image (if provided): the restaurant background – use it as the real environment. Keep perspective, colors and atmosphere; place the dish naturally in this scene.'
@@ -36,13 +62,18 @@ export function buildDishPrompt(settings: AiDishSettings): string {
     : '';
 
   return [
-    `Professional food photography of ${dishName}.`,
-    `Style: ${stylePhrase} fine dining restaurant presentation, chef-level plating, sophisticated composition.`,
+    `Professional food photography of ${dishName}, ${stylePhrase} style.`,
+    styleDetails
+      ? `Visual style details: ${styleDetails}.`
+      : `Style: ${stylePhrase} restaurant presentation, chef-level plating, sophisticated composition.`,
     `Lighting: ${lightingPhrase} lighting for food – warm, appetizing highlights, soft shadows, no harsh contrast.`,
-    `Camera angle: ${anglePhrase} – composed like a cinematic hero shot for restaurant menu.`,
+    angleDetails
+      ? `Camera angle and composition: ${angleDetails}.`
+      : `Camera angle: ${angleLabel.toLowerCase()} – composed like a cinematic hero shot for restaurant menu.`,
     backdropInstruction,
     tablewareInstruction,
     'Goals: hyper-realistic textures, perfect focus on the dish, shallow depth of field, bokeh in the background, ultra-detailed ingredients, vibrant yet natural colors.',
+    NEGATIVE_PROMPT,
     'Output: a single photorealistic culinary image, 4:3 aspect ratio, suitable for premium restaurant menu and marketing.',
   ].join('\n');
 }

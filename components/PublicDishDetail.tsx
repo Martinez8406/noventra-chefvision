@@ -27,11 +27,6 @@ export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark 
           </button>
 
           <div className="absolute bottom-8 left-8 right-8 text-white">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="bg-amber-500 text-white text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full">
-                Chef Signature
-              </span>
-            </div>
             <h1 className="text-4xl md:text-6xl font-serif italic mb-2 tracking-tight">{dish.name}</h1>
           </div>
         </>

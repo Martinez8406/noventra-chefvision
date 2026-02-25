@@ -30,12 +30,11 @@ export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo',
     >
       {/* Hero Image */}
       <WatermarkWrapper show={!!showWatermark} className="h-64 overflow-hidden">
-        <>
-          <img src={dish.imageUrl} alt={dish.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest text-slate-800 shadow-sm border border-slate-100">
-            Chef Signature
-          </div>
-        </>
+        <img
+          src={dish.imageUrl}
+          alt={dish.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
       </WatermarkWrapper>
 
       <div className="p-6">
