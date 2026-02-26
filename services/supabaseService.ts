@@ -206,6 +206,22 @@ export const db = {
     const updated = getLocalDishes().map(d => d.id === id ? { ...d, isOnline } : d);
     saveLocalDishes(updated);
     return true;
+  },
+
+  /** Zwiększa licznik kliknięć dania (clicks = clicks + 1). */
+  async incrementDishClicks(id: string, currentClicks: number = 0): Promise<boolean> {
+    if (supabase) {
+      const { error } = await supabase
+        .from('dishes')
+        .update({ clicks: currentClicks + 1 })
+        .eq('id', id);
+      return !error;
+    }
+    const updated = getLocalDishes().map(d =>
+      d.id === id ? { ...d, clicks: (d.clicks ?? 0) + 1 } : d
+    );
+    saveLocalDishes(updated);
+    return true;
   }
 };
 

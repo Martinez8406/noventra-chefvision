@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseService';
-import { ChefHat, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ChefHat, Loader2, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
 interface Props {
   onDemoLogin?: () => void;
@@ -13,6 +13,7 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [message, setMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,14 +74,24 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
 
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Hasło</label>
-            <input 
-              type="password" 
-              required
-              className="w-full bg-[#F8FAFC] border border-slate-100 rounded-2xl px-6 py-4 text-[#1E293B] outline-none focus:ring-2 focus:ring-[#FBB02D] transition-all font-bold"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="relative">
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                required
+                className="w-full bg-[#F8FAFC] border border-slate-100 rounded-2xl px-6 py-4 pr-12 text-[#1E293B] outline-none focus:ring-2 focus:ring-[#FBB02D] transition-all font-bold"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600"
+                aria-label={showPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           {message && (
