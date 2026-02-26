@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Dish } from '../types';
-import { Youtube, Eye, EyeOff, ExternalLink, QrCode, Trash2, Edit } from 'lucide-react';
+import { Link2, Eye, EyeOff, ExternalLink, QrCode, Trash2, Edit } from 'lucide-react';
 
 interface Props {
   dishes: Dish[];
@@ -45,7 +45,7 @@ export const MenuManager: React.FC<Props> = ({ dishes, onToggleOnline, onUpdateV
             <tr>
               <th className="px-8 py-4">Produkt</th>
               <th className="px-8 py-4">Status Online</th>
-              <th className="px-8 py-4">Video Link (YT)</th>
+              <th className="px-8 py-4">Social Link</th>
               <th className="px-8 py-4">Popularność</th>
               <th className="px-8 py-4 text-right">Akcje</th>
             </tr>
@@ -70,13 +70,13 @@ export const MenuManager: React.FC<Props> = ({ dishes, onToggleOnline, onUpdateV
                 </td>
                 <td className="px-8 py-4">
                   <div className="flex items-center gap-2 group">
-                    <div className="relative flex-1 max-w-[200px]">
-                      <Youtube className="absolute left-2 top-1/2 -translate-y-1/2 text-red-500" size={16} />
+                    <div className="relative flex-1 max-w-[260px]">
+                      <Link2 className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                       <input 
                         type="text" 
                         value={dish.videoUrl || ''} 
                         onChange={(e) => onUpdateVideo(dish.id, e.target.value)}
-                        placeholder="Link do YouTube..."
+                        placeholder="Wklej link do YT, TikTok lub Instagram..."
                         className="w-full pl-8 pr-2 py-1.5 bg-slate-100 border-none rounded-lg text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
                       />
                     </div>

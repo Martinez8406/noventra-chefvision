@@ -66,8 +66,18 @@ export async function uploadDishImage(dataUrl: string, userId: string): Promise<
 export const db = {
   async getDishes(restaurantId: string): Promise<Dish[]> {
     if (supabase) {
-      const { data, error } = await supabase.from('dishes').select('*').eq('restaurantId', restaurantId).order('createdAt', { ascending: false });
-      if (!error) return data || [];
+      const { data, error } = await supabase
+        .from('dishes')
+        .select('*')
+        .eq('restaurantId', restaurantId)
+        .order('createdAt', { ascending: false });
+      if (!error && data) {
+        // Mapujemy kolumnę social_link z bazy na pole videoUrl w typie Dish
+        return (data as any[]).map((row) => ({
+          ...row,
+          videoUrl: row.social_link ?? row.videoUrl ?? null,
+        })) as Dish[];
+      }
     }
     return getLocalDishes().filter(d => d.restaurantId === restaurantId);
   },
@@ -81,22 +91,47 @@ export const db = {
         .eq('user_id', userId)
         .eq('isOnline', true)
         .order('createdAt', { ascending: false });
-      if (!error) return data || [];
+      if (!error && data) {
+        return (data as any[]).map((row) => ({
+          ...row,
+          videoUrl: row.social_link ?? row.videoUrl ?? null,
+        })) as Dish[];
+      }
       const { data: fallback, error: err2 } = await supabase
         .from('dishes')
         .select('*')
         .eq('restaurantId', userId)
         .eq('isOnline', true)
         .order('createdAt', { ascending: false });
-      if (!err2) return fallback || [];
+      if (!err2 && fallback) {
+        return (fallback as any[]).map((row) => ({
+          ...row,
+          videoUrl: row.social_link ?? row.videoUrl ?? null,
+        })) as Dish[];
+      }
     }
     return getLocalDishes().filter(d => (d.restaurantId === userId || (d as any).user_id === userId) && d.isOnline);
   },
 
   async saveDish(dish: Partial<Dish>): Promise<Dish | null> {
     if (supabase) {
-      const { data, error } = await supabase.from('dishes').upsert(dish).select().single();
-      if (!error) return data;
+      const payload: any = {
+        ...dish,
+        // Zapisujemy link do social mediów w kolumnie social_link
+        social_link: (dish as any).videoUrl ?? (dish as any).social_link ?? null,
+      };
+      const { data, error } = await supabase
+        .from('dishes')
+        .upsert(payload)
+        .select('*')
+        .single();
+      if (!error && data) {
+        // Po zapisie również mapujemy social_link na videoUrl
+        return {
+          ...(data as any),
+          videoUrl: (data as any).social_link ?? (data as any).videoUrl ?? null,
+        } as Dish;
+      }
     }
     const dishes = getLocalDishes();
     const newDish = { id: dish.id || Math.random().toString(36).substr(2, 9), createdAt: Date.now(), clicks: 0, ...dish } as Dish;

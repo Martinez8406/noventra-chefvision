@@ -222,6 +222,26 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUpdateSocialLink = async (id: string, url: string) => {
+    const existing = dishes.find(d => d.id === id);
+    if (!existing) return;
+
+    const updated: Dish = { ...existing, videoUrl: url };
+
+    // Natychmiastowa aktualizacja w UI
+    setDishes(prev => prev.map(d => d.id === id ? updated : d));
+
+    try {
+      // Zapis pełnego dania do Supabase (saveDish zmapuje videoUrl -> social_link)
+      const saved = await db.saveDish(updated);
+      if (saved) {
+        setDishes(prev => prev.map(d => d.id === saved.id ? saved : d));
+      }
+    } catch (e) {
+      console.error('Aktualizacja Social Link nie powiodła się', e);
+    }
+  };
+
   const handleBuyPremium = async () => {
     try {
       // Upewnij się, że mamy aktualne userId z Supabase
@@ -467,7 +487,7 @@ const App: React.FC = () => {
             <MenuManager 
               dishes={dishes} 
               onToggleOnline={toggleStatus} 
-              onUpdateVideo={() => {}} 
+              onUpdateVideo={handleUpdateSocialLink} 
               onDelete={handleDeleteDish} 
               onSelect={setSelectedDishId}
               menuUserId={currentUser?.id ?? null}

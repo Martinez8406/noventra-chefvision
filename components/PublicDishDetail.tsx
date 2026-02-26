@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Dish } from '../types';
-import { Youtube, ChevronLeft, AlertCircle, Utensils, Info } from 'lucide-react';
+import { Youtube, Instagram, Link2, Music2, ChevronLeft, AlertCircle, Utensils, Info } from 'lucide-react';
 import { WatermarkWrapper } from './WatermarkWrapper';
 
 interface Props {
@@ -9,6 +9,20 @@ interface Props {
   onBack: () => void;
   showWatermark?: boolean;
 }
+
+const renderSocialIcon = (url: string) => {
+  const lower = url.toLowerCase();
+  if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+    return <Youtube size={32} />;
+  }
+  if (lower.includes('tiktok.com')) {
+    return <Music2 size={32} />;
+  }
+  if (lower.includes('instagram.com')) {
+    return <Instagram size={32} />;
+  }
+  return <Link2 size={32} />;
+};
 
 export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark }) => {
   return (
@@ -76,7 +90,7 @@ export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark 
           </div>
         </div>
 
-        {/* Video Section */}
+        {/* Social Link Section */}
         {dish.videoUrl && (
           <div className="pt-12 border-t border-slate-100">
             <a 
@@ -86,12 +100,12 @@ export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark 
               className="flex items-center justify-between p-8 bg-slate-950 rounded-[40px] text-white hover:scale-[1.01] transition-all group shadow-2xl shadow-indigo-500/10"
             >
               <div className="flex items-center gap-6">
-                <div className="w-16 h-16 bg-red-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
-                  <Youtube size={32} />
+                <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
+                  {renderSocialIcon(dish.videoUrl)}
                 </div>
                 <div>
-                  <h4 className="text-2xl font-black italic">Video Recipe</h4>
-                  <p className="text-slate-400 text-sm font-medium tracking-tight">Zobacz proces powstawania dania</p>
+                  <h4 className="text-2xl font-black italic">Social Link</h4>
+                  <p className="text-slate-400 text-sm font-medium tracking-tight">Zobacz danie w social mediach</p>
                 </div>
               </div>
               <ChevronLeft size={32} className="rotate-180 opacity-40 group-hover:translate-x-2 transition-transform" />

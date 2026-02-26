@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Dish } from '../types';
-import { Youtube, AlertTriangle, ChefHat, Info } from 'lucide-react';
+import { Youtube, Instagram, Link2, Music2, AlertTriangle, Info } from 'lucide-react';
 import { WatermarkWrapper } from './WatermarkWrapper';
 
 interface Props {
@@ -12,6 +12,20 @@ interface Props {
   onPathChange?: () => void;
   showWatermark?: boolean;
 }
+
+const renderSocialIcon = (url: string) => {
+  const lower = url.toLowerCase();
+  if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+    return <Youtube size={16} className="text-red-500" />;
+  }
+  if (lower.includes('tiktok.com')) {
+    return <Music2 size={16} className="text-slate-50" />;
+  }
+  if (lower.includes('instagram.com')) {
+    return <Instagram size={16} className="text-pink-500" />;
+  }
+  return <Link2 size={16} className="text-slate-200" />;
+};
 
 export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo', baseHash = '#/menu/demo', usePathRouting, onPathChange, showWatermark }) => {
   const openDetail = () => {
@@ -65,7 +79,7 @@ export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo',
           </div>
         </div>
 
-        {/* Technical/Video Section (Interactive) */}
+        {/* Social Link + Więcej info */}
         <div className="grid grid-cols-2 gap-3">
           {dish.videoUrl && (
             <a
@@ -75,8 +89,8 @@ export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo',
               onClick={(e) => e.stopPropagation()}
               className="flex items-center justify-center gap-2 bg-slate-900 text-white py-3 rounded-2xl text-xs font-bold hover:bg-slate-800 transition-colors"
             >
-              <Youtube size={16} className="text-red-500" />
-              Video Recipe
+              {renderSocialIcon(dish.videoUrl)}
+              Social Link
             </a>
           )}
           <button 
