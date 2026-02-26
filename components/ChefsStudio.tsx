@@ -297,7 +297,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
 
           <div className="flex flex-col sm:flex-row gap-4">
             <button onClick={handleGenerate} disabled={isGenerating || hasNoCredits} className="flex-1 py-6 bg-slate-900 text-white rounded-[30px] font-black text-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[0.99] transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
-              {isGenerating ? <Loader2 className="animate-spin" /> : <Wand2 />} {isGenerating ? 'MIKSUJĘ...' : hasNoCredits ? 'BRAK KREDYTÓW' : 'STWÓRZ AI'}
+              {isGenerating ? <Loader2 className="animate-spin" /> : <Wand2 />} {isGenerating ? 'MIKSUJĘ...' : hasNoCredits ? 'BRAK KREDYTÓW' : 'STWÓRZ ZDJĘCIE'}
             </button>
             <input
               ref={customPhotoInputRef}
