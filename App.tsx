@@ -7,7 +7,6 @@ import { PublicMenu } from './components/PublicMenu';
 import { QRGenerator } from './components/QRGenerator';
 import { KitchenWall } from './components/KitchenWall';
 import { MenuManager } from './components/MenuManager';
-import { Insights } from './components/Insights';
 import { DishDetailPanel } from './components/DishDetailPanel';
 import { Auth } from './components/Auth';
 import { SuccessPage } from './components/SuccessPage';
@@ -20,11 +19,8 @@ import {
   User as UserIcon, 
   LogOut, 
   Menu as MenuIcon, 
-  PieChart, 
   Zap,
   Crown,
-  Lock,
-  ArrowLeft,
   Layers,
   Loader2,
   AlertTriangle,
@@ -36,7 +32,7 @@ const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
-  const [activeTab, setActiveTab] = useState<'kuchnia' | 'studio' | 'backdrops' | 'menu' | 'insights' | 'qr'>('kuchnia');
+  const [activeTab, setActiveTab] = useState<'kuchnia' | 'studio' | 'backdrops' | 'menu' | 'qr'>('kuchnia');
   const [selectedDishId, setSelectedDishId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -139,10 +135,6 @@ const App: React.FC = () => {
 
   const isPremium = currentUser?.subscriptionStatus === 'premium';
   const isTrial = currentUser?.subscriptionStatus === 'trial';
-  const isLimited = currentUser?.subscriptionStatus === 'free_limited';
-  
-  // Dostęp do Insights tylko dla Premium
-  const canAccessInsights = isPremium;
 
   const handleSaveBackdrop = (imageUrl: string) => {
     const newBackdrop: Backdrop = {
@@ -379,7 +371,6 @@ const App: React.FC = () => {
     { id: 'studio', label: 'Chef’s Studio', icon: Zap, protected: false },
     { id: 'backdrops', label: 'Studio Tła', icon: Layers, protected: false },
     { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen, protected: false },
-    { id: 'insights', label: 'Analityka', icon: PieChart, protected: true },
     { id: 'qr', label: 'Kod QR', icon: MenuIcon, protected: false },
   ];
 
@@ -406,7 +397,6 @@ const App: React.FC = () => {
                 <div className="flex items-center gap-4">
                   <tab.icon size={20} /> {tab.label}
                 </div>
-                {tab.id === 'insights' && !isPremium && <Lock size={14} className="opacity-40" />}
               </button>
             ))}
           </nav>
@@ -510,20 +500,6 @@ const App: React.FC = () => {
               onSelect={setSelectedDishId}
               menuUserId={currentUser?.id ?? null}
             />
-          )}
-          {activeTab === 'insights' && (
-            !canAccessInsights ? (
-              <div className="h-[70vh] flex flex-col items-center justify-center text-center p-8 bg-white rounded-[40px] border border-slate-100 shadow-xl space-y-8">
-                <div className="w-24 h-24 bg-amber-500/10 rounded-3xl flex items-center justify-center text-amber-500"><PieChart size={48} /></div>
-                <div className="space-y-4 max-w-md">
-                  <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">Analityka Gości</h2>
-                  <p className="text-slate-500 font-medium text-sm">Dowiedz się co najchętniej zamawiają Twoi goście. Raporty i statystyki dostępne tylko dla użytkowników Premium.</p>
-                </div>
-                <button onClick={handleBuyPremium} className="bg-amber-500 text-white px-8 py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:bg-amber-600 shadow-xl shadow-amber-500/20 transition-all">
-                  <Crown size={24} /> AKTYWUJ RAPORTY
-                </button>
-              </div>
-            ) : <Insights dishes={dishes} />
           )}
           {activeTab === 'qr' && <QRGenerator userId={currentUser?.id ?? null} />}
         </div>
