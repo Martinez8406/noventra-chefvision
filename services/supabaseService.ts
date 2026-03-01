@@ -72,10 +72,9 @@ export const db = {
         .eq('restaurantId', restaurantId)
         .order('createdAt', { ascending: false });
       if (!error && data) {
-        // Mapujemy kolumnę social_link z bazy na pole videoUrl w typie Dish
         return (data as any[]).map((row) => ({
           ...row,
-          videoUrl: row.social_link ?? row.videoUrl ?? null,
+          videoUrl: row.social_link ?? row.video_url ?? row.videoUrl ?? undefined,
         })) as Dish[];
       }
     }
@@ -94,7 +93,7 @@ export const db = {
       if (!error && data) {
         return (data as any[]).map((row) => ({
           ...row,
-          videoUrl: row.social_link ?? row.videoUrl ?? null,
+          videoUrl: row.social_link ?? row.video_url ?? row.videoUrl ?? undefined,
         })) as Dish[];
       }
       const { data: fallback, error: err2 } = await supabase
@@ -106,7 +105,7 @@ export const db = {
       if (!err2 && fallback) {
         return (fallback as any[]).map((row) => ({
           ...row,
-          videoUrl: row.social_link ?? row.videoUrl ?? null,
+          videoUrl: row.social_link ?? row.video_url ?? row.videoUrl ?? undefined,
         })) as Dish[];
       }
     }
@@ -208,18 +207,15 @@ export const db = {
     return true;
   },
 
-  /** Zwiększa licznik kliknięć dania (clicks = clicks + 1). */
-  async incrementDishClicks(id: string, currentClicks: number = 0): Promise<boolean> {
+  /** Aktualizuje tylko link społecznościowy dania (UPDATE jednego pola – reszta rekordu bez zmian). */
+  async updateDishSocialLink(id: string, url: string): Promise<boolean> {
     if (supabase) {
-      const { error } = await supabase
-        .from('dishes')
-        .update({ clicks: currentClicks + 1 })
-        .eq('id', id);
-      return !error;
+      const value = url.trim() || null;
+      let err = (await supabase.from('dishes').update({ social_link: value }).eq('id', id)).error;
+      if (err) err = (await supabase.from('dishes').update({ video_url: value }).eq('id', id)).error;
+      return !err;
     }
-    const updated = getLocalDishes().map(d =>
-      d.id === id ? { ...d, clicks: (d.clicks ?? 0) + 1 } : d
-    );
+    const updated = getLocalDishes().map(d => d.id === id ? { ...d, videoUrl: url } : d);
     saveLocalDishes(updated);
     return true;
   }

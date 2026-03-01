@@ -100,11 +100,35 @@ const App: React.FC = () => {
         const data = await db.getDishesForPublicMenu(publicMenuUserId);
         setDishes(data);
       } else {
-        const profile = await authService.getCurrentProfile();
-        setCurrentUser(profile);
-        const restaurantId = profile ? profile.id : 'local-chef';
-        const data = await db.getDishes(restaurantId);
-        setDishes(data);
+        if (session?.user?.id === 'demo') {
+          const demoProfile: UserProfile = {
+            id: 'local-chef',
+            name: 'Restauracja Testowa',
+            email: 'demo@chefvision.pl',
+            subscriptionStatus: 'trial',
+            generationsUsed: parseInt(typeof window !== 'undefined' ? localStorage.getItem('chefvision_user_gens') || '0' : '0'),
+            credits: Math.max(0, 5 - parseInt(typeof window !== 'undefined' ? localStorage.getItem('chefvision_user_gens') || '0' : '0')),
+          };
+          setCurrentUser(demoProfile);
+          const data = await db.getDishes('local-chef');
+          setDishes(data);
+        } else {
+          let profile = await authService.getCurrentProfile();
+          if (!profile && session?.user) {
+            profile = {
+              id: session.user.id,
+              name: session.user.email?.split('@')[0] || 'Restauracja',
+              email: session.user.email || '',
+              subscriptionStatus: 'trial',
+              generationsUsed: 0,
+              credits: 5,
+            };
+          }
+          setCurrentUser(profile);
+          const restaurantId = profile ? profile.id : 'local-chef';
+          const data = await db.getDishes(restaurantId);
+          setDishes(data);
+        }
       }
     } catch (e) { 
       console.error("Błąd synchronizacji:", e); 
@@ -223,23 +247,9 @@ const App: React.FC = () => {
   };
 
   const handleUpdateSocialLink = async (id: string, url: string) => {
-    const existing = dishes.find(d => d.id === id);
-    if (!existing) return;
-
-    const updated: Dish = { ...existing, videoUrl: url };
-
-    // Natychmiastowa aktualizacja w UI
-    setDishes(prev => prev.map(d => d.id === id ? updated : d));
-
-    try {
-      // Zapis pełnego dania do Supabase (saveDish zmapuje videoUrl -> social_link)
-      const saved = await db.saveDish(updated);
-      if (saved) {
-        setDishes(prev => prev.map(d => d.id === saved.id ? saved : d));
-      }
-    } catch (e) {
-      console.error('Aktualizacja Social Link nie powiodła się', e);
-    }
+    setDishes(prev => prev.map(d => d.id === id ? { ...d, videoUrl: url } : d));
+    const ok = await db.updateDishSocialLink(id, url);
+    if (!ok) console.error('Aktualizacja Social Link nie powiodła się');
   };
 
   const handleBuyPremium = async () => {
@@ -455,7 +465,7 @@ const App: React.FC = () => {
           <div className="w-10" />
         </header>
 
-        <div className="p-6 md:p-10 max-w-5xl mx-auto">
+        <div className="p-6 md:p-10 max-w-5xl mx-auto min-h-0 w-full">
           {activeTab === 'kuchnia' && (
             <div className="space-y-8">
               <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">Status Kuchni</h2>
@@ -468,17 +478,25 @@ const App: React.FC = () => {
               />
             </div>
           )}
-          {activeTab === 'studio' && currentUser && (
-            <ChefsStudio 
-              onSaveStandard={handleSaveStandard} 
-              savedBackdrops={savedBackdrops} 
-              isSubscribed={isPremium}
-              generationsUsed={currentUser.generationsUsed}
-              credits={currentUser.credits}
-              onGenerationSuccess={handleGenerationSuccess}
-              onCreditsUpdated={(credits) => setCurrentUser(prev => prev ? { ...prev, credits } : null)}
-              onBuyPremium={handleBuyPremium}
-            />
+          {activeTab === 'studio' && (
+            currentUser ? (
+              <ChefsStudio 
+                onSaveStandard={handleSaveStandard} 
+                savedBackdrops={savedBackdrops} 
+                isSubscribed={isPremium}
+                generationsUsed={currentUser.generationsUsed}
+                credits={currentUser.credits}
+                onGenerationSuccess={handleGenerationSuccess}
+                onCreditsUpdated={(credits) => setCurrentUser(prev => prev ? { ...prev, credits } : null)}
+                onBuyPremium={handleBuyPremium}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-24 text-center text-slate-500 min-h-[50vh]">
+                <Loader2 className="animate-spin text-amber-500 mb-4" size={40} />
+                <p className="font-medium">Ładowanie profilu...</p>
+                <p className="text-sm mt-1">Za chwilę Chef’s Studio będzie dostępne.</p>
+              </div>
+            )
           )}
           {activeTab === 'backdrops' && (
             <BackdropLab onSaveBackdrop={handleSaveBackdrop} isTrial={!isPremium} />

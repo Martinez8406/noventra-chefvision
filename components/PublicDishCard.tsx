@@ -3,7 +3,6 @@ import React from 'react';
 import { Dish } from '../types';
 import { Youtube, Instagram, Link2, Music2, AlertTriangle, Info } from 'lucide-react';
 import { WatermarkWrapper } from './WatermarkWrapper';
-import { db } from '../services/supabaseService';
 
 interface Props {
   dish: Dish;
@@ -30,8 +29,6 @@ const renderSocialIcon = (url: string) => {
 
 export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo', baseHash = '#/menu/demo', usePathRouting, onPathChange, showWatermark }) => {
   const openDetail = () => {
-    // Zwiększamy licznik kliknięć w bazie (clicks = clicks + 1)
-    void db.incrementDishClicks(dish.id, dish.clicks ?? 0);
     if (usePathRouting) {
       history.pushState({}, '', `${basePath}/dish/${dish.id}`);
       onPathChange?.();
