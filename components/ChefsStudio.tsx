@@ -49,6 +49,10 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
     cameraAngle: ANGLE_OPTIONS[0].value,
     style: STYLE_OPTIONS[0].value,
   });
+
+  const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
+  const [dishReferenceImage, setDishReferenceImage] = useState<string | null>(null);
+  const [ingredientsText, setIngredientsText] = useState('');
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
@@ -58,8 +62,10 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
   const [customTablewareImage, setCustomTablewareImage] = useState<string | null>(null);
   const [isBackdropSelectorOpen, setIsBackdropSelectorOpen] = useState(false);
   const [isUploadingCustom, setIsUploadingCustom] = useState(false);
+  const [isUploadingDishRef, setIsUploadingDishRef] = useState(false);
   const tablewareInputRef = useRef<HTMLInputElement>(null);
   const customPhotoInputRef = useRef<HTMLInputElement>(null);
+  const dishRefInputRef = useRef<HTMLInputElement>(null);
 
   const isFreeTrialOver = !isSubscribed && generationsUsed >= 5;
   const hasNoCredits = !isSubscribed && credits <= 0;
@@ -100,14 +106,26 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
     });
   };
 
-  const buildAiSettings = (): AiDishSettings => {
-    const styleLabel = STYLE_OPTIONS.find(o => o.value === params.style)?.label || params.style;
-    const lightingLabel = LIGHTING_OPTIONS.find(o => o.value === params.lighting)?.label || params.lighting;
-    const plateLabel = PLATE_OPTIONS.find(o => o.value === params.plateType)?.label || params.plateType;
-    const angleLabel = ANGLE_OPTIONS.find(o => o.value === params.cameraAngle)?.label || params.cameraAngle;
+  /** Simple mode uses Chefvision Default / Auto; advanced uses current params. */
+  const getEffectiveParams = (): GeneratorParams => {
+    if (advancedSettingsOpen) return params;
+    return {
+      ...params,
+      style: STYLE_OPTIONS[0].value,
+      lighting: LIGHTING_OPTIONS[0].value,
+      plateType: PLATE_OPTIONS[0].value,
+      cameraAngle: ANGLE_OPTIONS[0].value,
+    };
+  };
+
+  const buildAiSettings = (effectiveParams: GeneratorParams): AiDishSettings => {
+    const styleLabel = STYLE_OPTIONS.find(o => o.value === effectiveParams.style)?.label || effectiveParams.style;
+    const lightingLabel = LIGHTING_OPTIONS.find(o => o.value === effectiveParams.lighting)?.label || effectiveParams.lighting;
+    const plateLabel = PLATE_OPTIONS.find(o => o.value === effectiveParams.plateType)?.label || effectiveParams.plateType;
+    const angleLabel = ANGLE_OPTIONS.find(o => o.value === effectiveParams.cameraAngle)?.label || effectiveParams.cameraAngle;
 
     return {
-      dishName: params.dishName,
+      dishName: effectiveParams.dishName,
       styleLabel,
       lightingLabel,
       plateLabel,
@@ -142,8 +160,25 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
     }
   };
 
+  const handleHybridPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    e.target.value = '';
+    setIsUploadingDishRef(true);
+    setError(null);
+    try {
+      const dataUrl = await compressImageForUpload(file);
+      setDishReferenceImage(dataUrl);
+    } catch (err: any) {
+      setError(err.message || 'Błąd przetwarzania zdjęcia.');
+    } finally {
+      setIsUploadingDishRef(false);
+    }
+  };
+
   const handleGenerate = async () => {
-    if (!params.dishName) {
+    const effectiveParams = getEffectiveParams();
+    if (!effectiveParams.dishName) {
       setError("Podaj nazwę dania.");
       return;
     }
@@ -154,10 +189,12 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
     setError(null);
     setIsGenerating(true);
     try {
-      const aiSettings = buildAiSettings();
-      let img = await generateDishImageWithAI(params, aiSettings, {
+      const aiSettings = buildAiSettings(effectiveParams);
+      let img = await generateDishImageWithAI(effectiveParams, aiSettings, {
         backdropImage: customBaseImage || undefined,
         tablewareImage: customTablewareImage || undefined,
+        dishReferenceImage: dishReferenceImage || undefined,
+        ingredientsHint: ingredientsText.trim() || undefined,
       });
       if (isFreeTrialOver) img = await addWatermark(img);
       setGeneratedImages([img]);
@@ -214,6 +251,19 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
           </div>
         )}
 
+        {error && (
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800">
+            <AlertCircle className="shrink-0 mt-0.5" size={20} />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold">Błąd</p>
+              <p className="text-sm mt-1">{error}</p>
+            </div>
+            <button type="button" onClick={() => setError(null)} className="p-1 rounded-lg hover:bg-red-100 text-red-600">
+              <X size={18} />
+            </button>
+          </div>
+        )}
+
         <div className="space-y-8">
           <div className="relative">
             <input
@@ -225,95 +275,131 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <label className="text-[10px] font-black uppercase text-slate-400">Stylistyka</label>
-              <div className="grid grid-cols-2 gap-2">
-                {STYLE_OPTIONS.map(opt => (
-                  <button key={opt.value} onClick={() => setParams({ ...params, style: opt.value })} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.style === opt.value ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-500 border-slate-50'}`}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-4">
-              <label className="text-[10px] font-black uppercase text-slate-400">Oświetlenie</label>
-              <div className="grid grid-cols-2 gap-2">
-                {LIGHTING_OPTIONS.map(opt => (
-                  <button key={opt.value} onClick={() => setParams({ ...params, lighting: opt.value })} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.lighting === opt.value ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-slate-500 border-slate-50'}`}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <label className="text-[10px] font-black uppercase text-slate-400">Tło i zastawa</label>
-              <div className="grid grid-cols-2 gap-2">
-                {PLATE_OPTIONS.map(opt => (
-                  <button key={opt.value} onClick={() => setParams({ ...params, plateType: opt.value })} disabled={!!customBaseImage || !!customTablewareImage} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.plateType === opt.value ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-50'} disabled:opacity-30`}>
-                    {opt.label}
-                  </button>
-                ))}
-                <div className="col-span-2 flex gap-2">
-                  <button onClick={() => setIsBackdropSelectorOpen(true)} disabled={isFreeTrialOver} className="flex-1 p-3 rounded-2xl border-2 border-dashed border-slate-200 text-[10px] font-black flex items-center justify-center gap-2 hover:bg-slate-50">
-                    {isFreeTrialOver ? <Lock size={12}/> : <Layers size={14}/>} TŁO ZE STUDIA
-                  </button>
-                  <input
-                    ref={tablewareInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleTablewareFile}
-                  />
-                  <button type="button" onClick={() => tablewareInputRef.current?.click()} disabled={isFreeTrialOver} className="flex-1 p-3 rounded-2xl border-2 border-dashed border-slate-200 text-[10px] font-black flex items-center justify-center gap-2 hover:bg-slate-50">
-                    {isFreeTrialOver ? <Lock size={12}/> : <UtensilsCrossed size={14}/>} WŁASNA ZASTAWA
-                  </button>
-                </div>
-                {customTablewareImage && (
-                  <div className="col-span-2 flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200">
-                    <img src={customTablewareImage} alt="Zastawa" className="w-14 h-14 object-cover rounded-xl" />
-                    <span className="text-xs font-medium text-slate-600 flex-1">Wybrana zastawa</span>
-                    <button type="button" onClick={() => setCustomTablewareImage(null)} className="p-2 rounded-xl text-slate-400 hover:bg-slate-200 hover:text-slate-700">
-                      <X size={16} />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="space-y-4">
-              <label className="text-[10px] font-black uppercase text-slate-400">Perspektywa</label>
-              <div className="grid grid-cols-2 gap-2">
-                {ANGLE_OPTIONS.map(opt => (
-                  <button key={opt.value} onClick={() => setParams({ ...params, cameraAngle: opt.value })} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.cameraAngle === opt.value ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-50'}`}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div>
+            <label className="text-[10px] font-black uppercase text-slate-400 block mb-2">Składniki (opcjonalnie)</label>
+            <textarea
+              className="w-full px-6 py-4 border-2 border-slate-50 focus:ring-4 focus:ring-indigo-50 rounded-2xl outline-none transition-all placeholder-slate-300 text-slate-700 bg-slate-50/50 resize-none"
+              placeholder="np. wołowina, grzyby, ciasto francuskie..."
+              value={ingredientsText}
+              onChange={(e) => setIngredientsText(e.target.value)}
+              rows={2}
+            />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4">
             <button onClick={handleGenerate} disabled={isGenerating || hasNoCredits} className="flex-1 py-6 bg-slate-900 text-white rounded-[30px] font-black text-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[0.99] transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
-              {isGenerating ? <Loader2 className="animate-spin" /> : <Wand2 />} {isGenerating ? 'MIKSUJĘ...' : hasNoCredits ? 'BRAK KREDYTÓW' : 'STWÓRZ ZDJĘCIE'}
+              {isGenerating ? <Loader2 className="animate-spin" /> : <Wand2 />} {isGenerating ? 'MIKSUJĘ...' : hasNoCredits ? 'BRAK KREDYTÓW' : dishReferenceImage ? 'ULEPSZ ZDJĘCIE' : 'STWÓRZ ZDJĘCIE'}
             </button>
-            <input
-              ref={customPhotoInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleCustomPhotoUpload}
-            />
+            <input ref={dishRefInputRef} type="file" accept="image/*" className="hidden" onChange={handleHybridPhotoUpload} />
             <button
               type="button"
-              onClick={() => customPhotoInputRef.current?.click()}
-              disabled={isUploadingCustom}
+              onClick={() => dishRefInputRef.current?.click()}
+              disabled={isUploadingDishRef}
               className="flex-1 py-6 bg-white text-slate-900 rounded-[30px] font-black text-xl flex items-center justify-center gap-3 border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all disabled:opacity-50"
             >
-              {isUploadingCustom ? <Loader2 className="animate-spin" /> : <Camera />} Wgraj własne zdjęcie
+              {isUploadingDishRef ? <Loader2 className="animate-spin" /> : <Camera />} Wgraj zdjęcie dania (Hybrid)
             </button>
+          </div>
+
+          {dishReferenceImage && (
+            <div className="flex items-center gap-3 p-4 rounded-2xl bg-indigo-50 border border-indigo-100">
+              <img src={dishReferenceImage} alt="Zdjęcie dania" className="w-20 h-20 object-cover rounded-xl" />
+              <span className="text-sm font-medium text-indigo-800 flex-1">Zdjęcie dania do ulepszenia (tryb Hybrid)</span>
+              <button type="button" onClick={() => setDishReferenceImage(null)} className="p-2 rounded-xl text-indigo-500 hover:bg-indigo-100">
+                <X size={18} />
+              </button>
+            </div>
+          )}
+
+          <div className="border-t border-slate-100 pt-6">
+            <button
+              type="button"
+              onClick={() => setAdvancedSettingsOpen(!advancedSettingsOpen)}
+              className="w-full flex items-center justify-between py-3 px-4 rounded-2xl border-2 border-slate-100 hover:bg-slate-50 text-slate-700 font-bold"
+            >
+              <span>Zaawansowane ustawienia zdjęcia</span>
+              <span className="text-slate-400">{advancedSettingsOpen ? '▼' : '▶'}</span>
+            </button>
+
+            {advancedSettingsOpen && (
+              <div className="mt-6 space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase text-slate-400">Stylistyka</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {STYLE_OPTIONS.map(opt => (
+                        <button key={opt.value} onClick={() => setParams({ ...params, style: opt.value })} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.style === opt.value ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-500 border-slate-50'}`}>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase text-slate-400">Oświetlenie</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {LIGHTING_OPTIONS.map(opt => (
+                        <button key={opt.value} onClick={() => setParams({ ...params, lighting: opt.value })} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.lighting === opt.value ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-slate-500 border-slate-50'}`}>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase text-slate-400">Tło i zastawa</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {PLATE_OPTIONS.map(opt => (
+                        <button key={opt.value} onClick={() => setParams({ ...params, plateType: opt.value })} disabled={!!customBaseImage || !!customTablewareImage} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.plateType === opt.value ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-50'} disabled:opacity-30`}>
+                          {opt.label}
+                        </button>
+                      ))}
+                      <div className="col-span-2 flex gap-2">
+                        <button onClick={() => setIsBackdropSelectorOpen(true)} disabled={isFreeTrialOver} className="flex-1 p-3 rounded-2xl border-2 border-dashed border-slate-200 text-[10px] font-black flex items-center justify-center gap-2 hover:bg-slate-50">
+                          {isFreeTrialOver ? <Lock size={12}/> : <Layers size={14}/>} TŁO ZE STUDIA
+                        </button>
+                        <input ref={tablewareInputRef} type="file" accept="image/*" className="hidden" onChange={handleTablewareFile} />
+                        <button type="button" onClick={() => tablewareInputRef.current?.click()} disabled={isFreeTrialOver} className="flex-1 p-3 rounded-2xl border-2 border-dashed border-slate-200 text-[10px] font-black flex items-center justify-center gap-2 hover:bg-slate-50">
+                          {isFreeTrialOver ? <Lock size={12}/> : <UtensilsCrossed size={14}/>} WŁASNA ZASTAWA
+                        </button>
+                      </div>
+                      {customTablewareImage && (
+                        <div className="col-span-2 flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                          <img src={customTablewareImage} alt="Zastawa" className="w-14 h-14 object-cover rounded-xl" />
+                          <span className="text-xs font-medium text-slate-600 flex-1">Wybrana zastawa</span>
+                          <button type="button" onClick={() => setCustomTablewareImage(null)} className="p-2 rounded-xl text-slate-400 hover:bg-slate-200 hover:text-slate-700">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase text-slate-400">Perspektywa</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {ANGLE_OPTIONS.map(opt => (
+                        <button key={opt.value} onClick={() => setParams({ ...params, cameraAngle: opt.value })} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.cameraAngle === opt.value ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-50'}`}>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <input ref={customPhotoInputRef} type="file" accept="image/*" className="hidden" onChange={handleCustomPhotoUpload} />
+                  <button
+                    type="button"
+                    onClick={() => customPhotoInputRef.current?.click()}
+                    disabled={isUploadingCustom}
+                    className="flex-1 py-4 bg-white text-slate-700 rounded-2xl font-bold flex items-center justify-center gap-2 border-2 border-slate-200 hover:bg-slate-50"
+                  >
+                    {isUploadingCustom ? <Loader2 className="animate-spin" /> : <Camera />} Wgraj własne zdjęcie (bez AI)
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -331,9 +417,22 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
               </div>
             </>
           </WatermarkWrapper>
-          <button onClick={() => onSaveStandard(generatedImages[0], params)} className="w-full py-6 bg-amber-500 text-white rounded-full font-black text-2xl flex items-center justify-center gap-3 shadow-2xl hover:bg-amber-600 transition-all">
-            <CheckCircle size={32} /> ZAPISZ JAKO STANDARD
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button
+              onClick={handleGenerate}
+              disabled={isGenerating || hasNoCredits}
+              className="flex-1 py-6 bg-slate-900 text-white rounded-full font-black text-xl flex items-center justify-center gap-3 shadow-xl hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed border-2 border-slate-900"
+            >
+              {isGenerating ? <Loader2 className="animate-spin" size={28} /> : <RefreshCw size={28} />}
+              {isGenerating ? 'REGENERUJĘ...' : 'REGENERUJ'}
+            </button>
+            <button
+              onClick={() => onSaveStandard(generatedImages[0], params)}
+              className="flex-1 py-6 bg-amber-500 text-white rounded-full font-black text-2xl flex items-center justify-center gap-3 shadow-2xl hover:bg-amber-600 transition-all"
+            >
+              <CheckCircle size={32} /> ZAPISZ JAKO STANDARD
+            </button>
+          </div>
         </div>
       )}
 

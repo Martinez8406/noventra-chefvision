@@ -46,7 +46,6 @@ export const MenuManager: React.FC<Props> = ({ dishes, onToggleOnline, onUpdateV
               <th className="px-8 py-4">Produkt</th>
               <th className="px-8 py-4">Status Online</th>
               <th className="px-8 py-4">Social Link</th>
-              <th className="px-8 py-4">Popularność</th>
               <th className="px-8 py-4 text-right">Akcje</th>
             </tr>
           </thead>
@@ -80,14 +79,6 @@ export const MenuManager: React.FC<Props> = ({ dishes, onToggleOnline, onUpdateV
                         className="w-full pl-8 pr-2 py-1.5 bg-slate-100 border-none rounded-lg text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
                       />
                     </div>
-                  </div>
-                </td>
-                <td className="px-8 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-indigo-500" style={{ width: `${Math.min(100, (dish.clicks / 500) * 100)}%` }} />
-                    </div>
-                    <span className="text-xs font-bold text-slate-400">{dish.clicks}</span>
                   </div>
                 </td>
                 <td className="px-8 py-4 text-right">
@@ -124,7 +115,7 @@ export const MenuManager: React.FC<Props> = ({ dishes, onToggleOnline, onUpdateV
             ))}
             {dishes.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-8 py-12 text-center text-slate-400 font-medium">
+                <td colSpan={4} className="px-8 py-12 text-center text-slate-400 font-medium">
                   Brak dań w menu. Przejdź do Chef's Studio, aby stworzyć pierwsze danie.
                 </td>
               </tr>

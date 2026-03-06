@@ -36,8 +36,24 @@ const anglePrompts: Record<string, string> = {
 const NEGATIVE_PROMPT =
   'Avoid: blurry image, low resolution, distorted hands or cutlery, unnatural proportions, cartoon or illustration style, over-saturated colors, text or logos on the image, extra objects that distract from the dish.';
 
+/** Prompt dla trybu Hybrid (ulepszenie wgranego zdjęcia dania). */
+export function buildHybridPrompt(ingredientsHint?: string): string {
+  const lines = [
+    'Use the provided dish photo as reference.',
+    'Keep the same dish structure and composition.',
+  ];
+  if (ingredientsHint?.trim()) {
+    lines.push('');
+    lines.push(`IMPORTANT: The dish must clearly show these ingredients on the plate, visible and appetizing: ${ingredientsHint.trim()}.`);
+  }
+  lines.push('');
+  lines.push('Improve lighting and composition to make it look like a professional restaurant menu photo.');
+  lines.push('Clean restaurant background, balanced lighting, shallow depth of field, food photography style.');
+  return lines.join('\n');
+}
+
 /** Buduje bogaty prompt dla Geminiego na podstawie aktualnych ustawień studia. */
-export function buildDishPrompt(settings: AiDishSettings): string {
+export function buildDishPrompt(settings: AiDishSettings, ingredientsHint?: string): string {
   const {
     dishName,
     styleLabel,
@@ -61,8 +77,15 @@ export function buildDishPrompt(settings: AiDishSettings): string {
     ? 'Second reference image (if provided): the plate or tableware – place the generated dish EXACTLY on this plate/setting. Preserve the shape, color and style of the plate; only add the food on top.'
     : '';
 
-  return [
+  const parts: string[] = [
     `Professional food photography of ${dishName}, ${stylePhrase} style.`,
+  ];
+
+  if (ingredientsHint?.trim()) {
+    parts.push(`The dish must include and clearly show these ingredients on the plate, each visible and appetizing: ${ingredientsHint.trim()}.`);
+  }
+
+  parts.push(
     styleDetails
       ? `Visual style details: ${styleDetails}.`
       : `Style: ${stylePhrase} restaurant presentation, chef-level plating, sophisticated composition.`,
@@ -75,36 +98,55 @@ export function buildDishPrompt(settings: AiDishSettings): string {
     'Goals: hyper-realistic textures, perfect focus on the dish, shallow depth of field, bokeh in the background, ultra-detailed ingredients, vibrant yet natural colors.',
     NEGATIVE_PROMPT,
     'Output: a single photorealistic culinary image, 4:3 aspect ratio, suitable for premium restaurant menu and marketing.',
-  ].join('\n');
+  );
+
+  return parts.join('\n');
 }
 
 /** Pełna generacja obrazu dania z użyciem Gemini 2.x Flash (image model). */
 export async function generateDishImageWithAI(
   params: GeneratorParams,
   settings: AiDishSettings,
-  options?: { backdropImage?: string; tablewareImage?: string }
+  options?: { backdropImage?: string; tablewareImage?: string; dishReferenceImage?: string; ingredientsHint?: string }
 ): Promise<string> {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-  const prompt = buildDishPrompt(settings);
-
-  const parts: any[] = [{ text: prompt }];
-
-  const addImagePart = (dataUrl: string) => {
+  const addImagePart = (dataUrl: string, targetParts: any[]): boolean => {
     try {
-      const mimeType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
-      const base64Data = dataUrl.split(',')[1];
-      if (mimeType && base64Data) {
-        parts.push({ inlineData: { mimeType, data: base64Data } });
-      }
+      if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) return false;
+      const base64Idx = dataUrl.indexOf(',');
+      const header = dataUrl.slice(0, base64Idx);
+      const mimeMatch = header.match(/^data:([^;]+)/);
+      const mimeType = (mimeMatch && mimeMatch[1]) || 'image/jpeg';
+      const base64Data = base64Idx >= 0 ? dataUrl.slice(base64Idx + 1).trim() : '';
+      if (!mimeType || !base64Data) return false;
+      targetParts.push({ inlineData: { mimeType, data: base64Data } });
+      return true;
     } catch (e) {
       console.error('Error parsing image for AI:', e);
+      return false;
     }
   };
 
-  // Kolejność: 1) tło (środowisko), 2) zastawa (talerz) – AI najpierw widzi tło, potem talerz
-  if (options?.backdropImage) addImagePart(options.backdropImage);
-  if (options?.tablewareImage) addImagePart(options.tablewareImage);
+  let parts: any[];
+
+  if (options?.dishReferenceImage) {
+    // Hybrid mode: dish photo first, then enhance prompt; model must return one image
+    parts = [];
+    const dishAdded = addImagePart(options.dishReferenceImage, parts);
+    if (!dishAdded) {
+      throw new Error('Nie udało się załadować zdjęcia dania. Spróbuj innego pliku (JPEG/PNG).');
+    }
+    const hybridPrompt = buildHybridPrompt(options.ingredientsHint) + '\n\nOutput: a single photorealistic image, 4:3 aspect ratio.';
+    parts.push({ text: hybridPrompt });
+    if (options?.backdropImage) addImagePart(options.backdropImage, parts);
+    if (options?.tablewareImage) addImagePart(options.tablewareImage, parts);
+  } else {
+    const prompt = buildDishPrompt(settings, options?.ingredientsHint);
+    parts = [{ text: prompt }];
+    if (options?.backdropImage) addImagePart(options.backdropImage, parts);
+    if (options?.tablewareImage) addImagePart(options.tablewareImage, parts);
+  }
 
   try {
     const response = await ai.models.generateContent({
