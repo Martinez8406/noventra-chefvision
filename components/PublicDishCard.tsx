@@ -52,7 +52,21 @@ export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo',
       </WatermarkWrapper>
 
       <div className="p-6">
-        <h3 className="font-serif text-2xl text-slate-900 mb-2 leading-tight">{dish.name}</h3>
+        {dish.menuPrice ? (
+          <div className="mb-2 flex items-baseline gap-2">
+            <h3 className="font-serif text-2xl text-slate-900 leading-tight">
+              {dish.name}
+            </h3>
+            <div className="flex-1 border-b border-dotted border-slate-200" />
+            <span className="text-lg font-semibold text-slate-900 whitespace-nowrap tabular-nums">
+              {dish.menuPrice} zł
+            </span>
+          </div>
+        ) : (
+          <h3 className="font-serif text-2xl text-slate-900 mb-2 leading-tight">
+            {dish.name}
+          </h3>
+        )}
         <p className="text-slate-600 text-sm mb-4 line-clamp-3 leading-relaxed">
           {dish.description}
         </p>

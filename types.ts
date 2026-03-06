@@ -29,6 +29,8 @@ export interface Dish {
   ingredients: string[];
   allergens: Allergen[];
   videoUrl?: string;
+  /** Cena pozycji w menu cyfrowym (bez sufiksu "zł") */
+  menuPrice?: string | null;
   isStandard: boolean;
   isOnline: boolean;
   status: DishStatus;

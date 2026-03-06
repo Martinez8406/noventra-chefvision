@@ -9,17 +9,32 @@ interface Props {
   onUpdateVideo: (id: string, url: string) => void;
   onDelete: (id: string) => void;
   onSelect: (id: string) => void;
+  onUpdatePrice: (id: string, price: string) => void;
   menuUserId: string | null;
 }
 
-export const MenuManager: React.FC<Props> = ({ dishes, onToggleOnline, onUpdateVideo, onDelete, onSelect, menuUserId }) => {
+export const MenuManager: React.FC<Props> = ({ dishes, onToggleOnline, onUpdateVideo, onDelete, onSelect, onUpdatePrice, menuUserId }) => {
   const [justToggledId, setJustToggledId] = useState<string | null>(null);
+  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
+  const [draftPrice, setDraftPrice] = useState<string>('');
 
   const handleToggleClick = (id: string) => {
     onToggleOnline(id);
     setJustToggledId(id);
     setTimeout(() => setJustToggledId(null), 400);
   };
+
+  const beginEditPrice = (dish: Dish) => {
+    setEditingPriceId(dish.id);
+    setDraftPrice(dish.menuPrice || '');
+  };
+
+  const commitPrice = (dishId: string) => {
+    onUpdatePrice(dishId, draftPrice);
+    setEditingPriceId(null);
+    setDraftPrice('');
+  };
+
   const getBaseUrl = () => `${window.location.origin}${(window.location.pathname || '/').replace(/\/+$/, '') || ''}`;
   const menuUrl = menuUserId ? `${getBaseUrl()}/#/menu/${menuUserId}` : '';
 
@@ -44,6 +59,7 @@ export const MenuManager: React.FC<Props> = ({ dishes, onToggleOnline, onUpdateV
           <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
             <tr>
               <th className="px-8 py-4">Produkt</th>
+              <th className="px-8 py-4">Cena</th>
               <th className="px-8 py-4">Status Online</th>
               <th className="px-8 py-4">Social Link</th>
               <th className="px-8 py-4 text-right">Akcje</th>
@@ -57,6 +73,39 @@ export const MenuManager: React.FC<Props> = ({ dishes, onToggleOnline, onUpdateV
                     <img src={dish.imageUrl} className="w-12 h-12 rounded-xl object-cover border border-slate-100" />
                     <span className="font-bold text-slate-800">{dish.name}</span>
                   </div>
+                </td>
+                <td className="px-8 py-4">
+                  {editingPriceId === dish.id ? (
+                    <input
+                      autoFocus
+                      type="text"
+                      value={draftPrice}
+                      onChange={(e) => setDraftPrice(e.target.value)}
+                      onBlur={() => commitPrice(dish.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          commitPrice(dish.id);
+                        } else if (e.key === 'Escape') {
+                          setEditingPriceId(null);
+                          setDraftPrice('');
+                        }
+                      }}
+                      className="w-28 px-2 py-1 text-xs font-medium rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-right"
+                      placeholder="np. 39"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => beginEditPrice(dish)}
+                      className="inline-flex items-center justify-end gap-1 min-w-[4rem] text-xs font-semibold text-slate-700 hover:text-slate-900"
+                    >
+                      {dish.menuPrice ? (
+                        <span className="tabular-nums">{dish.menuPrice} zł</span>
+                      ) : (
+                        <span className="text-slate-400 italic">Dodaj cenę</span>
+                      )}
+                    </button>
+                  )}
                 </td>
                 <td className="px-8 py-4">
                   <button 

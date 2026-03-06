@@ -75,6 +75,7 @@ export const db = {
         return (data as any[]).map((row) => ({
           ...row,
           videoUrl: row.social_link ?? row.video_url ?? row.videoUrl ?? undefined,
+          menuPrice: row.menu_price ?? row.menuPrice ?? null,
         })) as Dish[];
       }
     }
@@ -94,6 +95,7 @@ export const db = {
         return (data as any[]).map((row) => ({
           ...row,
           videoUrl: row.social_link ?? row.video_url ?? row.videoUrl ?? undefined,
+          menuPrice: row.menu_price ?? row.menuPrice ?? null,
         })) as Dish[];
       }
       const { data: fallback, error: err2 } = await supabase
@@ -106,6 +108,7 @@ export const db = {
         return (fallback as any[]).map((row) => ({
           ...row,
           videoUrl: row.social_link ?? row.video_url ?? row.videoUrl ?? undefined,
+          menuPrice: row.menu_price ?? row.menuPrice ?? null,
         })) as Dish[];
       }
     }
@@ -118,6 +121,9 @@ export const db = {
         ...dish,
         // Zapisujemy link do social mediów w kolumnie social_link
         social_link: (dish as any).videoUrl ?? (dish as any).social_link ?? null,
+        // Cena menu – obsługujemy obie możliwe nazwy kolumn
+        menu_price: (dish as any).menuPrice ?? (dish as any).menu_price ?? null,
+        menuPrice: (dish as any).menuPrice ?? (dish as any).menuPrice ?? null,
       };
       const { data, error } = await supabase
         .from('dishes')
@@ -129,6 +135,7 @@ export const db = {
         return {
           ...(data as any),
           videoUrl: (data as any).social_link ?? (data as any).videoUrl ?? null,
+          menuPrice: (data as any).menu_price ?? (data as any).menuPrice ?? null,
         } as Dish;
       }
     }
@@ -216,6 +223,30 @@ export const db = {
       return !err;
     }
     const updated = getLocalDishes().map(d => d.id === id ? { ...d, videoUrl: url } : d);
+    saveLocalDishes(updated);
+    return true;
+  },
+
+  /** Aktualizuje wyłącznie cenę pozycji w menu cyfrowym. */
+  async updateDishPrice(id: string, menuPrice: string | null): Promise<boolean> {
+    const value = (menuPrice || '').trim() || null;
+    if (supabase) {
+      // Najpierw próbujemy kolumnę snake_case, potem ewentualnie camelCase
+      let err = (await supabase
+        .from('dishes')
+        .update({ menu_price: value })
+        .eq('id', id)).error;
+      if (err) {
+        err = (await supabase
+          .from('dishes')
+          .update({ menuPrice: value })
+          .eq('id', id)).error;
+      }
+      return !err;
+    }
+    const updated = getLocalDishes().map(d =>
+      d.id === id ? { ...d, menuPrice: value } : d
+    );
     saveLocalDishes(updated);
     return true;
   }

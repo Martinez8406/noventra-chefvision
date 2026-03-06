@@ -244,6 +244,19 @@ const App: React.FC = () => {
     if (!ok) console.error('Aktualizacja Social Link nie powiodła się');
   };
 
+  const handleUpdateDishPrice = async (id: string, price: string) => {
+    const normalized = price.replace(/[^\d.,]/g, '').trim();
+    setDishes(prev =>
+      prev.map(d =>
+        d.id === id ? { ...d, menuPrice: normalized || null } : d
+      )
+    );
+    const ok = await db.updateDishPrice(id, normalized || null);
+    if (!ok) {
+      console.error('Aktualizacja ceny dania nie powiodła się');
+    }
+  };
+
   const handleBuyPremium = async () => {
     try {
       // Upewnij się, że mamy aktualne userId z Supabase
@@ -498,6 +511,7 @@ const App: React.FC = () => {
               onUpdateVideo={handleUpdateSocialLink} 
               onDelete={handleDeleteDish} 
               onSelect={setSelectedDishId}
+              onUpdatePrice={handleUpdateDishPrice}
               menuUserId={currentUser?.id ?? null}
             />
           )}
