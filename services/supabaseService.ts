@@ -63,6 +63,13 @@ export async function uploadDishImage(dataUrl: string, userId: string): Promise<
   return data.publicUrl;
 }
 
+const mapRow = (row: any): Dish => ({
+  ...row,
+  videoUrl: row.social_link ?? row.video_url ?? row.videoUrl ?? undefined,
+  menuPrice: row.menu_price ?? row.menuPrice ?? null,
+  category: row.category ?? null,
+});
+
 export const db = {
   async getDishes(restaurantId: string): Promise<Dish[]> {
     if (supabase) {
@@ -72,11 +79,7 @@ export const db = {
         .eq('restaurantId', restaurantId)
         .order('createdAt', { ascending: false });
       if (!error && data) {
-        return (data as any[]).map((row) => ({
-          ...row,
-          videoUrl: row.social_link ?? row.video_url ?? row.videoUrl ?? undefined,
-          menuPrice: row.menu_price ?? row.menuPrice ?? null,
-        })) as Dish[];
+        return data.map(mapRow) as Dish[];
       }
     }
     return getLocalDishes().filter(d => d.restaurantId === restaurantId);
@@ -91,12 +94,8 @@ export const db = {
         .eq('user_id', userId)
         .eq('isOnline', true)
         .order('createdAt', { ascending: false });
-      if (!error && data) {
-        return (data as any[]).map((row) => ({
-          ...row,
-          videoUrl: row.social_link ?? row.video_url ?? row.videoUrl ?? undefined,
-          menuPrice: row.menu_price ?? row.menuPrice ?? null,
-        })) as Dish[];
+      if (!error && data && data.length > 0) {
+        return data.map(mapRow) as Dish[];
       }
       const { data: fallback, error: err2 } = await supabase
         .from('dishes')
@@ -105,11 +104,7 @@ export const db = {
         .eq('isOnline', true)
         .order('createdAt', { ascending: false });
       if (!err2 && fallback) {
-        return (fallback as any[]).map((row) => ({
-          ...row,
-          videoUrl: row.social_link ?? row.video_url ?? row.videoUrl ?? undefined,
-          menuPrice: row.menu_price ?? row.menuPrice ?? null,
-        })) as Dish[];
+        return fallback.map(mapRow) as Dish[];
       }
     }
     return getLocalDishes().filter(d => (d.restaurantId === userId || (d as any).user_id === userId) && d.isOnline);
@@ -119,28 +114,30 @@ export const db = {
     if (supabase) {
       const payload: any = {
         ...dish,
-        // Zapisujemy link do social mediów w kolumnie social_link
+        // Social link
         social_link: (dish as any).videoUrl ?? (dish as any).social_link ?? null,
-        // Cena menu – obsługujemy obie możliwe nazwy kolumn
+        // Cena – tylko kolumna menu_price (snake_case)
         menu_price: (dish as any).menuPrice ?? (dish as any).menu_price ?? null,
-        menuPrice: (dish as any).menuPrice ?? (dish as any).menuPrice ?? null,
+        // Kategoria
+        category: (dish as any).category ?? null,
       };
+      // Usuń pola które nie są kolumnami w tabeli dishes
+      delete payload.menuPrice;
+      delete payload.user_id;
+
       const { data, error } = await supabase
         .from('dishes')
         .upsert(payload)
         .select('*')
         .single();
       if (!error && data) {
-        // Po zapisie również mapujemy social_link na videoUrl
-        return {
-          ...(data as any),
-          videoUrl: (data as any).social_link ?? (data as any).videoUrl ?? null,
-          menuPrice: (data as any).menu_price ?? (data as any).menuPrice ?? null,
-        } as Dish;
+        return mapRow(data) as Dish;
       }
+      console.error('[saveDish] Supabase error:', error?.message, error?.details, error?.hint);
     }
     const dishes = getLocalDishes();
-    const newDish = { id: dish.id || Math.random().toString(36).substr(2, 9), createdAt: Date.now(), clicks: 0, ...dish } as Dish;
+    // crypto.randomUUID() generuje prawidłowy UUID – kompatybilny z typem uuid w Supabase
+    const newDish = { id: dish.id || crypto.randomUUID(), createdAt: Date.now(), clicks: 0, ...dish } as Dish;
     try {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([newDish, ...dishes.filter(d => d.id !== newDish.id)]));
     } catch (e: any) {
@@ -196,7 +193,13 @@ export const db = {
 
   async updateDishStatus(id: string, status: DishStatus): Promise<boolean> {
     if (supabase) {
-      const { error } = await supabase.from('dishes').update({ status, isStandard: status === DishStatus.APPROVED }).eq('id', id);
+      // Aktualizujemy wyłącznie kolumnę "status" – nie dotykamy isStandard/is_standard,
+      // bo kolumna może nie istnieć i spowodowałoby to błąd całego UPDATE.
+      const { error } = await supabase
+        .from('dishes')
+        .update({ status })
+        .eq('id', id);
+      if (error) console.error('[updateDishStatus] Supabase error:', error?.message, error?.hint);
       return !error;
     }
     const updated = getLocalDishes().map(d => d.id === id ? { ...d, status, isStandard: status === DishStatus.APPROVED } : d);
@@ -231,21 +234,26 @@ export const db = {
   async updateDishPrice(id: string, menuPrice: string | null): Promise<boolean> {
     const value = (menuPrice || '').trim() || null;
     if (supabase) {
-      // Najpierw próbujemy kolumnę snake_case, potem ewentualnie camelCase
-      let err = (await supabase
-        .from('dishes')
-        .update({ menu_price: value })
-        .eq('id', id)).error;
-      if (err) {
-        err = (await supabase
-          .from('dishes')
-          .update({ menuPrice: value })
-          .eq('id', id)).error;
-      }
+      let err = (await supabase.from('dishes').update({ menu_price: value }).eq('id', id)).error;
+      if (err) err = (await supabase.from('dishes').update({ menuPrice: value }).eq('id', id)).error;
       return !err;
     }
     const updated = getLocalDishes().map(d =>
       d.id === id ? { ...d, menuPrice: value } : d
+    );
+    saveLocalDishes(updated);
+    return true;
+  },
+
+  /** Aktualizuje wyłącznie kategorię dania w menu cyfrowym. */
+  async updateDishCategory(id: string, category: string | null): Promise<boolean> {
+    const value = (category || '').trim() || null;
+    if (supabase) {
+      const { error } = await supabase.from('dishes').update({ category: value }).eq('id', id);
+      return !error;
+    }
+    const updated = getLocalDishes().map(d =>
+      d.id === id ? { ...d, category: value } : d
     );
     saveLocalDishes(updated);
     return true;

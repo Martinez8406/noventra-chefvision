@@ -31,6 +31,8 @@ export interface Dish {
   videoUrl?: string;
   /** Cena pozycji w menu cyfrowym (bez sufiksu "zł") */
   menuPrice?: string | null;
+  /** Kategoria w karcie menu */
+  category?: string | null;
   isStandard: boolean;
   isOnline: boolean;
   status: DishStatus;

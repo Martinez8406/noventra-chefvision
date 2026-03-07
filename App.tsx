@@ -257,6 +257,15 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUpdateDishCategory = async (id: string, category: string | null) => {
+    const value = (category || '').trim() || null;
+    setDishes(prev =>
+      prev.map(d => d.id === id ? { ...d, category: value } : d)
+    );
+    const ok = await db.updateDishCategory(id, value);
+    if (!ok) console.error('Aktualizacja kategorii nie powiodła się');
+  };
+
   const handleBuyPremium = async () => {
     try {
       // Upewnij się, że mamy aktualne userId z Supabase
@@ -512,6 +521,7 @@ const App: React.FC = () => {
               onDelete={handleDeleteDish} 
               onSelect={setSelectedDishId}
               onUpdatePrice={handleUpdateDishPrice}
+              onUpdateCategory={handleUpdateDishCategory}
               menuUserId={currentUser?.id ?? null}
             />
           )}

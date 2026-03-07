@@ -136,12 +136,9 @@ export const KitchenWall: React.FC<Props> = ({ dishes, onApprove, onOpenTraining
                     <CheckCircle2 size={14} /> ZATWIERDŹ STANDARD
                   </button>
                 ) : (
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); onOpenTraining(dish); }}
-                    className="w-full bg-slate-50 text-slate-500 py-3 rounded-2xl text-[11px] font-black hover:bg-slate-100 transition-all flex items-center justify-center gap-2 border border-slate-100"
-                  >
-                    TRYB TRENINGOWY
-                  </button>
+                  <div className="w-full bg-green-50 text-green-700 py-3 rounded-2xl text-[11px] font-black flex items-center justify-center gap-2 border border-green-100">
+                    <CheckCircle2 size={14} /> ZATWIERDZONE
+                  </div>
                 )}
               </div>
             </div>
