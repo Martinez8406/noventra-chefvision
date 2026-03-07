@@ -112,34 +112,58 @@ export const db = {
 
   async saveDish(dish: Partial<Dish>): Promise<Dish | null> {
     if (supabase) {
-      const payload: any = {
-        ...dish,
-        // Social link
-        social_link: (dish as any).videoUrl ?? (dish as any).social_link ?? null,
-        // Cena – tylko kolumna menu_price (snake_case)
-        menu_price: (dish as any).menuPrice ?? (dish as any).menu_price ?? null,
-        // Kategoria
-        category: (dish as any).category ?? null,
-      };
-      // Usuń pola które nie są kolumnami w tabeli dishes
-      delete payload.menuPrice;
-      delete payload.user_id;
+      // Budujemy payload tylko ze znanych kolumn – unikamy błędu "unknown column"
+      const payload: Record<string, any> = {};
+
+      // Pola podstawowe (camelCase zgodne z tabelą dishes)
+      if (dish.id)          payload.id           = dish.id;
+      if (dish.name        !== undefined) payload.name        = dish.name;
+      if (dish.imageUrl    !== undefined) payload.imageUrl    = dish.imageUrl;
+      if (dish.description !== undefined) payload.description = dish.description;
+      if (dish.technique   !== undefined) payload.technique   = dish.technique;
+      if (dish.ingredients !== undefined) payload.ingredients = dish.ingredients;
+      if (dish.allergens   !== undefined) payload.allergens   = dish.allergens;
+      if (dish.isOnline    !== undefined) payload.isOnline    = dish.isOnline;
+      if (dish.status      !== undefined) payload.status      = dish.status;
+      if (dish.restaurantId!== undefined) payload.restaurantId= dish.restaurantId;
+      if (dish.createdAt   !== undefined) payload.createdAt   = dish.createdAt;
+      if (dish.clicks      !== undefined) payload.clicks      = dish.clicks;
+      if (dish.authorId    !== undefined) payload.authorId    = dish.authorId;
+
+      // Kolumny dodatkowe (snake_case)
+      payload.social_link = (dish as any).videoUrl ?? (dish as any).social_link ?? null;
+      payload.menu_price  = (dish as any).menuPrice ?? (dish as any).menu_price ?? null;
+      payload.category    = (dish as any).category ?? null;
 
       const { data, error } = await supabase
         .from('dishes')
         .upsert(payload)
         .select('*')
         .single();
+
       if (!error && data) {
         return mapRow(data) as Dish;
       }
-      console.error('[saveDish] Supabase error:', error?.message, error?.details, error?.hint);
+
+      // Gdy Supabase zwróci błąd – rzucamy go jawnie, żeby alert był widoczny w UI
+      const msg = error?.message || 'Nieznany błąd Supabase';
+      console.error('[saveDish] Supabase error:', msg, error?.details, error?.hint);
+      throw new Error(msg);
     }
+
+    // Tryb bez Supabase (demo / offline) – zapis lokalny
     const dishes = getLocalDishes();
-    // crypto.randomUUID() generuje prawidłowy UUID – kompatybilny z typem uuid w Supabase
-    const newDish = { id: dish.id || crypto.randomUUID(), createdAt: Date.now(), clicks: 0, ...dish } as Dish;
+    const newDish = {
+      id: dish.id || crypto.randomUUID(),
+      createdAt: Date.now(),
+      clicks: 0,
+      ...dish,
+    } as Dish;
     try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([newDish, ...dishes.filter(d => d.id !== newDish.id)]));
+      localStorage.setItem(
+        LOCAL_STORAGE_KEY,
+        JSON.stringify([newDish, ...dishes.filter(d => d.id !== newDish.id)])
+      );
     } catch (e: any) {
       if (e?.name === 'QuotaExceededError' || e?.code === 22) {
         throw new Error('QuotaExceeded – obraz za duży do zapisania lokalnie.');
