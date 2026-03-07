@@ -168,7 +168,7 @@ const App: React.FC = () => {
       const newDish: Partial<Dish> = {
         name: params.dishName,
         imageUrl: finalImageUrl,
-        description: 'Zatwierdź standard, aby dodać opis dla gości.',
+        description: 'Krótki opis, który zobaczy gość...',
         technique: 'Wpisz technologię przygotowania dania...',
         ingredients: [],
         allergens: [],
