@@ -10,6 +10,7 @@ interface Props {
   usePathRouting?: boolean;
   onPathChange?: () => void;
   showWatermark?: boolean;
+  loading?: boolean;
 }
 
 const CATEGORY_ORDER = ['Przystawka', 'Zupy', 'Dania główne', 'Desery', 'Napoje', 'Inne'];
@@ -26,6 +27,7 @@ export const PublicMenu: React.FC<Props> = ({
   usePathRouting,
   onPathChange,
   showWatermark,
+  loading = false,
 }) => {
   const menuBasePath = `/menu/${userId}`;
   const menuBaseHash = `#/menu/${userId}`;
@@ -74,7 +76,15 @@ export const PublicMenu: React.FC<Props> = ({
       </header>
 
       <main className="max-w-7xl mx-auto px-6 pt-8 space-y-14">
-        {orderedKeys.map((category) => (
+        {/* Stan ładowania */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-32 gap-5">
+            <div className="w-10 h-10 border-4 border-slate-200 border-t-amber-500 rounded-full animate-spin" />
+            <p className="text-slate-400 text-sm font-medium tracking-wide">Ładowanie menu…</p>
+          </div>
+        )}
+
+        {!loading && orderedKeys.map((category) => (
           <section key={category}>
             {/* Nagłówek kategorii */}
             <div className="flex items-center gap-4 mb-8">
@@ -101,7 +111,7 @@ export const PublicMenu: React.FC<Props> = ({
           </section>
         ))}
 
-        {userDishes.length === 0 && (
+        {!loading && userDishes.length === 0 && (
           <p className="text-center text-slate-400 py-24 font-medium">
             Menu jest puste – zajrzyj tu wkrótce!
           </p>

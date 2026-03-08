@@ -372,6 +372,7 @@ const App: React.FC = () => {
         usePathRouting={usePathRouting}
         onPathChange={() => setPathname(window.location.pathname)}
         showWatermark={publicHasWatermark}
+        loading={isSyncing}
       />
     );
   }
