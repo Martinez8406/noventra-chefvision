@@ -4,7 +4,7 @@ import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { supabase } from '../services/supabaseService';
 import { ChefHat, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
 
-const HCAPTCHA_SITE_KEY = '98b9d5de-e1a6-450e-b8b9-d7359d52828f';
+const HCAPTCHA_SITE_KEY = '113419d8-b4de-46cc-8826-7062a67ab4f8';
 
 interface Props {
   onDemoLogin?: () => void;
