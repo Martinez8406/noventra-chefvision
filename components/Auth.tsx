@@ -1,7 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { supabase } from '../services/supabaseService';
 import { ChefHat, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
+
+const HCAPTCHA_SITE_KEY = '98b9d5de-e1a6-450e-b8b9-d7359d52828f';
 
 interface Props {
   onDemoLogin?: () => void;
@@ -13,6 +16,8 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [message, setMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptcha>(null);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,15 +34,28 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase!.auth.signUp({ email, password });
+        if (!captchaToken) {
+          setMessage({ type: 'error', text: 'Potwierdź, że nie jesteś robotem.' });
+          setLoading(false);
+          return;
+        }
+        const { error } = await supabase!.auth.signUp({
+          email,
+          password,
+          options: { captchaToken },
+        });
         if (error) throw error;
         setMessage({ type: 'success', text: 'Konto restauracji utworzone! Sprawdź email.' });
+        captchaRef.current?.resetCaptcha();
+        setCaptchaToken(null);
       } else {
         const { error } = await supabase!.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message || 'Błąd autoryzacji' });
+      captchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
     } finally {
       setLoading(false);
     }
@@ -89,10 +107,23 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
             </div>
           )}
 
+          {/* hCaptcha – widoczna tylko podczas rejestracji */}
+          {isSignUp && (
+            <div className="flex justify-center">
+              <HCaptcha
+                ref={captchaRef}
+                sitekey={HCAPTCHA_SITE_KEY}
+                onVerify={(token) => setCaptchaToken(token)}
+                onExpire={() => setCaptchaToken(null)}
+                onError={() => setCaptchaToken(null)}
+              />
+            </div>
+          )}
+
           <button 
             type="submit" 
-            disabled={loading}
-            className="w-full bg-[#FBB02D] hover:bg-[#f3a61d] text-white font-black py-5 rounded-2xl shadow-xl shadow-amber-500/10 transition-all flex items-center justify-center gap-3 disabled:opacity-50 text-lg group active:scale-[0.98]"
+            disabled={loading || (isSignUp && !captchaToken)}
+            className="w-full bg-[#FBB02D] hover:bg-[#f3a61d] text-white font-black py-5 rounded-2xl shadow-xl shadow-amber-500/10 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed text-lg group active:scale-[0.98]"
           >
             {loading ? <Loader2 className="animate-spin" /> : (isSignUp ? 'ZAREJESTRUJ' : 'ZALOGUJ SIĘ')}
             {!loading && <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />}
