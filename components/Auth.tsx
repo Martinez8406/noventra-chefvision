@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { supabase } from '../services/supabaseService';
-import { ChefHat, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ChefHat, Loader2, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
 interface Props {
   onDemoLogin?: () => void;
@@ -15,6 +15,7 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [message, setMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const captchaRef = useRef<HCaptcha>(null);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -95,14 +96,25 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
 
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Hasło</label>
-            <input 
-              type="password" 
-              required
-              className="w-full bg-[#F8FAFC] border border-slate-100 rounded-2xl px-6 py-4 text-[#1E293B] outline-none focus:ring-2 focus:ring-[#FBB02D] transition-all font-bold"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="relative">
+              <input 
+                type={showPassword ? 'text' : 'password'}
+                required
+                className="w-full bg-[#F8FAFC] border border-slate-100 rounded-2xl px-6 py-4 pr-14 text-[#1E293B] outline-none focus:ring-2 focus:ring-[#FBB02D] transition-all font-bold"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(prev => !prev)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1"
+                tabIndex={-1}
+                aria-label={showPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
 
           {message && (
