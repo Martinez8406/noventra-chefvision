@@ -71,11 +71,11 @@ export const processBackdropImage = async (base64Image: string, level: BlurLevel
   
   let blurInstructions = "";
   if (level === BlurLevel.NATURAL) {
-    blurInstructions = "Apply very light blur (Gaussian blur approx. 8–10%). Effect: subtle depth, barely noticeable, realistic camera look.";
+    blurInstructions = "Do NOT apply any blur effect. Return the image exactly as provided – sharp, original, no depth-of-field effect whatsoever.";
   } else if (level === BlurLevel.INSTAGRAM) {
-    blurInstructions = "Apply medium blur (Gaussian blur approx. 12–15%). Effect: clear subject separation, modern social-media style.";
+    blurInstructions = "Apply light blur (Gaussian blur approx. 7%). Effect: subtle subject separation, modern social-media style.";
   } else if (level === BlurLevel.FINE_DINING) {
-    blurInstructions = "Apply stronger blur (Gaussian blur approx. 18–22%). Effect: elegant, premium look with pronounced background softness.";
+    blurInstructions = "Apply medium-strong blur (Gaussian blur approx. 15%). Effect: elegant, premium look with noticeable background softness.";
   }
 
   const prompt = `You are an image processing assistant for a restaurant photography app.

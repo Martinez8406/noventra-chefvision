@@ -36,6 +36,7 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
       const reader = new FileReader();
       reader.onload = (event) => setSourceImage(event.target?.result as string);
       reader.readAsDataURL(file);
+      setBlurLevel(BlurLevel.NATURAL);
     }
   };
 
@@ -62,9 +63,9 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
   };
 
   const options = [
-    { level: BlurLevel.NATURAL, title: 'Natural', desc: 'Subtelna głębia (8-10%)' },
-    { level: BlurLevel.INSTAGRAM, title: 'Instagram', desc: 'Social-media style (12-15%)' },
-    { level: BlurLevel.FINE_DINING, title: 'Fine Dining', desc: 'Premium Softness (18-22%)' }
+    { level: BlurLevel.NATURAL,    title: 'Oryginał',   desc: 'Brak efektu rozmycia' },
+    { level: BlurLevel.INSTAGRAM,  title: 'Instagram',  desc: 'Social-media style' },
+    { level: BlurLevel.FINE_DINING, title: 'Fine Dining', desc: 'Premium Softness' }
   ];
 
   return (
