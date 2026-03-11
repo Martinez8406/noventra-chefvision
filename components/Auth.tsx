@@ -4,8 +4,6 @@ import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { supabase } from '../services/supabaseService';
 import { ChefHat, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
 
-const HCAPTCHA_SITE_KEY = '113419d8-b4de-46cc-8826-7062a67ab4f8';
-
 interface Props {
   onDemoLogin?: () => void;
 }
@@ -32,13 +30,14 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
       return;
     }
 
+    if (!captchaToken) {
+      setMessage({ type: 'error', text: 'Potwierdź, że nie jesteś robotem.' });
+      setLoading(false);
+      return;
+    }
+
     try {
       if (isSignUp) {
-        if (!captchaToken) {
-          setMessage({ type: 'error', text: 'Potwierdź, że nie jesteś robotem.' });
-          setLoading(false);
-          return;
-        }
         const { error } = await supabase!.auth.signUp({
           email,
           password,
@@ -46,12 +45,17 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
         });
         if (error) throw error;
         setMessage({ type: 'success', text: 'Konto restauracji utworzone! Sprawdź email.' });
-        captchaRef.current?.resetCaptcha();
-        setCaptchaToken(null);
       } else {
-        const { error } = await supabase!.auth.signInWithPassword({ email, password });
+        const { error } = await supabase!.auth.signInWithPassword({
+          email,
+          password,
+          options: { captchaToken },
+        });
         if (error) throw error;
       }
+      // Po udanym logowaniu / rejestracji resetujemy captcha
+      captchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message || 'Błąd autoryzacji' });
       captchaRef.current?.resetCaptcha();
@@ -107,22 +111,20 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
             </div>
           )}
 
-          {/* hCaptcha – widoczna tylko podczas rejestracji */}
-          {isSignUp && (
-            <div className="flex justify-center">
-              <HCaptcha
-                ref={captchaRef}
-                sitekey={HCAPTCHA_SITE_KEY}
-                onVerify={(token) => setCaptchaToken(token)}
-                onExpire={() => setCaptchaToken(null)}
-                onError={() => setCaptchaToken(null)}
-              />
-            </div>
-          )}
+          {/* hCaptcha – wymagana zarówno przy logowaniu jak i rejestracji */}
+          <div className="flex justify-center">
+            <HCaptcha
+              ref={captchaRef}
+              sitekey="113419d8-b4de-46cc-8826-7062a67ab4f8"
+              onVerify={(token) => setCaptchaToken(token)}
+              onExpire={() => setCaptchaToken(null)}
+              onError={() => setCaptchaToken(null)}
+            />
+          </div>
 
           <button 
             type="submit" 
-            disabled={loading || (isSignUp && !captchaToken)}
+            disabled={loading || !captchaToken}
             className="w-full bg-[#FBB02D] hover:bg-[#f3a61d] text-white font-black py-5 rounded-2xl shadow-xl shadow-amber-500/10 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed text-lg group active:scale-[0.98]"
           >
             {loading ? <Loader2 className="animate-spin" /> : (isSignUp ? 'ZAREJESTRUJ' : 'ZALOGUJ SIĘ')}
