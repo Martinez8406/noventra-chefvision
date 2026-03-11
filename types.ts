@@ -36,7 +36,7 @@ export interface Dish {
   isStandard: boolean;
   isOnline: boolean;
   status: DishStatus;
-  restaurantId: string;
+  restaurantId?: string;
   createdAt: number;
   clicks: number;
   authorId?: string;

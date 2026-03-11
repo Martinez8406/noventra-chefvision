@@ -175,10 +175,8 @@ const App: React.FC = () => {
         isStandard: false,
         isOnline: false,
         status: DishStatus.PENDING,
-        restaurantId: currentUser.id,
         createdAt: Date.now(),
         clicks: 0,
-        authorId: currentUser.id
       };
       const saved = await db.saveDish(newDish);
       if (saved) {
@@ -534,7 +532,8 @@ const App: React.FC = () => {
         <DishDetailPanel 
           dish={dishes.find(d => d.id === selectedDishId)!} 
           onClose={() => setSelectedDishId(null)} 
-          onSave={handleUpdateDish} 
+          onSave={handleUpdateDish}
+          userId={currentUser?.id}
         />
       )}
 

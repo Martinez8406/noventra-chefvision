@@ -21,9 +21,10 @@ interface Props {
   dish: Dish;
   onClose: () => void;
   onSave: (updatedDish: Dish) => void;
+  userId?: string;
 }
 
-export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave }) => {
+export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId }) => {
   const [editedDish, setEditedDish] = useState<Dish>({ ...dish });
   const [newIngredient, setNewIngredient] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -33,7 +34,6 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave }) => {
     const file = e.target.files?.[0];
     if (!file || !file.type.startsWith('image/')) return;
     e.target.value = '';
-    const userId = dish.restaurantId || dish.authorId;
     if (!userId) return;
     setIsUploadingImage(true);
     try {

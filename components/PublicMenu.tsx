@@ -32,9 +32,7 @@ export const PublicMenu: React.FC<Props> = ({
   const menuBasePath = `/menu/${userId}`;
   const menuBaseHash = `#/menu/${userId}`;
 
-  const userDishes = dishes
-    .filter((d) => d.restaurantId === userId || d.authorId === userId)
-    .filter((d) => d.isOnline);
+  const userDishes = dishes.filter((d) => d.isOnline);
 
   const goBack = () => {
     if (usePathRouting) {

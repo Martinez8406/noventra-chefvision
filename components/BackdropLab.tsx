@@ -3,7 +3,6 @@ import React, { useState, useRef } from 'react';
 import { BlurLevel } from '../types';
 import { processBackdropImage } from '../services/geminiService';
 import { 
-  Camera, 
   Upload, 
   X, 
   Loader2, 
@@ -27,41 +26,9 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
   const [processedImage, setProcessedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [blurLevel, setBlurLevel] = useState<BlurLevel>(BlurLevel.NATURAL);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const startCamera = async () => {
-    setIsCameraOpen(true);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      if (videoRef.current) videoRef.current.srcObject = stream;
-    } catch (err) {
-      alert("Błąd kamery");
-      setIsCameraOpen(false);
-    }
-  };
-
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const ctx = canvasRef.current.getContext('2d');
-      canvasRef.current.width = videoRef.current.videoWidth;
-      canvasRef.current.height = videoRef.current.videoHeight;
-      ctx?.drawImage(videoRef.current, 0, 0);
-      setSourceImage(canvasRef.current.toDataURL('image/jpeg'));
-      stopCamera();
-    }
-  };
-
-  const stopCamera = () => {
-    if (videoRef.current?.srcObject) {
-      (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
-    }
-    setIsCameraOpen(false);
-  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -124,12 +91,6 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
             
             {!sourceImage ? (
               <div className="space-y-3">
-                <button 
-                  onClick={startCamera}
-                  className="w-full flex items-center justify-center gap-3 p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl text-slate-500 font-bold hover:bg-indigo-50 hover:border-indigo-200 transition-all"
-                >
-                  <Camera size={24} /> Zrób zdjęcie wnętrza
-                </button>
                 <button 
                   onClick={() => fileInputRef.current?.click()}
                   className="w-full flex items-center justify-center gap-3 p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl text-slate-500 font-bold hover:bg-indigo-50 hover:border-indigo-200 transition-all"
@@ -260,14 +221,6 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
         </div>
       </div>
 
-      {isCameraOpen && (
-        <div className="fixed inset-0 z-[300] bg-black flex flex-col items-center justify-center p-6">
-          <button onClick={stopCamera} className="absolute top-8 right-8 text-white p-4"><X size={32}/></button>
-          <video ref={videoRef} autoPlay playsInline className="max-w-4xl w-full aspect-[4/3] object-cover rounded-[50px] border-4 border-white/20" />
-          <button onClick={capturePhoto} className="mt-12 w-24 h-24 bg-white rounded-full border-8 border-indigo-500 shadow-2xl active:scale-90 transition-transform" />
-          <canvas ref={canvasRef} className="hidden" />
-        </div>
-      )}
     </div>
   );
 };

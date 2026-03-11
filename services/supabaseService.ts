@@ -71,43 +71,34 @@ const mapRow = (row: any): Dish => ({
 });
 
 export const db = {
-  async getDishes(restaurantId: string): Promise<Dish[]> {
+  async getDishes(userId: string): Promise<Dish[]> {
     if (supabase) {
       const { data, error } = await supabase
         .from('dishes')
         .select('*')
-        .eq('restaurantId', restaurantId)
+        .eq('userId', userId)
         .order('createdAt', { ascending: false });
       if (!error && data) {
         return data.map(mapRow) as Dish[];
       }
     }
-    return getLocalDishes().filter(d => d.restaurantId === restaurantId);
+    return getLocalDishes().filter(d => d.restaurantId === userId || (d as any).userId === userId);
   },
 
-  /** Pobiera dania menu publicznego – tylko dania danego użytkownika (user_id / restaurantId) z isOnline = true. */
+  /** Pobiera dania menu publicznego – tylko dania danego użytkownika z isOnline = true. */
   async getDishesForPublicMenu(userId: string): Promise<Dish[]> {
     if (supabase) {
       const { data, error } = await supabase
         .from('dishes')
         .select('*')
-        .eq('user_id', userId)
+        .eq('userId', userId)
         .eq('isOnline', true)
         .order('createdAt', { ascending: false });
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         return data.map(mapRow) as Dish[];
       }
-      const { data: fallback, error: err2 } = await supabase
-        .from('dishes')
-        .select('*')
-        .eq('restaurantId', userId)
-        .eq('isOnline', true)
-        .order('createdAt', { ascending: false });
-      if (!err2 && fallback) {
-        return fallback.map(mapRow) as Dish[];
-      }
     }
-    return getLocalDishes().filter(d => (d.restaurantId === userId || (d as any).user_id === userId) && d.isOnline);
+    return getLocalDishes().filter(d => (d.restaurantId === userId || (d as any).userId === userId) && d.isOnline);
   },
 
   async saveDish(dish: Partial<Dish>): Promise<Dish | null> {
@@ -125,10 +116,8 @@ export const db = {
       if (dish.allergens   !== undefined) payload.allergens   = dish.allergens;
       if (dish.isOnline    !== undefined) payload.isOnline    = dish.isOnline;
       if (dish.status      !== undefined) payload.status      = dish.status;
-      if (dish.restaurantId!== undefined) payload.restaurantId= dish.restaurantId;
       if (dish.createdAt   !== undefined) payload.createdAt   = dish.createdAt;
       if (dish.clicks      !== undefined) payload.clicks      = dish.clicks;
-      if (dish.authorId    !== undefined) payload.authorId    = dish.authorId;
 
       // Kolumny dodatkowe (snake_case)
       payload.social_link = (dish as any).videoUrl ?? (dish as any).social_link ?? null;
