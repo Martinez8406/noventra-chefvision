@@ -1,5 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
+import { v4 as uuidv4 } from 'uuid';
 import { Dish, UserProfile, DishStatus, SubscriptionStatus } from '../types';
 
 const SUPABASE_URL = (process.env as any).SUPABASE_URL || (process.env as any).NEXT_PUBLIC_SUPABASE_URL || '';
@@ -43,7 +44,7 @@ export async function uploadDishImage(dataUrl: string, userId: string): Promise<
   const mimeType = match[1];
   const base64 = match[2];
   const ext = mimeType === 'image/png' ? 'png' : 'jpg';
-  const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+  const path = `${userId}/${uuidv4()}.${ext}`;
   const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
   const bucket = DISH_IMAGES_BUCKET;
   const { error } = await supabase.storage.from(bucket).upload(path, binary, {
@@ -143,7 +144,7 @@ export const db = {
     // Tryb bez Supabase (demo / offline) – zapis lokalny
     const dishes = getLocalDishes();
     const newDish = {
-      id: dish.id || crypto.randomUUID(),
+      id: dish.id || uuidv4(),
       createdAt: Date.now(),
       clicks: 0,
       ...dish,
