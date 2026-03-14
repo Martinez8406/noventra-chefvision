@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Dish } from '../types';
 import { Link2, Eye, EyeOff, ExternalLink, QrCode, Trash2, Edit } from 'lucide-react';
 
-const CATEGORIES = ['Przystawka', 'Zupy', 'Dania główne', 'Desery', 'Napoje', 'Inne'] as const;
+const CATEGORIES = ['Przystawka', 'Zupy', 'Sałatki', 'Dania główne', 'Desery', 'Napoje', 'Inne'] as const;
 
 interface Props {
   dishes: Dish[];

@@ -35,6 +35,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'kuchnia' | 'studio' | 'backdrops' | 'menu' | 'qr'>('kuchnia');
   const [selectedDishId, setSelectedDishId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [hash, setHash] = useState(window.location.hash);
   const [pathname, setPathname] = useState(window.location.pathname);
@@ -80,7 +81,9 @@ const App: React.FC = () => {
   }, [session, hash, pathname]);
 
   const syncData = async () => {
-    setIsSyncing(true);
+    // Nie ustawiamy isSyncing=true przy ponownych odświeżeniach (np. po token refresh),
+    // żeby nie odmontowywać ChefsStudio i nie resetować stanu formularza.
+    if (isInitialLoad) setIsSyncing(true);
     try {
       const hashMatch = hash.match(/#\/menu\/([^/?#]+)(?:\/dish\/([^/?#]+))?/);
       const pathMatch = pathname.match(/^\/menu\/([^/]+)(?:\/dish\/([^/]+))?\/?$/);
@@ -129,7 +132,8 @@ const App: React.FC = () => {
     } catch (e) { 
       console.error("Błąd synchronizacji:", e); 
     } finally { 
-      setIsSyncing(false); 
+      setIsSyncing(false);
+      setIsInitialLoad(false);
     }
   };
 
@@ -322,15 +326,15 @@ const App: React.FC = () => {
       if (supabase) {
         const { data, error } = await supabase
           .from('profiles')
-          .update({ credits: (currentUser?.credits ?? 0) + 5 })
+          .update({ ai_credits: (currentUser?.credits ?? 0) + 5 })
           .eq('id', userId!)
-          .select('credits')
+          .select('ai_credits')
           .single();
         if (!error) {
           setCurrentUser(prev => prev ? {
             ...prev,
-            credits: data?.credits ?? prev.credits + 5,
-            subscriptionStatus: prev.subscriptionStatus === 'free_limited' && (data?.credits ?? 0) > 0
+            credits: data?.ai_credits ?? prev.credits + 5,
+            subscriptionStatus: prev.subscriptionStatus === 'free_limited' && (data?.ai_credits ?? 0) > 0
               ? 'trial'
               : prev.subscriptionStatus
           } : prev);

@@ -3,12 +3,13 @@ import express from 'express';
 import Stripe from 'stripe';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { handleGenerateImage } from '../api/generate-image.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(__dirname, '..', '.env.local') });
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '15mb' }));
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY;
 // W Stripe Dashboard użyj Price ID (price_...), nie Product ID (prod_...)
@@ -62,6 +63,14 @@ app.get('/api/confirm-premium', async (req, res) => {
     console.error('Stripe confirm-premium:', e);
     return res.status(500).json({ error: e.message || 'Błąd weryfikacji sesji.' });
   }
+});
+
+app.post('/api/generate-image', async (req, res) => {
+  const result = await handleGenerateImage({
+    authorization: req.headers.authorization,
+    body: req.body || {},
+  });
+  return res.status(result.status).json(result.body);
 });
 
 const PORT = process.env.STRIPE_API_PORT || 3001;

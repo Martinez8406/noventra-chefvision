@@ -13,7 +13,7 @@ interface Props {
   loading?: boolean;
 }
 
-const CATEGORY_ORDER = ['Przystawka', 'Zupy', 'Dania główne', 'Desery', 'Napoje', 'Inne'];
+const CATEGORY_ORDER = ['Przystawka', 'Zupy', 'Sałatki', 'Dania główne', 'Desery', 'Napoje', 'Inne'];
 
 /**
  * Publiczny widok menu dla gości – bez logowania.

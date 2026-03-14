@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { LIGHTING_OPTIONS, PLATE_OPTIONS, ANGLE_OPTIONS, STYLE_OPTIONS } from '../constants';
-import { generateDishImageWithAI, AiDishSettings } from '../services/aiService';
+import { generateDishImageWithAI, AiDishSettings, GenerationResult } from '../services/aiService';
 import { compressImageForUpload } from '../services/imageService';
 import { GeneratorParams, Backdrop } from '../types';
 import { WatermarkWrapper } from './WatermarkWrapper';
@@ -190,17 +190,18 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
     setIsGenerating(true);
     try {
       const aiSettings = buildAiSettings(effectiveParams);
-      let img = await generateDishImageWithAI(effectiveParams, aiSettings, {
+      const result: GenerationResult = await generateDishImageWithAI(effectiveParams, aiSettings, {
         backdropImage: customBaseImage || undefined,
         tablewareImage: customTablewareImage || undefined,
         dishReferenceImage: dishReferenceImage || undefined,
         ingredientsHint: ingredientsText.trim() || undefined,
       });
+      let img = result.image;
       if (isFreeTrialOver) img = await addWatermark(img);
       setGeneratedImages([img]);
-      if (!isSubscribed && credits > 0) {
-        onGenerationSuccess?.();
-        onCreditsUpdated?.(credits - 1);
+      // Credits are decremented server-side – update UI with authoritative value from server
+      if (result.creditsRemaining !== undefined) {
+        onCreditsUpdated?.(result.creditsRemaining);
       }
     } catch (err: any) {
       setError(err.message || "Błąd wizualizacji.");

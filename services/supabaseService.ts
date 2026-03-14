@@ -311,22 +311,21 @@ export const authService = {
           id: user.id,
           name: user.email?.split('@')[0] || 'Restauracja',
           email: user.email,
-          credits: 5,
-          generations_used: 0,
+          ai_credits: 5,
           subscription_status: 'trial'
         }).select().single();
         profileData = inserted;
       }
 
       const gensUsed = profileData?.generations_used ?? localGens;
-      const credits = profileData?.credits ?? 5;
+      const aiCredits = profileData?.ai_credits ?? 5;
       const isPremiumFromDb = profileData?.subscription_status === 'premium';
       const isPremium = isPremiumFromDb || localPremiumFlag;
       
       let status: SubscriptionStatus = 'trial';
       if (isPremium) {
         status = 'premium';
-      } else if (credits <= 0) {
+      } else if (aiCredits <= 0) {
         status = 'free_limited';
       } else if (gensUsed >= 5) {
         status = 'free_limited';
@@ -338,7 +337,7 @@ export const authService = {
         email: user.email,
         subscriptionStatus: status,
         generationsUsed: gensUsed,
-        credits: isPremium ? 999999 : (credits ?? 5)
+        credits: isPremium ? 999999 : aiCredits
       };
     } catch (e) { return null; }
   },
@@ -358,7 +357,7 @@ export const authService = {
         email: data.email,
         subscriptionStatus: (data.subscription_status as SubscriptionStatus) ?? 'trial',
         generationsUsed: data.generations_used ?? 0,
-        credits: data.credits ?? 5
+        credits: data.ai_credits ?? 5
       };
     } catch (e) {
       console.error('Błąd pobierania profilu po ID:', e);
@@ -374,16 +373,12 @@ export const authService = {
 
     if (supabase) {
       try {
-        const { data: profile } = await supabase.from('profiles').select('credits, generations_used, subscription_status').eq('id', userId).single();
+        const { data: profile } = await supabase.from('profiles').select('ai_credits, subscription_status').eq('id', userId).single();
         const isPremium = profile?.subscription_status === 'premium';
-        const gensUsed = (profile?.generations_used ?? 0) + 1;
-        if (!isPremium && profile && (profile.credits ?? 5) > 0) {
+        if (!isPremium && profile && (profile.ai_credits ?? 5) > 0) {
           await supabase.from('profiles').update({
-            credits: Math.max(0, (profile.credits ?? 5) - 1),
-            generations_used: gensUsed
+            ai_credits: Math.max(0, (profile.ai_credits ?? 5) - 1),
           }).eq('id', userId);
-        } else if (isPremium) {
-          await supabase.from('profiles').update({ generations_used: gensUsed }).eq('id', userId);
         }
       } catch (e) {
         console.error('incrementGenerations', e);
@@ -391,10 +386,10 @@ export const authService = {
     }
 
     const { data: updated } = supabase
-      ? await supabase.from('profiles').select('credits, generations_used').eq('id', userId).single()
+      ? await supabase.from('profiles').select('ai_credits').eq('id', userId).single()
       : { data: null };
-    const credits = updated?.credits ?? Math.max(0, 5 - newGens);
-    return { generationsUsed: updated?.generations_used ?? newGens, credits };
+    const credits = updated?.ai_credits ?? Math.max(0, 5 - newGens);
+    return { generationsUsed: newGens, credits };
   },
 
   async signOut() {
