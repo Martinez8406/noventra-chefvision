@@ -5,6 +5,7 @@ import { ChefsStudio } from './components/ChefsStudio';
 import { BackdropLab } from './components/BackdropLab';
 import { PublicMenu } from './components/PublicMenu';
 import { QRGenerator } from './components/QRGenerator';
+import { UploadLogo } from './components/UploadLogo';
 import { KitchenWall } from './components/KitchenWall';
 import { MenuManager } from './components/MenuManager';
 import { DishDetailPanel } from './components/DishDetailPanel';
@@ -528,7 +529,16 @@ const App: React.FC = () => {
               menuUserId={currentUser?.id ?? null}
             />
           )}
-          {activeTab === 'qr' && <QRGenerator userId={currentUser?.id ?? null} />}
+          {activeTab === 'qr' && (
+            <div className="space-y-10">
+              {currentUser?.id && (
+                <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100">
+                  <UploadLogo userId={currentUser.id} />
+                </div>
+              )}
+              <QRGenerator userId={currentUser?.id ?? null} />
+            </div>
+          )}
         </div>
       </main>
 

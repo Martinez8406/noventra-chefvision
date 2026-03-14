@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dish } from '../types';
 import { PublicDishCard } from './PublicDishCard';
 import { PublicDishDetail } from './PublicDishDetail';
+import { supabase } from '../services/supabaseService';
 
 interface Props {
   dishes: Dish[];
@@ -31,6 +32,20 @@ export const PublicMenu: React.FC<Props> = ({
 }) => {
   const menuBasePath = `/menu/${userId}`;
   const menuBaseHash = `#/menu/${userId}`;
+
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!supabase || !userId) return;
+    supabase
+      .from('profiles')
+      .select('logo_url')
+      .eq('id', userId)
+      .single()
+      .then(({ data }) => {
+        if (data?.logo_url) setLogoUrl(data.logo_url);
+      });
+  }, [userId]);
 
   const userDishes = dishes.filter((d) => d.isOnline);
 
@@ -70,6 +85,13 @@ export const PublicMenu: React.FC<Props> = ({
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       <header className="bg-white/90 backdrop-blur-xl sticky top-0 z-50 py-8 px-6 text-center border-b border-slate-100">
+        {logoUrl && (
+          <img
+            src={logoUrl}
+            alt="Logo restauracji"
+            className="h-16 mx-auto mb-4 object-contain"
+          />
+        )}
         <h1 className="font-serif italic text-4xl text-slate-900">Karta Menu</h1>
       </header>
 
