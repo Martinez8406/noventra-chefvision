@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dish } from '../types';
 import { Link2, Eye, EyeOff, ExternalLink, QrCode, Trash2, Edit } from 'lucide-react';
+import { supabase } from '../services/supabaseService';
 
 const CATEGORIES = ['Przystawka', 'Zupy', 'Sałatki', 'Dania główne', 'Desery', 'Napoje', 'Inne'] as const;
 
@@ -29,6 +30,37 @@ export const MenuManager: React.FC<Props> = ({
   const [justToggledId, setJustToggledId] = useState<string | null>(null);
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [draftPrice, setDraftPrice] = useState<string>('');
+  const [primaryColor, setPrimaryColor] = useState('#6366f1');
+  const [secondaryColor, setSecondaryColor] = useState('#ffffff');
+  const [colorSaving, setColorSaving] = useState(false);
+  const [colorSaved, setColorSaved] = useState(false);
+
+  useEffect(() => {
+    if (!menuUserId || !supabase) return;
+    supabase
+      .from('profiles')
+      .select('primary_color, secondary_color')
+      .eq('id', menuUserId)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          if (data.primary_color) setPrimaryColor(data.primary_color);
+          if (data.secondary_color) setSecondaryColor(data.secondary_color);
+        }
+      });
+  }, [menuUserId]);
+
+  const handleSaveColors = async () => {
+    if (!menuUserId || !supabase) return;
+    setColorSaving(true);
+    await supabase
+      .from('profiles')
+      .update({ primary_color: primaryColor, secondary_color: secondaryColor })
+      .eq('id', menuUserId);
+    setColorSaving(false);
+    setColorSaved(true);
+    setTimeout(() => setColorSaved(false), 2000);
+  };
 
   const handleToggleClick = (id: string) => {
     onToggleOnline(id);
@@ -65,6 +97,45 @@ export const MenuManager: React.FC<Props> = ({
         >
           <QrCode size={18} /> Podgląd Menu Live
         </button>
+      </div>
+
+      {/* Wygląd menu */}
+      <div className="mx-8 my-6 p-6 bg-slate-50 rounded-2xl shadow-sm border border-slate-100">
+        <h3 className="text-base font-bold text-slate-800 mb-4">Wygląd menu</h3>
+        <div className="flex flex-wrap items-end gap-6">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Kolor główny</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={primaryColor}
+                onChange={(e) => setPrimaryColor(e.target.value)}
+                className="w-10 h-10 rounded-lg border border-slate-200 cursor-pointer p-0.5 bg-white"
+              />
+              <span className="text-sm font-mono text-slate-600">{primaryColor}</span>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Kolor tła</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={secondaryColor}
+                onChange={(e) => setSecondaryColor(e.target.value)}
+                className="w-10 h-10 rounded-lg border border-slate-200 cursor-pointer p-0.5 bg-white"
+              />
+              <span className="text-sm font-mono text-slate-600">{secondaryColor}</span>
+            </div>
+          </div>
+          <button
+            onClick={handleSaveColors}
+            disabled={colorSaving || !menuUserId}
+            className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed
+              bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95"
+          >
+            {colorSaving ? 'Zapisywanie…' : colorSaved ? 'Zapisano ✓' : 'Zapisz kolory'}
+          </button>
+        </div>
       </div>
 
       <div className="overflow-x-auto">

@@ -28,9 +28,9 @@ export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark 
   return (
     <div className="min-h-screen bg-white animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Hero Image Section – wysokość tak, by całe danie + znak wodny były widoczne */}
-      <WatermarkWrapper show={!!showWatermark} className="h-[75vh] md:h-[85vh] min-h-[400px] overflow-hidden">
+      <WatermarkWrapper show={!!showWatermark} className="h-[75vh] md:h-[85vh] min-h-[400px] overflow-hidden bg-slate-950">
         <>
-          <img src={dish.imageUrl} alt={dish.name} className="w-full h-full object-cover object-bottom" />
+          <img src={dish.imageUrl} alt={dish.name} className="w-full h-full object-cover object-center scale-150" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
           <button 

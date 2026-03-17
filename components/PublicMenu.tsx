@@ -34,16 +34,20 @@ export const PublicMenu: React.FC<Props> = ({
   const menuBaseHash = `#/menu/${userId}`;
 
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [primaryColor, setPrimaryColor] = useState('#6366f1');
+  const [secondaryColor, setSecondaryColor] = useState('#ffffff');
 
   useEffect(() => {
     if (!supabase || !userId) return;
     supabase
       .from('profiles')
-      .select('logo_url')
+      .select('logo_url, primary_color, secondary_color')
       .eq('id', userId)
       .single()
       .then(({ data }) => {
         if (data?.logo_url) setLogoUrl(data.logo_url);
+        if (data?.primary_color) setPrimaryColor(data.primary_color);
+        if (data?.secondary_color) setSecondaryColor(data.secondary_color);
       });
   }, [userId]);
 
@@ -83,8 +87,11 @@ export const PublicMenu: React.FC<Props> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
-      <header className="bg-white/90 backdrop-blur-xl sticky top-0 z-50 py-8 px-6 text-center border-b border-slate-100">
+    <div className="min-h-screen pb-20" style={{ backgroundColor: secondaryColor }}>
+      <header
+        className="backdrop-blur-xl sticky top-0 z-50 py-8 px-6 text-center border-b border-black/10"
+        style={{ backgroundColor: primaryColor }}
+      >
         {logoUrl && (
           <img
             src={logoUrl}
@@ -92,14 +99,14 @@ export const PublicMenu: React.FC<Props> = ({
             className="h-16 mx-auto mb-4 object-contain"
           />
         )}
-        <h1 className="font-serif italic text-4xl text-slate-900">Karta Menu</h1>
+        <h1 className="font-serif italic text-4xl" style={{ color: secondaryColor }}>Karta Menu</h1>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 pt-8 space-y-14">
         {/* Stan ładowania */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-32 gap-5">
-            <div className="w-10 h-10 border-4 border-slate-200 border-t-amber-500 rounded-full animate-spin" />
+            <div className="w-10 h-10 border-4 border-slate-200 rounded-full animate-spin" style={{ borderTopColor: primaryColor }} />
             <p className="text-slate-400 text-sm font-medium tracking-wide">Ładowanie menu…</p>
           </div>
         )}
@@ -108,10 +115,10 @@ export const PublicMenu: React.FC<Props> = ({
           <section key={category}>
             {/* Nagłówek kategorii */}
             <div className="flex items-center gap-4 mb-8">
-              <h2 className="text-xs font-black tracking-[0.25em] uppercase text-slate-400 whitespace-nowrap">
+              <h2 className="text-xs font-black tracking-[0.25em] uppercase whitespace-nowrap" style={{ color: primaryColor }}>
                 {category}
               </h2>
-              <div className="flex-1 h-px bg-slate-200" />
+              <div className="flex-1 h-px" style={{ backgroundColor: primaryColor, opacity: 0.25 }} />
             </div>
 
             {/* Siatka kart */}
