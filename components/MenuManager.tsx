@@ -50,8 +50,24 @@ export const MenuManager: React.FC<Props> = ({
       });
   }, [menuUserId]);
 
+  const getBrightness = (hex: string) => {
+    const c = hex.replace('#', '');
+    const rgb = parseInt(c, 16);
+    const r = (rgb >> 16) & 255;
+    const g = (rgb >> 8) & 255;
+    const b = rgb & 255;
+    return (r * 299 + g * 587 + b * 114) / 1000;
+  };
+
+  const isBadContrast = (c1: string, c2: string) =>
+    Math.abs(getBrightness(c1) - getBrightness(c2)) < 100;
+
   const handleSaveColors = async () => {
     if (!menuUserId || !supabase) return;
+    if (isBadContrast(primaryColor, secondaryColor)) {
+      alert('Kolory są zbyt podobne – menu będzie nieczytelne. Wybierz bardziej kontrastowe kolory.');
+      return;
+    }
     setColorSaving(true);
     await supabase
       .from('profiles')
@@ -127,14 +143,19 @@ export const MenuManager: React.FC<Props> = ({
               <span className="text-sm font-mono text-slate-600">{secondaryColor}</span>
             </div>
           </div>
-          <button
-            onClick={handleSaveColors}
-            disabled={colorSaving || !menuUserId}
-            className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed
-              bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95"
-          >
-            {colorSaving ? 'Zapisywanie…' : colorSaved ? 'Zapisano ✓' : 'Zapisz kolory'}
-          </button>
+          <div className="flex flex-col gap-2 justify-end">
+            <button
+              onClick={handleSaveColors}
+              disabled={colorSaving || !menuUserId}
+              className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed
+                bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95"
+            >
+              {colorSaving ? 'Zapisywanie…' : colorSaved ? 'Zapisano ✓' : 'Zapisz kolory'}
+            </button>
+            {isBadContrast(primaryColor, secondaryColor) && (
+              <p className="text-xs text-amber-600 font-semibold">⚠️ Wybierz kontrastowe kolory</p>
+            )}
+          </div>
         </div>
       </div>
 

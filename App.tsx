@@ -397,7 +397,7 @@ const App: React.FC = () => {
     { id: 'studio', label: 'Chef’s Studio', icon: Zap, protected: false },
     { id: 'backdrops', label: 'Studio Tła', icon: Layers, protected: false },
     { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen, protected: false },
-    { id: 'qr', label: 'Kod QR', icon: MenuIcon, protected: false },
+    { id: 'qr', label: 'Kod QR / Logo', icon: MenuIcon, protected: false },
   ];
 
   return (
