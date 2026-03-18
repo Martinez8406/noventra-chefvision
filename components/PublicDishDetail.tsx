@@ -8,6 +8,7 @@ interface Props {
   dish: Dish;
   onBack: () => void;
   showWatermark?: boolean;
+  fontFamily?: string;
 }
 
 const renderSocialIcon = (url: string) => {
@@ -24,9 +25,9 @@ const renderSocialIcon = (url: string) => {
   return <Link2 size={32} />;
 };
 
-export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark }) => {
+export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark, fontFamily }) => {
   return (
-    <div className="min-h-screen bg-white animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="min-h-screen bg-white animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ fontFamily: fontFamily || 'Inter' }}>
       {/* Hero Image Section – wysokość tak, by całe danie + znak wodny były widoczne */}
       <WatermarkWrapper show={!!showWatermark} className="h-[75vh] md:h-[85vh] min-h-[400px] overflow-hidden bg-slate-950">
         <>

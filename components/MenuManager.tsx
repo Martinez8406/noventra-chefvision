@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Dish } from '../types';
 import { Link2, Eye, EyeOff, ExternalLink, QrCode, Trash2, Edit } from 'lucide-react';
 import { supabase } from '../services/supabaseService';
+import { UploadCover } from './UploadCover';
 
 const CATEGORIES = ['Przystawka', 'Zupy', 'Sałatki', 'Dania główne', 'Desery', 'Napoje', 'Inne'] as const;
 
@@ -32,6 +33,10 @@ export const MenuManager: React.FC<Props> = ({
   const [draftPrice, setDraftPrice] = useState<string>('');
   const [primaryColor, setPrimaryColor] = useState('#6366f1');
   const [secondaryColor, setSecondaryColor] = useState('#ffffff');
+  const [fontFamily, setFontFamily] = useState('Inter');
+  const [restaurantName, setRestaurantName] = useState('');
+  const [nameSaving, setNameSaving] = useState(false);
+  const [nameSaved, setNameSaved] = useState(false);
   const [colorSaving, setColorSaving] = useState(false);
   const [colorSaved, setColorSaved] = useState(false);
 
@@ -39,13 +44,15 @@ export const MenuManager: React.FC<Props> = ({
     if (!menuUserId || !supabase) return;
     supabase
       .from('profiles')
-      .select('primary_color, secondary_color')
+      .select('primary_color, secondary_color, font_family, restaurant_name')
       .eq('id', menuUserId)
       .single()
       .then(({ data }) => {
         if (data) {
           if (data.primary_color) setPrimaryColor(data.primary_color);
           if (data.secondary_color) setSecondaryColor(data.secondary_color);
+          if (data.font_family) setFontFamily(data.font_family);
+          if (data.restaurant_name) setRestaurantName(data.restaurant_name);
         }
       });
   }, [menuUserId]);
@@ -71,11 +78,23 @@ export const MenuManager: React.FC<Props> = ({
     setColorSaving(true);
     await supabase
       .from('profiles')
-      .update({ primary_color: primaryColor, secondary_color: secondaryColor })
+      .update({ primary_color: primaryColor, secondary_color: secondaryColor, font_family: fontFamily, restaurant_name: restaurantName })
       .eq('id', menuUserId);
     setColorSaving(false);
     setColorSaved(true);
     setTimeout(() => setColorSaved(false), 2000);
+  };
+
+  const handleSaveName = async () => {
+    if (!menuUserId || !supabase) return;
+    setNameSaving(true);
+    await supabase
+      .from('profiles')
+      .update({ restaurant_name: restaurantName })
+      .eq('id', menuUserId);
+    setNameSaving(false);
+    setNameSaved(true);
+    setTimeout(() => setNameSaved(false), 2000);
   };
 
   const handleToggleClick = (id: string) => {
@@ -118,6 +137,25 @@ export const MenuManager: React.FC<Props> = ({
       {/* Wygląd menu */}
       <div className="mx-8 my-6 p-6 bg-slate-50 rounded-2xl shadow-sm border border-slate-100">
         <h3 className="text-base font-bold text-slate-800 mb-4">Wygląd menu</h3>
+        <div className="mb-5">
+          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Nazwa restauracji</label>
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              placeholder="Np. Mamma Mia"
+              value={restaurantName}
+              onChange={(e) => setRestaurantName(e.target.value)}
+              className="w-full max-w-sm px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <button
+              onClick={handleSaveName}
+              disabled={nameSaving || !menuUserId}
+              className="px-4 py-2.5 rounded-lg text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 whitespace-nowrap"
+            >
+              {nameSaving ? 'Zapisywanie…' : nameSaved ? 'Zapisano ✓' : 'Zapisz nazwę'}
+            </button>
+          </div>
+        </div>
         <div className="flex flex-wrap items-end gap-6">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Kolor główny</label>
@@ -143,6 +181,19 @@ export const MenuManager: React.FC<Props> = ({
               <span className="text-sm font-mono text-slate-600">{secondaryColor}</span>
             </div>
           </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Font menu</label>
+            <select
+              value={fontFamily}
+              onChange={(e) => setFontFamily(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+              style={{ fontFamily }}
+            >
+              <option value="Inter" style={{ fontFamily: 'Inter' }}>Inter</option>
+              <option value="Roboto" style={{ fontFamily: 'Roboto' }}>Roboto</option>
+              <option value="Playfair Display" style={{ fontFamily: 'Playfair Display' }}>Playfair Display</option>
+            </select>
+          </div>
           <div className="flex flex-col gap-2 justify-end">
             <button
               onClick={handleSaveColors}
@@ -157,6 +208,12 @@ export const MenuManager: React.FC<Props> = ({
             )}
           </div>
         </div>
+
+        {menuUserId && (
+          <div className="mt-6 pt-6 border-t border-slate-200">
+            <UploadCover userId={menuUserId} />
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-auto">

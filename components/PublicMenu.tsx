@@ -34,20 +34,26 @@ export const PublicMenu: React.FC<Props> = ({
   const menuBaseHash = `#/menu/${userId}`;
 
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [primaryColor, setPrimaryColor] = useState('#6366f1');
   const [secondaryColor, setSecondaryColor] = useState('#ffffff');
+  const [fontFamily, setFontFamily] = useState('Inter');
+  const [restaurantName, setRestaurantName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase || !userId) return;
     supabase
       .from('profiles')
-      .select('logo_url, primary_color, secondary_color')
+      .select('logo_url, cover_url, primary_color, secondary_color, font_family, restaurant_name')
       .eq('id', userId)
       .single()
       .then(({ data }) => {
         if (data?.logo_url) setLogoUrl(data.logo_url);
+        if (data?.cover_url) setCoverUrl(data.cover_url);
         if (data?.primary_color) setPrimaryColor(data.primary_color);
         if (data?.secondary_color) setSecondaryColor(data.secondary_color);
+        if (data?.font_family) setFontFamily(data.font_family);
+        if (data?.restaurant_name) setRestaurantName(data.restaurant_name);
       });
   }, [userId]);
 
@@ -66,7 +72,7 @@ export const PublicMenu: React.FC<Props> = ({
     const dish = userDishes.find((d) => d.id === dishId);
     if (dish) {
       return (
-        <PublicDishDetail dish={dish} onBack={goBack} showWatermark={showWatermark} />
+        <PublicDishDetail dish={dish} onBack={goBack} showWatermark={showWatermark} fontFamily={fontFamily} />
       );
     }
   }
@@ -87,22 +93,51 @@ export const PublicMenu: React.FC<Props> = ({
   ];
 
   return (
-    <div className="min-h-screen pb-20" style={{ backgroundColor: secondaryColor }}>
-      <header
-        className="backdrop-blur-xl sticky top-0 z-50 py-8 px-6 text-center border-b border-black/10"
-        style={{ backgroundColor: primaryColor }}
-      >
-        {logoUrl && (
+    <div className="min-h-screen pb-20" style={{ backgroundColor: secondaryColor, fontFamily }}>
+      {/* HERO – widoczny tylko gdy jest cover */}
+      {coverUrl ? (
+        <div className="relative w-full h-56 sm:h-72 overflow-hidden">
           <img
-            src={logoUrl}
-            alt="Logo restauracji"
-            className="h-16 mx-auto mb-4 object-contain"
+            src={coverUrl}
+            alt="Cover menu"
+            className="w-full h-full object-cover"
           />
-        )}
-        <h1 className="font-serif italic text-4xl" style={{ color: secondaryColor }}>Karta Menu</h1>
-      </header>
+          {/* Ciemny overlay */}
+          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.45)' }} />
+          {/* Treść na środku */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white text-center px-6">
+            {logoUrl && (
+              <img
+                src={logoUrl}
+                alt="Logo restauracji"
+                className="h-36 object-contain drop-shadow-lg"
+              />
+            )}
+            {restaurantName && (
+              <h1 className="font-serif italic text-4xl sm:text-5xl drop-shadow-lg">{restaurantName}</h1>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Sticky header gdy brak cover */
+        <header
+          className="backdrop-blur-xl sticky top-0 z-50 py-8 px-6 text-center border-b border-black/10"
+          style={{ backgroundColor: primaryColor }}
+        >
+          {logoUrl && (
+            <img
+              src={logoUrl}
+              alt="Logo restauracji"
+              className="h-16 mx-auto mb-4 object-contain"
+            />
+          )}
+          {restaurantName && (
+            <h1 className="font-serif italic text-3xl" style={{ color: secondaryColor }}>{restaurantName}</h1>
+          )}
+        </header>
+      )}
 
-      <main className="max-w-7xl mx-auto px-6 pt-8 space-y-14">
+      <main className="max-w-7xl mx-auto px-6 pt-8 mt-6 space-y-14">
         {/* Stan ładowania */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-32 gap-5">
