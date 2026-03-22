@@ -21,6 +21,7 @@ import {
   LogOut, 
   Menu as MenuIcon, 
   Zap,
+  Camera,
   Crown,
   Layers,
   Loader2,
@@ -393,8 +394,8 @@ const App: React.FC = () => {
   }
 
   const navItems = [
-    { id: 'kuchnia', label: 'Dashboard', icon: LayoutDashboard, protected: false },
-    { id: 'studio', label: 'Chef’s Studio', icon: Zap, protected: false },
+    { id: 'kuchnia', label: 'Panel menu', icon: LayoutDashboard, protected: false },
+    { id: 'studio', label: 'Chef’s Studio', icon: Camera, protected: false },
     { id: 'backdrops', label: 'Studio Tła', icon: Layers, protected: false },
     { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen, protected: false },
     { id: 'qr', label: 'Kod QR / Logo', icon: MenuIcon, protected: false },

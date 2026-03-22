@@ -266,14 +266,17 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
         )}
 
         <div className="space-y-8">
-          <div className="relative">
-            <input
-              type="text"
-              className="w-full px-8 py-5 border-2 border-slate-50 focus:ring-4 focus:ring-indigo-50 rounded-3xl outline-none transition-all placeholder-slate-300 text-2xl font-serif italic bg-slate-50/50"
-              placeholder="np. Polędwica Wellington..."
-              value={params.dishName}
-              onChange={(e) => setParams({ ...params, dishName: e.target.value })}
-            />
+          <div>
+            <label className="text-[10px] font-black uppercase text-slate-400 block mb-2">Nazwa dania</label>
+            <div className="relative">
+              <input
+                type="text"
+                className="w-full px-8 py-5 border-2 border-slate-50 focus:ring-4 focus:ring-indigo-50 rounded-3xl outline-none transition-all placeholder-slate-300 text-2xl font-serif italic bg-slate-50/50"
+                placeholder="np. Polędwica Wellington..."
+                value={params.dishName}
+                onChange={(e) => setParams({ ...params, dishName: e.target.value })}
+              />
+            </div>
           </div>
 
           <div>
@@ -289,7 +292,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
 
           <div className="flex flex-col sm:flex-row gap-4">
             <button onClick={handleGenerate} disabled={isGenerating || hasNoCredits} className="flex-1 py-6 bg-slate-900 text-white rounded-[30px] font-black text-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[0.99] transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
-              {isGenerating ? <Loader2 className="animate-spin" /> : <Wand2 />} {isGenerating ? 'MIKSUJĘ...' : hasNoCredits ? 'BRAK KREDYTÓW' : dishReferenceImage ? 'ULEPSZ ZDJĘCIE' : 'STWÓRZ ZDJĘCIE'}
+              {isGenerating ? <Loader2 className="animate-spin" /> : <Wand2 />} {isGenerating ? 'MIKSUJĘ...' : hasNoCredits ? 'BRAK KREDYTÓW' : dishReferenceImage ? 'ULEPSZ ZDJĘCIE' : 'PROJEKTUJ NOWE DANIE'}
             </button>
             <input ref={dishRefInputRef} type="file" accept="image/*" className="hidden" onChange={handleHybridPhotoUpload} />
             <button
@@ -298,7 +301,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
               disabled={isUploadingDishRef}
               className="flex-1 py-6 bg-white text-slate-900 rounded-[30px] font-black text-xl flex items-center justify-center gap-3 border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all disabled:opacity-50"
             >
-              {isUploadingDishRef ? <Loader2 className="animate-spin" /> : <Camera />} Wgraj zdjęcie dania (Hybrid)
+              {isUploadingDishRef ? <Loader2 className="animate-spin" /> : <Camera />} Ulepsz własne zdjęcie
             </button>
           </div>
 
