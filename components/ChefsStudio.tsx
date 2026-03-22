@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { LIGHTING_OPTIONS, PLATE_OPTIONS, ANGLE_OPTIONS, STYLE_OPTIONS } from '../constants';
 import { generateDishImageWithAI, AiDishSettings, GenerationResult } from '../services/aiService';
 import { compressImageForUpload } from '../services/imageService';
@@ -64,11 +64,15 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
   const [isUploadingCustom, setIsUploadingCustom] = useState(false);
   const [isUploadingDishRef, setIsUploadingDishRef] = useState(false);
   const tablewareInputRef = useRef<HTMLInputElement>(null);
-  const customPhotoInputRef = useRef<HTMLInputElement>(null);
   const dishRefInputRef = useRef<HTMLInputElement>(null);
 
   const isFreeTrialOver = !isSubscribed && generationsUsed >= 5;
   const hasNoCredits = !isSubscribed && credits <= 0;
+  const hybridModeActive = !!dishReferenceImage;
+
+  useEffect(() => {
+    if (hybridModeActive) setAdvancedSettingsOpen(false);
+  }, [hybridModeActive]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -290,19 +294,61 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button onClick={handleGenerate} disabled={isGenerating || hasNoCredits} className="flex-1 py-6 bg-slate-900 text-white rounded-[30px] font-black text-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[0.99] transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
-              {isGenerating ? <Loader2 className="animate-spin" /> : <Wand2 />} {isGenerating ? 'MIKSUJĘ...' : hasNoCredits ? 'BRAK KREDYTÓW' : dishReferenceImage ? 'ULEPSZ ZDJĘCIE' : 'PROJEKTUJ NOWE DANIE'}
-            </button>
-            <input ref={dishRefInputRef} type="file" accept="image/*" className="hidden" onChange={handleHybridPhotoUpload} />
-            <button
-              type="button"
-              onClick={() => dishRefInputRef.current?.click()}
-              disabled={isUploadingDishRef}
-              className="flex-1 py-6 bg-white text-slate-900 rounded-[30px] font-black text-xl flex items-center justify-center gap-3 border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all disabled:opacity-50"
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-start">
+            <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+              <button onClick={handleGenerate} disabled={isGenerating || hasNoCredits} className="w-full py-6 bg-slate-900 text-white rounded-[30px] font-black text-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[0.99] transition-transform disabled:opacity-50 disabled:cursor-not-allowed min-w-0">
+                {isGenerating ? <Loader2 className="animate-spin" /> : <Wand2 />} {isGenerating ? 'MIKSUJĘ...' : hasNoCredits ? 'BRAK KREDYTÓW' : dishReferenceImage ? 'ULEPSZ ZDJĘCIE' : 'PROJEKTUJ NOWE DANIE'}
+              </button>
+              {!dishReferenceImage && (
+                <p className="text-[10px] sm:text-[11px] text-center text-slate-400 font-medium leading-snug px-1">
+                  Brak zdjęcia? Wygeneruj koncept z opisu
+                </p>
+              )}
+            </div>
+            <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+              <input
+                ref={dishRefInputRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                tabIndex={-1}
+                aria-hidden
+                onChange={handleHybridPhotoUpload}
+              />
+              <button
+                type="button"
+                onClick={() => dishRefInputRef.current?.click()}
+                disabled={isUploadingDishRef}
+                className="w-full py-6 bg-white text-slate-900 rounded-[30px] font-black text-xl flex items-center justify-center gap-3 border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all disabled:opacity-50 min-w-0"
+              >
+                {isUploadingDishRef ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Camera />
+                    <Wand2 />
+                  </span>
+                )}{' '}
+                Hybrid Photo Mode (Ulepszanie)
+              </button>
+              <p className="text-[10px] sm:text-[11px] text-center text-slate-400 font-medium leading-snug px-1">
+                Masz zdjęcie? AI poprawi światło i tło
+              </p>
+            </div>
+            {/* label + input zamiast programatycznego .click() — przeglądarki blokują otwarcie okna dla inputów z display:none */}
+            <label
+              className={`flex-1 py-6 bg-white text-slate-700 rounded-[30px] font-bold text-sm sm:text-base flex items-center justify-center gap-2 border-2 border-slate-200 hover:bg-slate-50 transition-all min-w-0 px-2 text-center leading-tight ${isUploadingCustom ? 'opacity-50 pointer-events-none cursor-not-allowed' : 'cursor-pointer'}`}
             >
-              {isUploadingDishRef ? <Loader2 className="animate-spin" /> : <Camera />} Ulepsz własne zdjęcie
-            </button>
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                tabIndex={-1}
+                disabled={isUploadingCustom}
+                onChange={handleCustomPhotoUpload}
+              />
+              {isUploadingCustom ? <Loader2 className="animate-spin shrink-0" /> : <Camera className="shrink-0" />} Wgraj własne zdjęcie (bez AI)
+            </label>
           </div>
 
           {dishReferenceImage && (
@@ -319,7 +365,9 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
             <button
               type="button"
               onClick={() => setAdvancedSettingsOpen(!advancedSettingsOpen)}
-              className="w-full flex items-center justify-between py-3 px-4 rounded-2xl border-2 border-slate-100 hover:bg-slate-50 text-slate-700 font-bold"
+              disabled={hybridModeActive}
+              title={hybridModeActive ? 'Niedostępne w trybie Hybrid Photo Mode' : undefined}
+              className="w-full flex items-center justify-between py-3 px-4 rounded-2xl border-2 border-slate-100 hover:bg-slate-50 text-slate-700 font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             >
               <span>Zaawansowane ustawienia zdjęcia</span>
               <span className="text-slate-400">{advancedSettingsOpen ? '▼' : '▶'}</span>
@@ -389,18 +437,6 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
                       ))}
                     </div>
                   </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <input ref={customPhotoInputRef} type="file" accept="image/*" className="hidden" onChange={handleCustomPhotoUpload} />
-                  <button
-                    type="button"
-                    onClick={() => customPhotoInputRef.current?.click()}
-                    disabled={isUploadingCustom}
-                    className="flex-1 py-4 bg-white text-slate-700 rounded-2xl font-bold flex items-center justify-center gap-2 border-2 border-slate-200 hover:bg-slate-50"
-                  >
-                    {isUploadingCustom ? <Loader2 className="animate-spin" /> : <Camera />} Wgraj własne zdjęcie (bez AI)
-                  </button>
                 </div>
               </div>
             )}
