@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ChefHat, CheckCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, Loader2 } from 'lucide-react';
+import { BRAND_LOGO_SRC } from '../constants';
 import { confirmPremiumSession } from '../services/stripeService';
 import { authService } from '../services/supabaseService';
 
@@ -66,7 +67,7 @@ export const SuccessPage: React.FC<Props> = ({ onBack, onPremiumActivated }) => 
           onClick={onBack}
           className="w-full py-5 bg-amber-500 text-white rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-amber-600 transition-colors"
         >
-          <ChefHat size={22} /> Wróć do Chefvision
+          <img src={BRAND_LOGO_SRC} alt="" width={22} height={22} className="h-[22px] w-[22px] rounded object-cover shrink-0" /> Wróć do Chefvision
         </button>
       </div>
     </div>

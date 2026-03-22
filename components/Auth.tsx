@@ -2,7 +2,8 @@
 import React, { useState, useRef } from 'react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { supabase } from '../services/supabaseService';
-import { ChefHat, Loader2, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { BRAND_LOGO_SRC } from '../constants';
+import { Loader2, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
 interface Props {
   onDemoLogin?: () => void;
@@ -69,9 +70,13 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6">
       <div className="flex items-center gap-3 mb-12">
-        <div className="bg-[#FBB02D] p-3 rounded-2xl shadow-lg shadow-amber-500/20">
-          <ChefHat size={40} className="text-white" />
-        </div>
+        <img
+          src={BRAND_LOGO_SRC}
+          alt=""
+          width={64}
+          height={64}
+          className="h-16 w-16 rounded-2xl shadow-lg shadow-amber-500/20 object-cover shrink-0"
+        />
         <h1 className="text-4xl font-black italic text-[#0F172A] tracking-tighter">Chefvision</h1>
       </div>
 

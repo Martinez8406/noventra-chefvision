@@ -11,10 +11,10 @@ import { MenuManager } from './components/MenuManager';
 import { DishDetailPanel } from './components/DishDetailPanel';
 import { Auth } from './components/Auth';
 import { SuccessPage } from './components/SuccessPage';
+import { BRAND_LOGO_SRC } from './constants';
 import { supabase, db, authService, uploadDishImage } from './services/supabaseService';
 import { createCheckoutSession, confirmPremiumSession } from './services/stripeService';
 import { 
-  ChefHat, 
   LayoutDashboard, 
   BookOpen, 
   User as UserIcon, 
@@ -410,7 +410,13 @@ const App: React.FC = () => {
       <aside className={`fixed lg:relative inset-y-0 left-0 w-72 bg-slate-950 flex-shrink-0 flex flex-col z-[100] transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="p-10 flex-1">
           <div className="flex items-center gap-4 mb-14">
-            <div className="bg-amber-500 p-3 rounded-2xl shadow-xl shadow-amber-500/20"><ChefHat size={32} className="text-white" /></div>
+            <img
+              src={BRAND_LOGO_SRC}
+              alt=""
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-2xl shadow-xl shadow-amber-500/20 object-cover shrink-0"
+            />
             <h1 className="text-2xl font-black tracking-tighter italic text-white">Chefvision</h1>
           </div>
 
@@ -478,7 +484,10 @@ const App: React.FC = () => {
       <main className="flex-1 overflow-y-auto">
         <header className="lg:hidden h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 z-[80]">
           <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-600"><MenuIcon size={24} /></button>
-          <div className="flex items-center gap-2"><ChefHat size={20} className="text-amber-500" /><span className="font-black italic text-slate-900">Chefvision</span></div>
+          <div className="flex items-center gap-2">
+            <img src={BRAND_LOGO_SRC} alt="" width={32} height={32} className="h-8 w-8 rounded-lg object-cover shrink-0" />
+            <span className="font-black italic text-slate-900">Chefvision</span>
+          </div>
           <div className="w-10" />
         </header>
 

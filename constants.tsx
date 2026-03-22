@@ -1,3 +1,5 @@
+/** Logo w `public/chefvisionlogo.png` */
+export const BRAND_LOGO_SRC = '/chefvisionlogo.png';
 
 export const LIGHTING_OPTIONS = [
   { label: 'Złota Godzina', value: 'Golden Hour (warm, soft sunlight)' },

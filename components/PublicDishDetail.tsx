@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Dish } from '../types';
-import { Youtube, Instagram, Link2, Music2, ChevronLeft, AlertCircle, Utensils, Info } from 'lucide-react';
+import { Youtube, Instagram, Link2, Music2, ChevronLeft, AlertCircle, Info } from 'lucide-react';
+import { BRAND_LOGO_SRC } from '../constants';
 import { WatermarkWrapper } from './WatermarkWrapper';
 
 interface Props {
@@ -118,7 +119,7 @@ export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark,
       {/* Footer Branding */}
       <footer className="py-20 text-center space-y-4">
         <div className="flex items-center justify-center gap-2 opacity-20 grayscale">
-          <Utensils size={24} />
+          <img src={BRAND_LOGO_SRC} alt="" width={28} height={28} className="h-7 w-7 rounded-md object-cover" />
           <h2 className="text-xl font-black italic tracking-tighter">Chefvision</h2>
         </div>
         <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.4em]">Professional Digital Menu</p>
