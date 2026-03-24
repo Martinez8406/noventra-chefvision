@@ -65,5 +65,28 @@ export const processBackdropImage = async (base64Image: string, level: BlurLevel
   const data = await response.json();
   if (!response.ok) throw new Error(data?.error || 'Błąd przetwarzania tła.');
   if (!data.image) throw new Error('Brak przetworzonego obrazu.');
-  return data.image;
+  if (level === BlurLevel.NATURAL) return data.image;
+  return applyCanvasBlur(data.image, level);
 };
+
+async function applyCanvasBlur(dataUrl: string, level: BlurLevel): Promise<string> {
+  const blurPx = level === BlurLevel.FINE_DINING ? 8 : 3; // wyraźna różnica między trybami
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('Canvas context unavailable'));
+
+      ctx.filter = `blur(${blurPx}px)`;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      ctx.filter = 'none';
+      resolve(canvas.toDataURL('image/jpeg', 0.92));
+    };
+    img.onerror = () => reject(new Error('Nie można załadować obrazu po przetwarzaniu.'));
+    img.src = dataUrl;
+  });
+}

@@ -63,9 +63,17 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
   };
 
   const options = [
-    { level: BlurLevel.NATURAL,    title: 'Oryginał',   desc: 'Brak efektu rozmycia' },
-    { level: BlurLevel.INSTAGRAM,  title: 'Instagram',  desc: 'Social-media style' },
-    { level: BlurLevel.FINE_DINING, title: 'Fine Dining', desc: 'Premium Softness' }
+    { level: BlurLevel.NATURAL, title: 'Oryginał', desc: 'Brak efektu rozmycia' },
+    {
+      level: BlurLevel.INSTAGRAM,
+      title: 'Instagram Social-Style',
+      desc: 'Delikatne rozmycie, które zachowuje charakter Twojego lokalu w tle. Idealne do szybkich postów i relacji.',
+    },
+    {
+      level: BlurLevel.FINE_DINING,
+      title: 'Efekt Bokeh (Premium)',
+      desc: 'Rozmyte, miękkie tło, które stanowi estetyczne dopełnienie obiektu na pierwszym planie. Nie dominuje i nie przytłacza kompozycji, nadając zdjęciu luksusowy, magazynowy wygląd.',
+    },
   ];
 
   return (
@@ -73,8 +81,11 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
       <div className="bg-slate-900 text-white p-12 rounded-[50px] shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 p-12 opacity-10 rotate-12"><Layers size={200} /></div>
         <div className="relative z-10 space-y-4">
-          <h2 className="text-4xl font-black italic tracking-tighter">Studio Tła (Backdrop Lab)</h2>
-          <p className="text-slate-400 max-w-xl text-lg">Przygotuj realistyczne tło swojej restauracji, które będzie bazą dla wszystkich Twoich dań.</p>
+          <h2 className="text-4xl font-black italic tracking-tighter">Inteligentne Studio Tła</h2>
+          <p className="text-slate-400 max-w-2xl text-lg">
+            Wgraj zdjęcie swojej sali i stwórz autentyczną scenerię dla swoich dań. AI automatycznie oddzieli
+            potrawę i nałoży profesjonalną głębię.
+          </p>
         </div>
         {isTrial && (
           <div className="relative z-10 mt-6 max-w-xl text-xs text-slate-300 font-medium">

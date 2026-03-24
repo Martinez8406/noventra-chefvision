@@ -122,12 +122,16 @@ export async function runGeneration(body) {
     if (!imagePart) throw { status: 400, message: 'Brak obrazu tła.' };
 
     let blurInstructions = '';
+    let detailInstructions = '';
     if (blurLevel === 'NATURAL') {
       blurInstructions = 'Do NOT apply any blur effect. Return the image exactly as provided – sharp, original, no depth-of-field effect whatsoever.';
+      detailInstructions = 'Maintain sharp edges of tables, walls, and architectural elements.';
     } else if (blurLevel === 'INSTAGRAM') {
       blurInstructions = 'Apply light blur (Gaussian blur approx. 7%). Effect: subtle subject separation, modern social-media style.';
+      detailInstructions = 'Keep main shapes natural and readable, with only gentle background softness.';
     } else if (blurLevel === 'FINE DINING') {
-      blurInstructions = 'Apply medium-strong blur (Gaussian blur approx. 15%). Effect: elegant, premium look with noticeable background softness.';
+      blurInstructions = 'Apply strong blur (Gaussian blur approx. 35-45%). Create premium, soft bokeh background with clearly visible depth-of-field effect.';
+      detailInstructions = 'Background details should be noticeably softened and partially unreadable; keep geometry natural but do not preserve crisp edges.';
     }
 
     const prompt = `You are an image processing assistant for a restaurant photography app.
@@ -143,7 +147,7 @@ export async function runGeneration(body) {
     PROCESSING STEPS:
     1. ${blurInstructions}
     2. Slightly smooth visual noise and imperfections.
-    3. Maintain sharp edges of tables, walls, and architectural elements.
+    3. ${detailInstructions}
     4. Keep lighting natural and consistent with the original image.
     OUTPUT: A single processed image that remains realistic and reusable for multiple food photos.`;
 
