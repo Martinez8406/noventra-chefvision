@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Dish } from '../types';
-import { Youtube, Instagram, Link2, Music2, AlertTriangle, Info } from 'lucide-react';
+import { Youtube, Instagram, Link2, Music2, Info, UtensilsCrossed } from 'lucide-react';
 import { WatermarkWrapper } from './WatermarkWrapper';
 
 interface Props {
@@ -81,16 +81,6 @@ export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo',
             ))}
             {dish.ingredients.length > 4 && <span className="text-[11px] text-slate-400">+{dish.ingredients.length - 4} więcej</span>}
           </div>
-
-          <div className="bg-red-50 p-3 rounded-xl flex items-start gap-3">
-            <AlertTriangle className="text-red-500 shrink-0 mt-0.5" size={16} />
-            <div>
-              <p className="text-[11px] font-bold text-red-700 uppercase tracking-wide">Alergeny</p>
-              <p className="text-xs text-red-600">
-                {dish.allergens.length > 0 ? dish.allergens.join(', ') : 'Brak głównych alergenów'}
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* Social Link + Więcej info */}
@@ -114,6 +104,17 @@ export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo',
             <Info size={16} />
             Więcej info
           </button>
+        </div>
+
+        {/* Alergeny (neutralne tło + zamiana z sekcją "Więcej info" w kolejności) */}
+        <div className="mt-4 bg-amber-50 border border-amber-100 p-3 rounded-xl flex items-start gap-3">
+          <UtensilsCrossed className="text-amber-700 shrink-0 mt-0.5" size={16} />
+          <div>
+            <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wide">Alergeny</p>
+            <p className="text-xs text-slate-600">
+              {dish.allergens.length > 0 ? dish.allergens.join(', ') : 'Brak głównych alergenów'}
+            </p>
+          </div>
         </div>
       </div>
     </div>

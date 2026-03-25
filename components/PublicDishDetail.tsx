@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Dish } from '../types';
-import { Youtube, Instagram, Link2, Music2, ChevronLeft, AlertCircle, Info, Utensils } from 'lucide-react';
+import { Youtube, Instagram, Link2, Music2, ChevronLeft, Info, Utensils, UtensilsCrossed } from 'lucide-react';
 import { BRAND_LOGO_SRC } from '../constants';
 import { WatermarkWrapper } from './WatermarkWrapper';
 
@@ -52,13 +52,25 @@ export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark,
 
       {/* Content Section – zwarty blok, żeby nie zasłaniał zdjęcia */}
       <div className="max-w-2xl mx-auto px-6 py-6 space-y-6">
-        <div className="space-y-3">
-          <h2 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] flex items-center gap-2">
-            <Info size={14} className="text-amber-500" /> O daniu
+        {/* Alergeny (zamienione z sekcją "O daniu") */}
+        <div className="space-y-3 bg-amber-50/60 border border-amber-100 rounded-2xl p-4">
+          <h2 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.3em] flex items-center gap-2">
+            <UtensilsCrossed size={14} className="text-amber-600" /> Alergeny
           </h2>
-          <p className="text-base text-slate-700 leading-relaxed font-medium">
-            {dish.description}
-          </p>
+          <div className="flex flex-wrap gap-2">
+            {allergens.length > 0 ? (
+              allergens.map((a) => (
+                <span
+                  key={a}
+                  className="bg-amber-50 text-amber-900 px-4 py-2 rounded-xl text-xs font-black uppercase border border-amber-100"
+                >
+                  {a}
+                </span>
+              ))
+            ) : (
+              <span className="text-slate-400 text-sm font-medium">Brak głównych alergenów</span>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -77,20 +89,14 @@ export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark,
             </ul>
           </div>
 
-          {/* Allergens */}
-          <div className="space-y-3">
-            <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] flex items-center gap-2 text-red-500">
-              <AlertCircle size={14} /> Alergeny
+          {/* O daniu (zamienione z sekcją "Alergeny") */}
+          <div className="space-y-3 bg-slate-50 border border-slate-100 rounded-2xl p-4">
+            <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] flex items-center gap-2">
+              <Info size={14} className="text-amber-500" /> O daniu
             </h3>
-            <div className="flex flex-wrap gap-2">
-              {allergens.length > 0 ? allergens.map(a => (
-                <span key={a} className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-xs font-black uppercase border border-red-100">
-                  {a}
-                </span>
-              )) : (
-                <span className="text-slate-400 text-sm font-medium">Brak głównych alergenów</span>
-              )}
-            </div>
+            <p className="text-base text-slate-700 leading-relaxed font-medium">
+              {dish.description}
+            </p>
           </div>
         </div>
 
