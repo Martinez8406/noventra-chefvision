@@ -178,6 +178,13 @@ export const PublicMenu: React.FC<Props> = ({
             Menu jest puste – zajrzyj tu wkrótce!
           </p>
         )}
+
+        {!loading && userDishes.length > 0 && (
+          <p className="text-slate-400 text-xs text-center mt-6 pb-2 px-2">
+            W naszej kuchni stawiamy na świeże składniki, dlatego każde podane danie jest unikalne i może
+            nieznacznie różnić się od tego na zdjęciu
+          </p>
+        )}
       </main>
     </div>
   );

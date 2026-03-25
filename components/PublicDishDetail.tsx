@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Dish } from '../types';
-import { Youtube, Instagram, Link2, Music2, ChevronLeft, AlertCircle, Info } from 'lucide-react';
+import { Youtube, Instagram, Link2, Music2, ChevronLeft, AlertCircle, Info, Utensils } from 'lucide-react';
 import { BRAND_LOGO_SRC } from '../constants';
 import { WatermarkWrapper } from './WatermarkWrapper';
 
@@ -27,6 +27,8 @@ const renderSocialIcon = (url: string) => {
 };
 
 export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark, fontFamily }) => {
+  const ingredients = dish.ingredients || [];
+  const allergens = dish.allergens || [];
   return (
     <div className="min-h-screen bg-white animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ fontFamily: fontFamily || 'Inter' }}>
       {/* Hero Image Section – wysokość tak, by całe danie + znak wodny były widoczne */}
@@ -66,7 +68,7 @@ export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark,
               <Utensils size={14} className="text-amber-500" /> Składniki
             </h3>
             <ul className="space-y-2">
-              {dish.ingredients.map((ing, i) => (
+              {ingredients.map((ing, i) => (
                 <li key={i} className="flex items-center gap-3 text-slate-600 font-bold border-b border-slate-50 pb-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
                   {ing}
@@ -81,7 +83,7 @@ export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark,
               <AlertCircle size={14} /> Alergeny
             </h3>
             <div className="flex flex-wrap gap-2">
-              {dish.allergens.length > 0 ? dish.allergens.map(a => (
+              {allergens.length > 0 ? allergens.map(a => (
                 <span key={a} className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-xs font-black uppercase border border-red-100">
                   {a}
                 </span>
