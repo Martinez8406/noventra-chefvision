@@ -172,7 +172,6 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
               {isProcessing ? (
                 <div className="text-center space-y-4">
                   <Loader2 size={64} className="animate-spin text-indigo-500 mx-auto" />
-                  <p className="text-slate-400 font-black uppercase tracking-widest text-xs">AI precyzyjnie rozmywa Twoją restaurację...</p>
                 </div>
               ) : processedImage ? (
                 <>

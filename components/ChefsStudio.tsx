@@ -22,7 +22,6 @@ import {
   Mic,
   MicOff,
   AlertCircle,
-  Zap,
   Layers,
   Lock,
   Crown
@@ -222,12 +221,11 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
             <div className="p-4 bg-indigo-50 text-indigo-600 rounded-3xl"><Palette size={32} /></div>
             <h2 className="text-3xl font-black text-slate-800 tracking-tight italic">Chef’s Studio</h2>
           </div>
-          <div className="flex flex-col items-end gap-2 text-[10px] font-black uppercase tracking-widest">
-            {!isSubscribed && <span className={hasNoCredits ? 'text-red-500' : 'text-slate-400'}>Kredyty: {credits}/5</span>}
-            <div className="bg-amber-500/10 text-amber-600 px-3 py-1 rounded-full flex items-center gap-1">
-              <Zap size={10}/> Wizja 2.5 Flash
+          {!isSubscribed && (
+            <div className="text-[10px] font-black uppercase tracking-widest">
+              <span className={hasNoCredits ? 'text-red-500' : 'text-slate-400'}>Kredyty: {credits}/5</span>
             </div>
-          </div>
+          )}
         </div>
 
         {hasNoCredits && (
@@ -278,7 +276,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
                 className="w-full px-8 py-5 border-2 border-slate-50 focus:ring-4 focus:ring-indigo-50 rounded-3xl outline-none transition-all placeholder-slate-300 text-2xl font-serif italic bg-slate-50/50"
                 placeholder="np. Polędwica Wellington..."
                 value={params.dishName}
-                onChange={(e) => setParams({ ...params, dishName: e.target.value })}
+                onChange={(e) => setParams((prev) => ({ ...prev, dishName: e.target.value }))}
               />
             </div>
           </div>
@@ -297,7 +295,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
           <div className="flex flex-col sm:flex-row gap-4 sm:items-start">
             <div className="flex-1 flex flex-col gap-1.5 min-w-0">
               <button onClick={handleGenerate} disabled={isGenerating || hasNoCredits} className="w-full py-6 bg-slate-900 text-white rounded-[30px] font-black text-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[0.99] transition-transform disabled:opacity-50 disabled:cursor-not-allowed min-w-0">
-                {isGenerating ? <Loader2 className="animate-spin" /> : <Wand2 />} {isGenerating ? 'MIKSUJĘ...' : hasNoCredits ? 'BRAK KREDYTÓW' : dishReferenceImage ? 'ULEPSZ ZDJĘCIE' : 'PROJEKTUJ NOWE DANIE'}
+                {isGenerating ? <Loader2 className="animate-spin" /> : <Wand2 />} {isGenerating ? 'MIKSUJĘ...' : hasNoCredits ? 'BRAK KREDYTÓW' : dishReferenceImage ? 'ULEPSZ ZDJĘCIE' : 'STWÓRZ NOWE DANIE OD ZERA'}
               </button>
               {!dishReferenceImage && (
                 <p className="text-[10px] sm:text-[11px] text-center text-slate-400 font-medium leading-snug px-1">
@@ -329,7 +327,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
                     <Wand2 />
                   </span>
                 )}{' '}
-                Hybrid Photo Mode (Ulepszanie)
+                Ulepsz istniejące danie
               </button>
               <p className="text-[10px] sm:text-[11px] text-center text-slate-400 font-medium leading-snug px-1">
                 Masz zdjęcie? AI poprawi światło i tło
@@ -369,7 +367,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
               title={hybridModeActive ? 'Niedostępne w trybie Hybrid Photo Mode' : undefined}
               className="w-full flex items-center justify-between py-3 px-4 rounded-2xl border-2 border-slate-100 hover:bg-slate-50 text-slate-700 font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             >
-              <span>Zaawansowane ustawienia zdjęcia</span>
+              <span>Dopasuj detale do charakteru Twojej kuchni</span>
               <span className="text-slate-400">{advancedSettingsOpen ? '▼' : '▶'}</span>
             </button>
 

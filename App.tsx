@@ -295,65 +295,6 @@ const App: React.FC = () => {
     }
   };
 
-  // DEBUG: ręczne wymuszenie Premium i kredytów
-  const handleDebugSetPremium = async () => {
-    try {
-      let userId = currentUser?.id;
-      if (!userId) {
-        const profile = await authService.getCurrentProfile();
-        if (!profile) return;
-        userId = profile.id;
-        setCurrentUser(profile);
-      }
-      const ok = await authService.setPremiumStatus(userId!);
-      if (ok) {
-        const profile = await authService.getCurrentProfile();
-        if (profile) setCurrentUser(profile);
-      }
-    } catch (e) {
-      console.error('DEBUG setPremium', e);
-    }
-  };
-
-  const handleDebugAddCredits = async () => {
-    try {
-      let userId = currentUser?.id;
-      if (!userId) {
-        const profile = await authService.getCurrentProfile();
-        if (!profile) return;
-        userId = profile.id;
-        setCurrentUser(profile);
-      }
-
-      if (supabase) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .update({ ai_credits: (currentUser?.credits ?? 0) + 5 })
-          .eq('id', userId!)
-          .select('ai_credits')
-          .single();
-        if (!error) {
-          setCurrentUser(prev => prev ? {
-            ...prev,
-            credits: data?.ai_credits ?? prev.credits + 5,
-            subscriptionStatus: prev.subscriptionStatus === 'free_limited' && (data?.ai_credits ?? 0) > 0
-              ? 'trial'
-              : prev.subscriptionStatus
-          } : prev);
-        }
-      } else {
-        // Tryb demo (bez Supabase) – tylko lokalny stan
-        setCurrentUser(prev => prev ? {
-          ...prev,
-          credits: prev.credits + 5,
-          subscriptionStatus: prev.subscriptionStatus === 'free_limited' ? 'trial' : prev.subscriptionStatus
-        } : prev);
-      }
-    } catch (e) {
-      console.error('DEBUG addCredits', e);
-    }
-  };
-
   if (isSuccessPage) {
     return (
       <SuccessPage
@@ -451,23 +392,6 @@ const App: React.FC = () => {
           >
             <LogOut size={16} /> Wyloguj
           </button>
-          {/* DEBUG – narzędzia testowe dla Stripe / kredytów */}
-          {currentUser && (
-            <div className="space-y-2">
-              <button
-                onClick={handleDebugSetPremium}
-                className="w-full px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-slate-900 text-slate-300 hover:bg-slate-800 transition-colors"
-              >
-                DEBUG: Ustaw Premium
-              </button>
-              <button
-                onClick={handleDebugAddCredits}
-                className="w-full px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-slate-900 text-slate-300 hover:bg-slate-800 transition-colors"
-              >
-                DEBUG: Dodaj 5 kredytów
-              </button>
-            </div>
-          )}
           <div className="flex items-center gap-4 text-white">
             <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-slate-400 border border-slate-800">
               <UserIcon size={20} />
@@ -552,7 +476,8 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {selectedDishId && (
+      {/* Panel edycji tylko na zakładkach z listą dań — inaczej fixed z-[200] przykrywał Chef’s Studio i pola były „martwe”. */}
+      {(activeTab === 'kuchnia' || activeTab === 'menu') && selectedDishId && (
         <DishDetailPanel 
           dish={dishes.find(d => d.id === selectedDishId)!} 
           onClose={() => setSelectedDishId(null)} 
