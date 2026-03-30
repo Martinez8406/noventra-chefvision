@@ -12,6 +12,8 @@ const stylePrompts = {
     'vibrant colors, neon lights background, paper wrapping, casual setting, urban atmosphere, high contrast, dynamic close-up, flash photography style, greasy textures, paper bags, high energy, saturated colors',
   'Bistro':
     'classic cafe setting, white tablecloth or bright wood, daylight, silverware, casual but clean look',
+  'Bistro Lifestyle':
+    'classic cafe setting, white tablecloth or bright wood, daylight, silverware, casual but clean look',
 };
 
 const anglePrompts = {
@@ -46,6 +48,44 @@ function buildHybridPrompt(ingredientsHint) {
 function buildDishPrompt(settings, ingredientsHint) {
   const { dishName, styleLabel, lightingLabel, plateLabel, angleLabel, hasCustomBackdrop, hasCustomTableware } =
     settings;
+
+  if (styleLabel === 'Bistro Lifestyle') {
+    const bistroNegativePrompt =
+      `${NEGATIVE_PROMPT} Strictly exclude: black stone, dark slate, dark or moody backgrounds, low-key lighting, fine-dining minimalist plating, plain white studio backdrop, dark ceramics, any dark or black surface.`;
+
+    const parts = [
+      `Professional food editorial photograph of "${dishName}" in Bistro Lifestyle style.`,
+      'Tableware: rustic handmade ceramic plate or bowl with warm cream or ivory body and a clearly visible natural brown or earth-toned rim. Artisanal, slightly imperfect glaze – NOT smooth fine-dining white porcelain.',
+      'Background surface: one of these options – (A) rose-pink square ceramic tiles with visible grout grid lines, (B) white Carrara marble with thin natural grey veining, or (C) warm pale sandstone or beige tile. The surface fills most of the background and is clearly visible around the plate.',
+      'Lighting: bright natural side-sunlight from one direction creating crisp hard-edged cast shadows on the surface. High-key and airy. No studio softboxes, no diffused fill light.',
+      'Mandatory lifestyle props (all must be present): (1) one or two ribbed colored drinking glasses – amber/orange OR purple/violet – placed upright in the background; (2) colorful matte cutlery – gold/brass OR matte purple – lying naturally beside the plate; (3) a loosely draped colored linen napkin – mustard yellow, lavender, or sage green. Optional extras: a small bowl with whole mushrooms, scattered pine nuts or peppercorns, fresh herb sprigs.',
+      `Camera angle: ${anglePrompts[angleLabel] ?? '45-50 degree overhead tilt, plate dominant, props arranged casually'}. Keep the composition consistent with Bistro Lifestyle editorial style.`,
+      'Color palette: warm, vibrant, high-saturation, sun-drenched. Clean bright whites mixed with saturated color accents from glassware, textiles and cutlery. Energetic food-editorial feel.',
+      'Focus: main dish and plate sharply in focus. Background props have slight natural bokeh.',
+      `Dish "${dishName}" must be the hero – well-plated, appetizing, with clearly visible textures and ingredients.`,
+    ];
+
+    if (ingredientsHint?.trim()) {
+      parts.push(
+        `IMPORTANT: These ingredients must be clearly visible and appetizing on the plate: ${ingredientsHint.trim()}.`
+      );
+    }
+
+    if (hasCustomBackdrop) {
+      parts.push('A reference backdrop image is provided: respect its composition and perspective, but keep the overall atmosphere bright and light.');
+    }
+
+    if (hasCustomTableware) {
+      parts.push('A reference tableware image is provided: place the food on exactly this plate or bowl, preserving its shape, color and design.');
+    }
+
+    parts.push(
+      'Output: a single ultra-photorealistic culinary image, 4:3 aspect ratio, suitable for premium restaurant menu, food magazine editorial, and social media.',
+      bistroNegativePrompt
+    );
+
+    return parts.join('\n');
+  }
 
   const stylePhrase   = styleLabel.toLowerCase();
   const lightingPhrase = lightingLabel.toLowerCase();

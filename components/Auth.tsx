@@ -75,7 +75,7 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
           alt=""
           width={64}
           height={64}
-          className="h-16 w-16 rounded-2xl shadow-lg shadow-amber-500/20 object-cover shrink-0"
+          className="h-16 w-16 rounded-2xl shadow-lg shadow-chef-gold/20 object-cover shrink-0"
         />
         <h1 className="text-4xl font-black italic text-[#0F172A] tracking-tighter">Chefvision</h1>
       </div>
@@ -142,7 +142,7 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
           <button 
             type="submit" 
             disabled={loading || !captchaToken}
-            className="w-full bg-[#FBB02D] hover:bg-[#f3a61d] text-white font-black py-5 rounded-2xl shadow-xl shadow-amber-500/10 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed text-lg group active:scale-[0.98]"
+            className="w-full bg-chef-gold hover:bg-chef-gold2 text-white font-black py-5 rounded-2xl shadow-xl shadow-chef-gold/10 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed text-lg group active:scale-[0.98]"
           >
             {loading ? <Loader2 className="animate-spin" /> : (isSignUp ? 'ZAREJESTRUJ' : 'ZALOGUJ SIĘ')}
             {!loading && <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />}

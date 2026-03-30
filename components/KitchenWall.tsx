@@ -46,7 +46,7 @@ export const KitchenWall: React.FC<Props> = ({ dishes, onApprove, onOpenTraining
           <input 
             type="text" 
             placeholder="Szukaj dania lub składnika..." 
-            className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-amber-500/10 bg-white text-sm font-medium shadow-sm transition-all"
+            className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-chef-gold/10 bg-white text-sm font-medium shadow-sm transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -70,7 +70,7 @@ export const KitchenWall: React.FC<Props> = ({ dishes, onApprove, onOpenTraining
           <div 
             key={dish.id} 
             onClick={() => onSelect(dish.id)}
-            className={`group bg-white rounded-[32px] overflow-hidden border-2 transition-all cursor-pointer flex flex-col ${selectedId === dish.id ? 'border-amber-500 ring-4 ring-amber-500/10 shadow-2xl' : 'border-white hover:border-slate-200 shadow-md hover:shadow-xl'}`}
+            className={`group bg-white rounded-[32px] overflow-hidden border-2 transition-all cursor-pointer flex flex-col ${selectedId === dish.id ? 'border-chef-gold ring-4 ring-chef-gold/10 shadow-2xl' : 'border-white hover:border-slate-200 shadow-md hover:shadow-xl'}`}
           >
             {/* Image Container */}
             <div className="relative h-72 overflow-hidden bg-slate-100">
@@ -88,7 +88,7 @@ export const KitchenWall: React.FC<Props> = ({ dishes, onApprove, onOpenTraining
                     <CheckCircle2 size={18} strokeWidth={3} />
                   </div>
                 ) : (
-                  <div className="bg-amber-500/90 backdrop-blur-sm text-white p-2.5 rounded-2xl shadow-xl border border-white/20 animate-pulse" title="Oczekuje na akceptację">
+                  <div className="bg-chef-gold/90 backdrop-blur-sm text-white p-2.5 rounded-2xl shadow-xl border border-white/20 animate-pulse" title="Oczekuje na akceptację">
                     <Clock size={18} strokeWidth={3} />
                   </div>
                 )}
@@ -96,7 +96,7 @@ export const KitchenWall: React.FC<Props> = ({ dishes, onApprove, onOpenTraining
                 {/* Download Button */}
                 <button 
                   onClick={(e) => handleDownload(e, dish.imageUrl, dish.name)}
-                  className="bg-slate-900/60 backdrop-blur-md text-white p-2.5 rounded-2xl shadow-xl border border-white/10 hover:bg-amber-500 transition-all hover:scale-110 active:scale-95"
+                  className="bg-chef-dark/60 backdrop-blur-md text-white p-2.5 rounded-2xl shadow-xl border border-white/10 hover:bg-chef-gold transition-all hover:scale-110 active:scale-95"
                   title="Pobierz zdjęcie na urządzenie"
                 >
                   <Download size={18} strokeWidth={3} />

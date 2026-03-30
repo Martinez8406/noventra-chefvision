@@ -5,8 +5,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chefvision - AI Food Visualizer</title>
-    <link rel="icon" href="/chefvisionlogo.png" type="image/png" />
+    <link rel="icon" href="/logo.png" type="image/png" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              chef: {
+                dark:   '#24211f',
+                dark2:  '#2e2a26',
+                gold:   '#bb9860',
+                gold2:  '#bfa38c',
+                beige:  '#cab8a4',
+                cream:  '#eeeee9',
+                teal:   '#738484',
+                blush:  '#925d55',
+                gray:   '#928d8d',
+              }
+            }
+          }
+        }
+      }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Roboto:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
     <style>
         body { 
@@ -28,7 +49,7 @@
         .toast-in { animation: toastIn 0.3s ease-out forwards; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 overflow-x-hidden">
+<body class="bg-chef-cream text-slate-900 overflow-x-hidden">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>

@@ -325,7 +325,7 @@ const App: React.FC = () => {
   if (isSyncing) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="animate-spin text-amber-500" size={48} />
+        <Loader2 className="animate-spin text-chef-gold" size={48} />
       </div>
     );
   }
@@ -343,12 +343,12 @@ const App: React.FC = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
+    <div className="flex h-screen bg-chef-cream overflow-hidden">
       {isSidebarOpen && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[90] lg:hidden" onClick={() => setIsSidebarOpen(false)} />
+        <div className="fixed inset-0 bg-chef-dark/60 backdrop-blur-sm z-[90] lg:hidden" onClick={() => setIsSidebarOpen(false)} />
       )}
 
-      <aside className={`fixed lg:relative inset-y-0 left-0 w-72 bg-slate-950 flex-shrink-0 flex flex-col z-[100] transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`fixed lg:relative inset-y-0 left-0 w-72 bg-chef-dark flex-shrink-0 flex flex-col z-[100] transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="p-10 flex-1">
           <div className="flex items-center gap-4 mb-14">
             <img
@@ -356,7 +356,7 @@ const App: React.FC = () => {
               alt=""
               width={56}
               height={56}
-              className="h-14 w-14 rounded-2xl shadow-xl shadow-amber-500/20 object-cover shrink-0"
+              className="h-14 w-14 rounded-2xl shadow-xl shadow-chef-gold/20 object-cover shrink-0"
             />
             <h1 className="text-2xl font-black tracking-tighter italic text-white">Chefvision</h1>
           </div>
@@ -366,7 +366,7 @@ const App: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => { setActiveTab(tab.id as any); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl text-sm font-black transition-all group ${activeTab === tab.id ? 'bg-amber-500 text-white shadow-2xl' : 'text-slate-500 hover:text-white hover:bg-slate-900'}`}
+                className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl text-sm font-black transition-all group ${activeTab === tab.id ? 'bg-chef-gold text-white shadow-2xl' : 'text-slate-400 hover:text-white hover:bg-chef-dark2'}`}
               >
                 <div className="flex items-center gap-4">
                   <tab.icon size={20} /> {tab.label}
@@ -376,7 +376,7 @@ const App: React.FC = () => {
           </nav>
         </div>
 
-        <div className="p-10 border-t border-slate-900 space-y-6">
+        <div className="p-10 border-t border-chef-dark2 space-y-6">
           <div className={`p-4 rounded-2xl border transition-all ${isPremium ? 'bg-green-500/10 border-green-500/20 text-green-400' : isTrial ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
              <div className="flex items-center gap-2 mb-1">
                 {isPremium ? <Crown size={16} /> : isTrial ? <Gift size={16} /> : <AlertTriangle size={16} />}
@@ -388,12 +388,12 @@ const App: React.FC = () => {
           {/* Duży, widoczny przycisk Wyloguj tuż pod statusem konta */}
           <button
             onClick={() => { authService.signOut(); setSession(null); }}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-slate-900 text-slate-300 hover:bg-red-500 hover:text-white transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-chef-dark2 text-slate-300 hover:bg-red-500 hover:text-white transition-colors"
           >
             <LogOut size={16} /> Wyloguj
           </button>
           <div className="flex items-center gap-4 text-white">
-            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-slate-400 border border-slate-800">
+            <div className="w-10 h-10 bg-chef-dark2 rounded-xl flex items-center justify-center text-slate-400 border border-chef-dark2">
               <UserIcon size={20} />
             </div>
             <div className="overflow-hidden flex-1">
@@ -442,7 +442,7 @@ const App: React.FC = () => {
               />
             ) : (
               <div className="flex flex-col items-center justify-center py-24 text-center text-slate-500 min-h-[50vh]">
-                <Loader2 className="animate-spin text-amber-500 mb-4" size={40} />
+                <Loader2 className="animate-spin text-chef-gold mb-4" size={40} />
                 <p className="font-medium">Ładowanie profilu...</p>
                 <p className="text-sm mt-1">Za chwilę Chef’s Studio będzie dostępne.</p>
               </div>
@@ -489,7 +489,7 @@ const App: React.FC = () => {
       {statusToast && (
         <div
           key={statusToast}
-          className="toast-in fixed bottom-8 left-1/2 z-[200] flex items-center gap-2 px-5 py-3 rounded-2xl bg-slate-900 text-white text-sm font-bold shadow-xl border border-slate-700/50"
+          className="toast-in fixed bottom-8 left-1/2 z-[200] flex items-center gap-2 px-5 py-3 rounded-2xl bg-chef-dark text-white text-sm font-bold shadow-xl border border-chef-dark2/50"
           role="status"
           aria-live="polite"
         >

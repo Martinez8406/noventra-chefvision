@@ -68,10 +68,54 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
   const isFreeTrialOver = !isSubscribed && generationsUsed >= 5;
   const hasNoCredits = !isSubscribed && credits <= 0;
   const hybridModeActive = !!dishReferenceImage;
+  const bistroLifestyleValue = STYLE_OPTIONS.find((o) => o.label === 'Bistro Lifestyle')?.value;
+  const isBistroLifestyle = !!bistroLifestyleValue && params.style === bistroLifestyleValue;
+
+  const streetFoodValue = STYLE_OPTIONS.find((o) => o.label === 'Street Food')?.value;
+  const isStreetFood = !!streetFoodValue && params.style === streetFoodValue;
+
+  const bistroDefaultLightingValue =
+    LIGHTING_OPTIONS.find((o) => o.label === 'Naturalne')?.value ?? LIGHTING_OPTIONS[0].value;
+  const bistroDefaultPlateValue =
+    PLATE_OPTIONS.find((o) => o.label === 'Biała Porcelana')?.value ?? PLATE_OPTIONS[0].value;
+  const streetFoodDefaultPlateValue =
+    PLATE_OPTIONS.find((o) => o.label === 'Ceramika')?.value ?? PLATE_OPTIONS[0].value;
+  const bistroLifestyleTooltipText =
+    'Styl Bistro Lifestyle wymaga jasnych tła dla zachowania estetyki premium.';
 
   useEffect(() => {
     if (hybridModeActive) setAdvancedSettingsOpen(false);
   }, [hybridModeActive]);
+
+  // Style Logic: auto-override lighting + podłoże dla Bistro Lifestyle.
+  useEffect(() => {
+    if (!isBistroLifestyle) return;
+    setParams((prev) => ({
+      ...prev,
+      lighting: bistroDefaultLightingValue,
+      plateType: bistroDefaultPlateValue,
+    }));
+  }, [isBistroLifestyle, bistroDefaultLightingValue, bistroDefaultPlateValue]);
+
+  // Style Logic (UI-only): Street Food blokuje ciemne tekstury i białą porcelanę.
+  useEffect(() => {
+    if (!isStreetFood) return;
+
+    const disabledPlateValues = new Set(
+      PLATE_OPTIONS.filter((opt) => {
+        const label = opt.label.toLowerCase();
+        const value = String(opt.value).toLowerCase();
+        const isKamienLup = value.includes('stone') || label.includes('kamień') || label.includes('łupek') || value.includes('dark');
+        const isBialaPorcelana = label.includes('biała porcelana') || value.includes('porcelain');
+        return isKamienLup || isBialaPorcelana;
+      }).map((opt) => opt.value)
+    );
+
+    setParams((prev) => {
+      if (!disabledPlateValues.has(prev.plateType)) return prev;
+      return { ...prev, plateType: streetFoodDefaultPlateValue };
+    });
+  }, [isStreetFood, streetFoodDefaultPlateValue]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -273,7 +317,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
             <div className="relative">
               <input
                 type="text"
-                className="w-full px-8 py-5 border-2 border-slate-50 focus:ring-4 focus:ring-indigo-50 rounded-3xl outline-none transition-all placeholder-slate-300 text-2xl font-serif italic bg-slate-50/50"
+                className="w-full px-8 py-5 border-2 border-slate-50 focus:ring-4 focus:ring-chef-beige/40 rounded-3xl outline-none transition-all placeholder-slate-300 text-2xl font-serif italic bg-slate-50/50"
                 placeholder="np. Polędwica Wellington..."
                 value={params.dishName}
                 onChange={(e) => setParams((prev) => ({ ...prev, dishName: e.target.value }))}
@@ -284,7 +328,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
           <div>
             <label className="text-[10px] font-black uppercase text-slate-400 block mb-2">Składniki (opcjonalnie)</label>
             <textarea
-              className="w-full px-6 py-4 border-2 border-slate-50 focus:ring-4 focus:ring-indigo-50 rounded-2xl outline-none transition-all placeholder-slate-300 text-slate-700 bg-slate-50/50 resize-none"
+              className="w-full px-6 py-4 border-2 border-slate-50 focus:ring-4 focus:ring-chef-beige/40 rounded-2xl outline-none transition-all placeholder-slate-300 text-slate-700 bg-slate-50/50 resize-none"
               placeholder="np. wołowina, grzyby, ciasto francuskie..."
               value={ingredientsText}
               onChange={(e) => setIngredientsText(e.target.value)}
@@ -294,7 +338,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
 
           <div className="flex flex-col sm:flex-row gap-4 sm:items-start">
             <div className="flex-1 flex flex-col gap-1.5 min-w-0">
-              <button onClick={handleGenerate} disabled={isGenerating || hasNoCredits} className="w-full py-6 bg-slate-900 text-white rounded-[30px] font-black text-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[0.99] transition-transform disabled:opacity-50 disabled:cursor-not-allowed min-w-0">
+              <button onClick={handleGenerate} disabled={isGenerating || hasNoCredits} className="w-full py-6 bg-chef-dark text-white rounded-[30px] font-black text-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[0.99] transition-transform disabled:opacity-50 disabled:cursor-not-allowed min-w-0">
                 {isGenerating ? <Loader2 className="animate-spin" /> : <Wand2 />} {isGenerating ? 'MIKSUJĘ...' : hasNoCredits ? 'BRAK KREDYTÓW' : dishReferenceImage ? 'ULEPSZ ZDJĘCIE' : 'STWÓRZ NOWE DANIE OD ZERA'}
               </button>
               {!dishReferenceImage && (
@@ -317,7 +361,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
                 type="button"
                 onClick={() => dishRefInputRef.current?.click()}
                 disabled={isUploadingDishRef}
-                className="w-full py-6 bg-white text-slate-900 rounded-[30px] font-black text-xl flex items-center justify-center gap-3 border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all disabled:opacity-50 min-w-0"
+                className="w-full py-6 bg-white text-slate-900 rounded-[30px] font-black text-xl flex items-center justify-center gap-3 border-2 border-slate-200 hover:border-chef-teal hover:bg-chef-cream/50 transition-all disabled:opacity-50 min-w-0"
               >
                 {isUploadingDishRef ? (
                   <Loader2 className="animate-spin" />
@@ -330,7 +374,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
                 Ulepsz istniejące danie
               </button>
               <p className="text-[10px] sm:text-[11px] text-center text-slate-400 font-medium leading-snug px-1">
-                Masz zdjęcie? AI poprawi światło i tło
+                Masz zdjęcie? Zamień je w sztukę, która sprzedaje
               </p>
             </div>
             {/* label + input zamiast programatycznego .click() — przeglądarki blokują otwarcie okna dla inputów z display:none */}
@@ -350,10 +394,10 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
           </div>
 
           {dishReferenceImage && (
-            <div className="flex items-center gap-3 p-4 rounded-2xl bg-indigo-50 border border-indigo-100">
+            <div className="flex items-center gap-3 p-4 rounded-2xl bg-chef-cream border border-chef-beige/40">
               <img src={dishReferenceImage} alt="Zdjęcie dania" className="w-20 h-20 object-cover rounded-xl" />
-              <span className="text-sm font-medium text-indigo-800 flex-1">Zdjęcie dania do ulepszenia (tryb Hybrid)</span>
-              <button type="button" onClick={() => setDishReferenceImage(null)} className="p-2 rounded-xl text-indigo-500 hover:bg-indigo-100">
+              <span className="text-sm font-medium text-chef-dark flex-1">Zdjęcie dania do ulepszenia (tryb Hybrid)</span>
+              <button type="button" onClick={() => setDishReferenceImage(null)} className="p-2 rounded-xl text-chef-teal hover:bg-chef-cream">
                 <X size={18} />
               </button>
             </div>
@@ -378,7 +422,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
                     <label className="text-[10px] font-black uppercase text-slate-400">Stylistyka</label>
                     <div className="grid grid-cols-2 gap-2">
                       {STYLE_OPTIONS.map(opt => (
-                        <button key={opt.value} onClick={() => setParams({ ...params, style: opt.value })} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.style === opt.value ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-500 border-slate-50'}`}>
+                        <button key={opt.value} onClick={() => setParams({ ...params, style: opt.value })} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.style === opt.value ? 'bg-chef-teal text-white border-chef-teal' : 'bg-white text-slate-500 border-slate-50'}`}>
                           {opt.label}
                         </button>
                       ))}
@@ -387,11 +431,20 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
                   <div className="space-y-4">
                     <label className="text-[10px] font-black uppercase text-slate-400">Oświetlenie</label>
                     <div className="grid grid-cols-2 gap-2">
-                      {LIGHTING_OPTIONS.map(opt => (
-                        <button key={opt.value} onClick={() => setParams({ ...params, lighting: opt.value })} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.lighting === opt.value ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-slate-500 border-slate-50'}`}>
-                          {opt.label}
-                        </button>
-                      ))}
+                      {LIGHTING_OPTIONS.map(opt => {
+                        const isLockedByBistro = isBistroLifestyle && opt.label !== 'Naturalne';
+                        return (
+                          <button
+                            key={opt.value}
+                            onClick={() => setParams({ ...params, lighting: opt.value })}
+                            disabled={isLockedByBistro}
+                            title={isLockedByBistro ? 'Styl Bistro Lifestyle wymaga naturalnego oświetlenia.' : undefined}
+                            className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.lighting === opt.value ? 'bg-chef-gold text-white border-chef-gold' : 'bg-white text-slate-500 border-slate-50'} disabled:opacity-30 disabled:cursor-not-allowed`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -400,11 +453,36 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
                   <div className="space-y-4">
                     <label className="text-[10px] font-black uppercase text-slate-400">Tło i zastawa</label>
                     <div className="grid grid-cols-2 gap-2">
-                      {PLATE_OPTIONS.map(opt => (
-                        <button key={opt.value} onClick={() => setParams({ ...params, plateType: opt.value })} disabled={!!customBaseImage || !!customTablewareImage} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.plateType === opt.value ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-50'} disabled:opacity-30`}>
-                          {opt.label}
-                        </button>
-                      ))}
+                      {PLATE_OPTIONS.map(opt => {
+                        const value = String(opt.value).toLowerCase();
+                        const label = opt.label.toLowerCase();
+                        const isKamienLupOption = value.includes('stone') || label.includes('kamień') || label.includes('łupek') || value.includes('dark');
+                        const isBialaPorcelanaOption = label.includes('biała porcelana') || value.includes('porcelain');
+
+                        const isStyleLockedBistro = isBistroLifestyle && isKamienLupOption;
+                        const isStyleLockedStreetFood = isStreetFood && (isKamienLupOption || isBialaPorcelanaOption);
+
+                        const isDisabled = !!customBaseImage || !!customTablewareImage || isStyleLockedBistro || isStyleLockedStreetFood;
+
+                        return (
+                          <button
+                            key={opt.value}
+                            onClick={() => setParams({ ...params, plateType: opt.value })}
+                            disabled={isDisabled}
+                            title={isStyleLockedBistro ? bistroLifestyleTooltipText : undefined}
+                            className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${
+                              params.plateType === opt.value ? 'bg-chef-dark text-white border-chef-dark' : 'bg-white text-slate-500 border-slate-50'
+                            } disabled:opacity-30 disabled:cursor-not-allowed`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                      {isBistroLifestyle && (
+                        <div className="col-span-2 text-[10px] text-amber-800 bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-xl font-medium">
+                          {bistroLifestyleTooltipText}
+                        </div>
+                      )}
                       <div className="col-span-2 flex gap-2">
                         <button onClick={() => setIsBackdropSelectorOpen(true)} disabled={isFreeTrialOver} className="flex-1 p-3 rounded-2xl border-2 border-dashed border-slate-200 text-[10px] font-black flex items-center justify-center gap-2 hover:bg-slate-50">
                           {isFreeTrialOver ? <Lock size={12}/> : <Layers size={14}/>} TŁO ZE STUDIA
@@ -429,7 +507,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
                     <label className="text-[10px] font-black uppercase text-slate-400">Perspektywa</label>
                     <div className="grid grid-cols-2 gap-2">
                       {ANGLE_OPTIONS.map(opt => (
-                        <button key={opt.value} onClick={() => setParams({ ...params, cameraAngle: opt.value })} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.cameraAngle === opt.value ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-50'}`}>
+                        <button key={opt.value} onClick={() => setParams({ ...params, cameraAngle: opt.value })} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.cameraAngle === opt.value ? 'bg-chef-dark text-white border-chef-dark' : 'bg-white text-slate-500 border-slate-50'}`}>
                           {opt.label}
                         </button>
                       ))}
@@ -459,14 +537,14 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
             <button
               onClick={handleGenerate}
               disabled={isGenerating || hasNoCredits}
-              className="flex-1 py-6 bg-slate-900 text-white rounded-full font-black text-xl flex items-center justify-center gap-3 shadow-xl hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed border-2 border-slate-900"
+              className="flex-1 py-6 bg-chef-dark text-white rounded-full font-black text-xl flex items-center justify-center gap-3 shadow-xl hover:bg-chef-dark2 transition-all disabled:opacity-50 disabled:cursor-not-allowed border-2 border-chef-dark"
             >
               {isGenerating ? <Loader2 className="animate-spin" size={28} /> : <RefreshCw size={28} />}
               {isGenerating ? 'REGENERUJĘ...' : 'REGENERUJ'}
             </button>
             <button
               onClick={() => onSaveStandard(generatedImages[0], params)}
-              className="flex-1 py-6 bg-amber-500 text-white rounded-full font-black text-2xl flex items-center justify-center gap-3 shadow-2xl hover:bg-amber-600 transition-all"
+              className="flex-1 py-6 bg-chef-gold text-white rounded-full font-black text-2xl flex items-center justify-center gap-3 shadow-2xl hover:bg-chef-gold2 transition-all"
             >
               <CheckCircle size={32} /> ZAPISZ JAKO STANDARD
             </button>

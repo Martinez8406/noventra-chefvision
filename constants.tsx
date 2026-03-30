@@ -1,5 +1,5 @@
-/** Logo w `public/chefvisionlogo.png` */
-export const BRAND_LOGO_SRC = '/chefvisionlogo.png';
+/** Logo w `public/logo.png` */
+export const BRAND_LOGO_SRC = '/logo.png';
 
 export const LIGHTING_OPTIONS = [
   { label: 'Złota Godzina', value: 'Golden Hour (warm, soft sunlight)' },
@@ -25,7 +25,7 @@ export const STYLE_OPTIONS = [
   { label: 'Fine Dining', value: 'Fine dining style, elegant plating, microgreens, sauces in dots' },
   { label: 'Rustic', value: 'Rustic, hearty portions, casual but beautiful' },
   { label: 'Street Food', value: 'Modern street food style, vibrant, dynamic' },
-  { label: 'Bistro', value: 'Classic French bistro style, warm, inviting' },
+  { label: 'Bistro Lifestyle', value: 'Classic French bistro style, warm, inviting' },
 ];
 
 export const ALLERGENS_LIST: string[] = [
