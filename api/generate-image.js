@@ -16,6 +16,16 @@ const stylePrompts = {
     'classic cafe setting, white tablecloth or bright wood, daylight, silverware, casual but clean look',
 };
 
+const BISTRO_BACKGROUNDS = [
+  'white Carrara marble slab with subtle grey veining and perfectly smooth, polished surface',
+  'warm sandy beige stone tiles with a slightly rough, natural texture and thin grout lines',
+  'terrazzo surface – light grey or off-white base densely scattered with colorful mineral flecks in coral, sage green, mustard yellow and dusty violet',
+  'soft dusty rose or blush pink ribbed/fluted ceramic surface with clear parallel vertical ridges casting fine shadows',
+  'pale lavender or cool lilac smooth marble with faint warm peach veining',
+  'classic white square ceramic tiles with clean visible grout lines forming a regular grid',
+  'light warm grey brushed concrete with a matte, fine-grained texture',
+];
+
 const anglePrompts = {
   'Top-down (Flatlay)':
     "Bird's eye view, camera directly above the plate at a perfect 90 degree angle, lens perfectly parallel to the table, no perspective tilt or distortion, geometric composition, centered dish, all ingredients visible from the top",
@@ -56,7 +66,7 @@ function buildDishPrompt(settings, ingredientsHint) {
     const parts = [
       `Professional food editorial photograph of "${dishName}" in Bistro Lifestyle style.`,
       'Tableware: rustic handmade ceramic plate or bowl with warm cream or ivory body and a clearly visible natural brown or earth-toned rim. Artisanal, slightly imperfect glaze – NOT smooth fine-dining white porcelain.',
-      'Background surface: one of these options – (A) rose-pink square ceramic tiles with visible grout grid lines, (B) white Carrara marble with thin natural grey veining, or (C) warm pale sandstone or beige tile. The surface fills most of the background and is clearly visible around the plate.',
+      `Background surface: use EXACTLY THIS specific surface for this image – ${BISTRO_BACKGROUNDS[Math.floor(Math.random() * BISTRO_BACKGROUNDS.length)]}. This surface fills most of the background and is clearly visible around the plate.`,
       'Lighting: bright natural side-sunlight from one direction creating crisp hard-edged cast shadows on the surface. High-key and airy. No studio softboxes, no diffused fill light.',
       'Mandatory lifestyle props (all must be present): (1) one or two ribbed colored drinking glasses – amber/orange OR purple/violet – placed upright in the background; (2) colorful matte cutlery – gold/brass OR matte purple – lying naturally beside the plate; (3) a loosely draped colored linen napkin – mustard yellow, lavender, or sage green. Optional extras: a small bowl with whole mushrooms, scattered pine nuts or peppercorns, fresh herb sprigs.',
       `Camera angle: ${anglePrompts[angleLabel] ?? '45-50 degree overhead tilt, plate dominant, props arranged casually'}. Keep the composition consistent with Bistro Lifestyle editorial style.`,
