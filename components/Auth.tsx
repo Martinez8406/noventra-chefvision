@@ -168,7 +168,7 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
                 ) : (
                   <>
                     <Mail size={20} />
-                    WYŚLIJ MAGIC LINK
+                    WYŚLIJ LINK AKTYWACYJNY
                   </>
                 )}
               </button>

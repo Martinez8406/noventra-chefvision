@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n \"VITE,SERVER\" -c \"cyan,yellow\" \"vite\" \"node server/index.js\"",
+    "dev": "concurrently -n \"VITE,SERVER\" -c \"cyan,yellow\" \"vite\" \"node server/index.js\"",
+    "dev:vite": "vite",
     "dev:full": "vercel dev",
     "build": "vite build",
     "preview": "vite preview",
