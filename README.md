@@ -15,6 +15,10 @@ View your app in AI Studio: https://ai.studio/apps/drive/1gVnKdlt_5Ld0EQO3jvk2Mw
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2. Create `.env.local` (copy from `.env.example`) and set at least:
+   - `GEMINI_API_KEY`
+   - `SUPABASE_URL` + `SUPABASE_ANON_KEY` (or `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+3. Supabase (recommended): auto-create `profiles` rows on signup.
+   - Open Supabase SQL Editor and run `supabase/profiles.sql`.
+4. Run the app:
    `npm run dev`

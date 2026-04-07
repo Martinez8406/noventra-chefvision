@@ -3,8 +3,26 @@ import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import { Dish, UserProfile, DishStatus, SubscriptionStatus } from '../types';
 
-const SUPABASE_URL = (process.env as any).SUPABASE_URL || (process.env as any).NEXT_PUBLIC_SUPABASE_URL || '';
-const SUPABASE_KEY = (process.env as any).SUPABASE_ANON_KEY || (process.env as any).NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Vite exposes env vars via import.meta.env (only keys prefixed with VITE_).
+// We still keep process.env fallback for server-like environments.
+const VITE_ENV = (typeof import.meta !== 'undefined' ? (import.meta as any).env : undefined) as any;
+
+const SUPABASE_URL =
+  VITE_ENV?.VITE_SUPABASE_URL ||
+  VITE_ENV?.VITE_PUBLIC_SUPABASE_URL ||
+  (process.env as any).VITE_SUPABASE_URL ||
+  (process.env as any).SUPABASE_URL ||
+  (process.env as any).NEXT_PUBLIC_SUPABASE_URL ||
+  '';
+
+const SUPABASE_KEY =
+  VITE_ENV?.VITE_SUPABASE_ANON_KEY ||
+  VITE_ENV?.VITE_PUBLIC_SUPABASE_ANON_KEY ||
+  (process.env as any).VITE_SUPABASE_ANON_KEY ||
+  (process.env as any).SUPABASE_ANON_KEY ||
+  (process.env as any).NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  '';
+
 const isRealSupabase = !!SUPABASE_URL && !SUPABASE_URL.includes('placeholder') && SUPABASE_URL.startsWith('https://');
 
 export const supabase = isRealSupabase ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;

@@ -16,7 +16,9 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [message, setMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const captchaRef = useRef<HCaptcha>(null);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -32,6 +34,12 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
       return;
     }
 
+    if (isSignUp && password !== confirmPassword) {
+      setMessage({ type: 'error', text: 'Hasła nie są identyczne.' });
+      setLoading(false);
+      return;
+    }
+
     if (!captchaToken) {
       setMessage({ type: 'error', text: 'Potwierdź, że nie jesteś robotem.' });
       setLoading(false);
@@ -40,13 +48,39 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
 
     try {
       if (isSignUp) {
+        const emailRedirectTo =
+          typeof window !== 'undefined'
+            ? `${window.location.origin}/`
+            : undefined;
+
         const { error } = await supabase!.auth.signUp({
           email,
           password,
-          options: { captchaToken },
+          options: { captchaToken, emailRedirectTo },
         });
         if (error) throw error;
-        setMessage({ type: 'success', text: 'Konto restauracji utworzone! Sprawdź email.' });
+
+        // Wymuszamy wysyłkę maila weryfikacyjnego i wyciągamy czytelną informację,
+        // jeśli Supabase/SMTP nie jest skonfigurowany lub blokuje wysyłkę.
+        try {
+          const resendResult = await supabase!.auth.resend({
+            type: 'signup',
+            email,
+            options: { captchaToken, emailRedirectTo },
+          } as any);
+          if ((resendResult as any)?.error) throw (resendResult as any).error;
+        } catch (resendErr: any) {
+          console.error('[auth.resend][signup]', resendErr);
+          setMessage({
+            type: 'error',
+            text:
+              resendErr?.message ||
+              'Konto utworzone, ale nie udało się wysłać emaila potwierdzającego. Sprawdź konfigurację SMTP w Supabase Auth.',
+          });
+          return;
+        }
+
+        setMessage({ type: 'success', text: 'Konto restauracji utworzone! Sprawdź email (także SPAM/oferty).' });
       } else {
         const { error } = await supabase!.auth.signInWithPassword({
           email,
@@ -82,13 +116,33 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
 
       <div className="w-full max-w-[480px] bg-white border border-slate-100 p-10 md:p-14 rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.03)] space-y-10">
         <div className="text-center space-y-2">
-          <h2 className="text-3xl font-black text-[#1E293B] tracking-tight italic">Zaloguj Restaurację</h2>
+          <h2 className="text-3xl font-black text-[#1E293B] tracking-tight italic">
+            {isSignUp ? 'Nowe Konto' : 'Zaloguj Restaurację'}
+          </h2>
           <p className="text-slate-400 font-medium">Panel zarządzania standardami AI</p>
+        </div>
+
+        {/* Przełącznik Logowanie / Rejestracja */}
+        <div className="flex rounded-2xl bg-[#F8FAFC] border border-slate-100 p-1 gap-1">
+          <button
+            type="button"
+            onClick={() => { setIsSignUp(false); setMessage(null); setConfirmPassword(''); }}
+            className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${!isSignUp ? 'bg-white shadow text-[#1E293B]' : 'text-slate-400 hover:text-slate-600'}`}
+          >
+            ZALOGUJ SIĘ
+          </button>
+          <button
+            type="button"
+            onClick={() => { setIsSignUp(true); setMessage(null); setConfirmPassword(''); }}
+            className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${isSignUp ? 'bg-white shadow text-[#1E293B]' : 'text-slate-400 hover:text-slate-600'}`}
+          >
+            ZAREJESTRUJ
+          </button>
         </div>
 
         <form onSubmit={handleAuth} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Email Biznesowy</label>
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Email</label>
             <input 
               type="email" 
               required
@@ -100,7 +154,9 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Hasło</label>
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+              {isSignUp ? 'Stwórz nowe hasło' : 'Hasło'}
+            </label>
             <div className="relative">
               <input 
                 type={showPassword ? 'text' : 'password'}
@@ -121,6 +177,34 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
               </button>
             </div>
           </div>
+
+          {isSignUp && (
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Potwierdź hasło</label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  required
+                  className={`w-full bg-[#F8FAFC] border rounded-2xl px-6 py-4 pr-14 text-[#1E293B] outline-none focus:ring-2 transition-all font-bold ${confirmPassword && password !== confirmPassword ? 'border-red-300 focus:ring-red-300' : 'border-slate-100 focus:ring-[#FBB02D]'}`}
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(prev => !prev)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1"
+                  tabIndex={-1}
+                  aria-label={showConfirmPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+              {confirmPassword && password !== confirmPassword && (
+                <p className="text-[10px] font-black uppercase tracking-widest text-red-400 ml-1">Hasła nie są identyczne</p>
+              )}
+            </div>
+          )}
 
           {message && (
             <div className={`p-4 rounded-xl text-xs font-black uppercase tracking-tight ${message.type === 'error' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}`}>
@@ -158,17 +242,6 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
           </button>
         )}
 
-        <div className="text-center pt-2">
-          <p className="text-slate-400 font-medium text-sm">
-            {isSignUp ? 'Masz już konto? ' : 'Chcesz założyć konto? '}
-            <button 
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-[#FBB02D] font-black hover:underline transition-colors"
-            >
-              {isSignUp ? 'Zaloguj się' : 'Zarejestruj się'}
-            </button>
-          </p>
-        </div>
       </div>
     </div>
   );
