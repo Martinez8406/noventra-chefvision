@@ -1,6 +1,5 @@
 
-import React, { useState, useRef } from 'react';
-import HCaptcha from '@hcaptcha/react-hcaptcha';
+import React, { useState } from 'react';
 import { supabase } from '../services/supabaseService';
 import { BRAND_LOGO_SRC } from '../constants';
 import { Loader2, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
@@ -15,11 +14,9 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [message, setMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const captchaRef = useRef<HCaptcha>(null);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,12 +37,6 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
       return;
     }
 
-    if (!captchaToken) {
-      setMessage({ type: 'error', text: 'Potwierdź, że nie jesteś robotem.' });
-      setLoading(false);
-      return;
-    }
-
     try {
       if (isSignUp) {
         const emailRedirectTo =
@@ -56,46 +47,17 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
         const { error } = await supabase!.auth.signUp({
           email,
           password,
-          options: { captchaToken, emailRedirectTo },
+          options: { emailRedirectTo },
         });
         if (error) throw error;
-
-        // Wymuszamy wysyłkę maila weryfikacyjnego i wyciągamy czytelną informację,
-        // jeśli Supabase/SMTP nie jest skonfigurowany lub blokuje wysyłkę.
-        try {
-          const resendResult = await supabase!.auth.resend({
-            type: 'signup',
-            email,
-            options: { captchaToken, emailRedirectTo },
-          } as any);
-          if ((resendResult as any)?.error) throw (resendResult as any).error;
-        } catch (resendErr: any) {
-          console.error('[auth.resend][signup]', resendErr);
-          setMessage({
-            type: 'error',
-            text:
-              resendErr?.message ||
-              'Konto utworzone, ale nie udało się wysłać emaila potwierdzającego. Sprawdź konfigurację SMTP w Supabase Auth.',
-          });
-          return;
-        }
 
         setMessage({ type: 'success', text: 'Konto restauracji utworzone! Sprawdź email (także SPAM/oferty).' });
       } else {
-        const { error } = await supabase!.auth.signInWithPassword({
-          email,
-          password,
-          options: { captchaToken },
-        });
+        const { error } = await supabase!.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      // Po udanym logowaniu / rejestracji resetujemy captcha
-      captchaRef.current?.resetCaptcha();
-      setCaptchaToken(null);
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message || 'Błąd autoryzacji' });
-      captchaRef.current?.resetCaptcha();
-      setCaptchaToken(null);
     } finally {
       setLoading(false);
     }
@@ -212,20 +174,9 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
             </div>
           )}
 
-          {/* hCaptcha – wymagana zarówno przy logowaniu jak i rejestracji */}
-          <div className="flex justify-center">
-            <HCaptcha
-              ref={captchaRef}
-              sitekey="113419d8-b4de-46cc-8826-7062a67ab4f8"
-              onVerify={(token) => setCaptchaToken(token)}
-              onExpire={() => setCaptchaToken(null)}
-              onError={() => setCaptchaToken(null)}
-            />
-          </div>
-
           <button 
             type="submit" 
-            disabled={loading || !captchaToken}
+            disabled={loading}
             className="w-full bg-chef-gold hover:bg-chef-gold2 text-white font-black py-5 rounded-2xl shadow-xl shadow-chef-gold/10 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed text-lg group active:scale-[0.98]"
           >
             {loading ? <Loader2 className="animate-spin" /> : (isSignUp ? 'ZAREJESTRUJ' : 'ZALOGUJ SIĘ')}
