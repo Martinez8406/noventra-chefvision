@@ -46,18 +46,31 @@ const App: React.FC = () => {
   const [publicHasWatermark, setPublicHasWatermark] = useState<boolean>(false);
   
   useEffect(() => {
-    const initAuth = async () => {
-      const { data: { session } } = await authService.getSession();
+    let subscription: any = null;
+    let initialised = false;
+
+    const markInitialised = (session: any) => {
       setSession(session);
-      setIsSyncing(false);
+      if (!initialised) {
+        initialised = true;
+        setIsSyncing(false);
+      }
     };
 
-    initAuth();
-
-    let subscription: any = null;
     if (supabase) {
-      const { data } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
+      // Listen first so we catch the PKCE code-exchange session right away.
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        markInitialised(session);
+      });
       subscription = data.subscription;
+
+      // Also call getSession — in PKCE flow this triggers the ?code= exchange
+      // and resolves to the real session before onAuthStateChange fires.
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        markInitialised(session);
+      });
+    } else {
+      setIsSyncing(false);
     }
 
     const handleHashChange = () => setHash(window.location.hash);
