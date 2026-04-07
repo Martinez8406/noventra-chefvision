@@ -16,7 +16,7 @@ export const WatermarkWrapper: React.FC<Props> = ({ children, show, className })
       {children}
       {show && (
         <div className="pointer-events-none absolute bottom-3 right-3 text-[10px] font-semibold text-white/60 drop-shadow-md">
-          Powered by <span className="font-bold">noventralabs.com</span>
+          Powered by <span className="font-bold">ChefVision.pl</span>
         </div>
       )}
     </div>
