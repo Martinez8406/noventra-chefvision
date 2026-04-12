@@ -4,11 +4,12 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = { ...process.env, ...loadEnv(mode, '.', '') };
+    const apiPort = env.STRIPE_API_PORT || '3002';
     return {
       server: {
         port: 3000,
         host: '0.0.0.0',
-        proxy: { '/api': 'http://localhost:3001' },
+        proxy: { '/api': `http://localhost:${apiPort}` },
         // SPA fallback: Stripe przekierowuje na http://localhost:3000/success
       },
       plugins: [

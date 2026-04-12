@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { LIGHTING_OPTIONS, PLATE_OPTIONS, ANGLE_OPTIONS, STYLE_OPTIONS } from '../constants';
+import { DEFAULT_LIGHTING, PLATE_OPTIONS, ANGLE_OPTIONS, STYLE_OPTIONS } from '../constants';
 import { generateDishImage } from '../services/geminiService';
 import { GeneratorParams, UserRole } from '../types';
 import { Loader2, Wand2, CheckCircle, Save } from 'lucide-react';
@@ -14,7 +14,7 @@ export const DishGenerator: React.FC<Props> = ({ userRole, onSaveStandard }) => 
   // Fix: Added missing 'style' property to satisfy GeneratorParams interface requirement
   const [params, setParams] = useState<GeneratorParams>({
     dishName: '',
-    lighting: LIGHTING_OPTIONS[0].value,
+    lighting: DEFAULT_LIGHTING.value,
     plateType: PLATE_OPTIONS[0].value,
     cameraAngle: ANGLE_OPTIONS[0].value,
     style: STYLE_OPTIONS[0].value,
@@ -65,17 +65,6 @@ export const DishGenerator: React.FC<Props> = ({ userRole, onSaveStandard }) => 
               value={params.dishName}
               onChange={(e) => setParams({ ...params, dishName: e.target.value })}
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Oświetlenie</label>
-            <select
-              className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none bg-white"
-              value={params.lighting}
-              onChange={(e) => setParams({ ...params, lighting: e.target.value })}
-            >
-              {LIGHTING_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-            </select>
           </div>
 
           <div>

@@ -11,7 +11,7 @@ import { MenuManager } from './components/MenuManager';
 import { DishDetailPanel } from './components/DishDetailPanel';
 import { Auth } from './components/Auth';
 import { SuccessPage } from './components/SuccessPage';
-import { BRAND_LOGO_SRC } from './constants';
+import { BRAND_LOGO_SRC, TRIAL_AI_CREDITS } from './constants';
 import { supabase, db, authService, uploadDishImage } from './services/supabaseService';
 import { createCheckoutSession, confirmPremiumSession } from './services/stripeService';
 import { 
@@ -121,7 +121,7 @@ const App: React.FC = () => {
             email: 'demo@chefvision.pl',
             subscriptionStatus: 'trial',
             generationsUsed: parseInt(typeof window !== 'undefined' ? localStorage.getItem('chefvision_user_gens') || '0' : '0'),
-            credits: Math.max(0, 5 - parseInt(typeof window !== 'undefined' ? localStorage.getItem('chefvision_user_gens') || '0' : '0')),
+            credits: Math.max(0, TRIAL_AI_CREDITS - parseInt(typeof window !== 'undefined' ? localStorage.getItem('chefvision_user_gens') || '0' : '0')),
           };
           setCurrentUser(demoProfile);
           const data = await db.getDishes('local-chef');
@@ -135,7 +135,7 @@ const App: React.FC = () => {
               email: session.user.email || '',
               subscriptionStatus: 'trial',
               generationsUsed: 0,
-              credits: 5,
+              credits: TRIAL_AI_CREDITS,
             };
           }
           setCurrentUser(profile);
@@ -394,7 +394,7 @@ const App: React.FC = () => {
              <div className="flex items-center gap-2 mb-1">
                 {isPremium ? <Crown size={16} /> : isTrial ? <Gift size={16} /> : <AlertTriangle size={16} />}
                 <span className="text-[10px] font-black uppercase tracking-widest">
-                  {isPremium ? 'Konto Premium' : isTrial ? `Tryb Trial: ${currentUser?.generationsUsed}/5` : 'Limit Darmowy'}
+                  {isPremium ? 'Konto Premium' : isTrial ? `Tryb Trial: ${currentUser?.generationsUsed}/${TRIAL_AI_CREDITS}` : 'Limit Darmowy'}
                 </span>
              </div>
           </div>

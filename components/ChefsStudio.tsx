@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { LIGHTING_OPTIONS, PLATE_OPTIONS, ANGLE_OPTIONS, STYLE_OPTIONS } from '../constants';
+import { DEFAULT_LIGHTING, PLATE_OPTIONS, ANGLE_OPTIONS, STYLE_OPTIONS, TRIAL_AI_CREDITS } from '../constants';
 import { generateDishImageWithAI, AiDishSettings, GenerationResult } from '../services/aiService';
 import { compressImageForUpload } from '../services/imageService';
 import { GeneratorParams, Backdrop } from '../types';
@@ -12,8 +12,6 @@ import {
   Palette, 
   Sparkles, 
   Layout, 
-  Sun, 
-  Moon, 
   UtensilsCrossed, 
   ChevronRight, 
   Camera, 
@@ -43,7 +41,7 @@ interface Props {
 export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, isSubscribed, generationsUsed, credits, onGenerationSuccess, onCreditsUpdated, onBuyPremium }) => {
   const [params, setParams] = useState<GeneratorParams>({
     dishName: '',
-    lighting: LIGHTING_OPTIONS[0].value,
+    lighting: DEFAULT_LIGHTING.value,
     plateType: PLATE_OPTIONS[0].value,
     cameraAngle: ANGLE_OPTIONS[0].value,
     style: STYLE_OPTIONS[0].value,
@@ -65,7 +63,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
   const tablewareInputRef = useRef<HTMLInputElement>(null);
   const dishRefInputRef = useRef<HTMLInputElement>(null);
 
-  const isFreeTrialOver = !isSubscribed && generationsUsed >= 5;
+  const isFreeTrialOver = !isSubscribed && generationsUsed >= TRIAL_AI_CREDITS;
   const hasNoCredits = !isSubscribed && credits <= 0;
   const hybridModeActive = !!dishReferenceImage;
   const bistroLifestyleValue = STYLE_OPTIONS.find((o) => o.label === 'Bistro Lifestyle')?.value;
@@ -74,8 +72,21 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
   const streetFoodValue = STYLE_OPTIONS.find((o) => o.label === 'Street Food')?.value;
   const isStreetFood = !!streetFoodValue && params.style === streetFoodValue;
 
-  const bistroDefaultLightingValue =
-    LIGHTING_OPTIONS.find((o) => o.label === 'Naturalne')?.value ?? LIGHTING_OPTIONS[0].value;
+  const fineDiningValue = STYLE_OPTIONS.find((o) => o.label === 'Fine Dining')?.value;
+  const isFineDining = !!fineDiningValue && params.style === fineDiningValue;
+  const fineDiningWoodPlateValue = PLATE_OPTIONS.find((o) => o.label === 'Drewno')?.value;
+  const fineDiningDefaultPlateValue =
+    PLATE_OPTIONS.find((o) => o.label === 'Biała Porcelana')?.value ?? PLATE_OPTIONS[0].value;
+
+  const rusticValue = STYLE_OPTIONS.find((o) => o.label === 'Rustic')?.value;
+  const isRustic = !!rusticValue && params.style === rusticValue;
+  const rusticDefaultPlateValue =
+    PLATE_OPTIONS.find((o) => o.label === 'Drewno')?.value ??
+    PLATE_OPTIONS.find((o) => o.label === 'Ceramika')?.value ??
+    PLATE_OPTIONS[0].value;
+  const rusticPlateLockTooltip =
+    'Styl Rustic wyłącza kamień i białą porcelanę — wybierz drewno, ceramikę lub własną zastawę.';
+
   const bistroDefaultPlateValue =
     PLATE_OPTIONS.find((o) => o.label === 'Biała Porcelana')?.value ?? PLATE_OPTIONS[0].value;
   const streetFoodDefaultPlateValue =
@@ -87,15 +98,14 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
     if (hybridModeActive) setAdvancedSettingsOpen(false);
   }, [hybridModeActive]);
 
-  // Style Logic: auto-override lighting + podłoże dla Bistro Lifestyle.
+  // Style Logic: auto-override podłoże dla Bistro Lifestyle.
   useEffect(() => {
     if (!isBistroLifestyle) return;
     setParams((prev) => ({
       ...prev,
-      lighting: bistroDefaultLightingValue,
       plateType: bistroDefaultPlateValue,
     }));
-  }, [isBistroLifestyle, bistroDefaultLightingValue, bistroDefaultPlateValue]);
+  }, [isBistroLifestyle, bistroDefaultPlateValue]);
 
   // Style Logic (UI-only): Street Food blokuje ciemne tekstury i białą porcelanę.
   useEffect(() => {
@@ -116,6 +126,35 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
       return { ...prev, plateType: streetFoodDefaultPlateValue };
     });
   }, [isStreetFood, streetFoodDefaultPlateValue]);
+
+  // Fine Dining: drewniana deska nie pasuje do estetyki — brak wyboru tej opcji (wymuszamy inne podłoże).
+  useEffect(() => {
+    if (!isFineDining || !fineDiningWoodPlateValue) return;
+    setParams((prev) => {
+      if (prev.plateType !== fineDiningWoodPlateValue) return prev;
+      return { ...prev, plateType: fineDiningDefaultPlateValue };
+    });
+  }, [isFineDining, fineDiningWoodPlateValue, fineDiningDefaultPlateValue]);
+
+  // Rustic: bez chłodnego kamienia i formalnej białej porcelany — tylko ciepłe podłoża.
+  useEffect(() => {
+    if (!isRustic) return;
+
+    const lockedValues = new Set(
+      PLATE_OPTIONS.filter((opt) => {
+        const label = opt.label.toLowerCase();
+        const value = String(opt.value).toLowerCase();
+        const isKamienLup = value.includes('stone') || label.includes('kamień') || label.includes('łupek') || value.includes('dark');
+        const isBialaPorcelana = label.includes('biała porcelana') || value.includes('porcelain');
+        return isKamienLup || isBialaPorcelana;
+      }).map((opt) => opt.value)
+    );
+
+    setParams((prev) => {
+      if (!lockedValues.has(prev.plateType)) return prev;
+      return { ...prev, plateType: rusticDefaultPlateValue };
+    });
+  }, [isRustic, rusticDefaultPlateValue]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -159,7 +198,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
     return {
       ...params,
       style: STYLE_OPTIONS[0].value,
-      lighting: LIGHTING_OPTIONS[0].value,
+      lighting: DEFAULT_LIGHTING.value,
       plateType: PLATE_OPTIONS[0].value,
       cameraAngle: ANGLE_OPTIONS[0].value,
     };
@@ -167,7 +206,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
 
   const buildAiSettings = (effectiveParams: GeneratorParams): AiDishSettings => {
     const styleLabel = STYLE_OPTIONS.find(o => o.value === effectiveParams.style)?.label || effectiveParams.style;
-    const lightingLabel = LIGHTING_OPTIONS.find(o => o.value === effectiveParams.lighting)?.label || effectiveParams.lighting;
+    const lightingLabel = DEFAULT_LIGHTING.label;
     const plateLabel = PLATE_OPTIONS.find(o => o.value === effectiveParams.plateType)?.label || effectiveParams.plateType;
     const angleLabel = ANGLE_OPTIONS.find(o => o.value === effectiveParams.cameraAngle)?.label || effectiveParams.cameraAngle;
 
@@ -267,7 +306,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
           </div>
           {!isSubscribed && (
             <div className="text-[10px] font-black uppercase tracking-widest">
-              <span className={hasNoCredits ? 'text-red-500' : 'text-slate-400'}>Kredyty: {credits}/5</span>
+              <span className={hasNoCredits ? 'text-red-500' : 'text-slate-400'}>Kredyty: {credits}/{TRIAL_AI_CREDITS}</span>
             </div>
           )}
         </div>
@@ -417,35 +456,14 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
 
             {advancedSettingsOpen && (
               <div className="mt-6 space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-4">
-                    <label className="text-[10px] font-black uppercase text-slate-400">Stylistyka</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {STYLE_OPTIONS.map(opt => (
-                        <button key={opt.value} onClick={() => setParams({ ...params, style: opt.value })} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.style === opt.value ? 'bg-chef-teal text-white border-chef-teal' : 'bg-white text-slate-500 border-slate-50'}`}>
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <label className="text-[10px] font-black uppercase text-slate-400">Oświetlenie</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {LIGHTING_OPTIONS.map(opt => {
-                        const isLockedByBistro = isBistroLifestyle && opt.label !== 'Naturalne';
-                        return (
-                          <button
-                            key={opt.value}
-                            onClick={() => setParams({ ...params, lighting: opt.value })}
-                            disabled={isLockedByBistro}
-                            title={isLockedByBistro ? 'Styl Bistro Lifestyle wymaga naturalnego oświetlenia.' : undefined}
-                            className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.lighting === opt.value ? 'bg-chef-gold text-white border-chef-gold' : 'bg-white text-slate-500 border-slate-50'} disabled:opacity-30 disabled:cursor-not-allowed`}
-                          >
-                            {opt.label}
-                          </button>
-                        );
-                      })}
-                    </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black uppercase text-slate-400">Stylistyka</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {STYLE_OPTIONS.map(opt => (
+                      <button key={opt.value} onClick={() => setParams({ ...params, style: opt.value })} className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${params.style === opt.value ? 'bg-chef-teal text-white border-chef-teal' : 'bg-white text-slate-500 border-slate-50'}`}>
+                        {opt.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -458,18 +476,35 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
                         const label = opt.label.toLowerCase();
                         const isKamienLupOption = value.includes('stone') || label.includes('kamień') || label.includes('łupek') || value.includes('dark');
                         const isBialaPorcelanaOption = label.includes('biała porcelana') || value.includes('porcelain');
+                        const isDrewnoOption = label.includes('drewno') || value.includes('wood');
 
                         const isStyleLockedBistro = isBistroLifestyle && isKamienLupOption;
                         const isStyleLockedStreetFood = isStreetFood && (isKamienLupOption || isBialaPorcelanaOption);
+                        const isStyleLockedFineDining = isFineDining && isDrewnoOption;
+                        const isStyleLockedRustic = isRustic && (isKamienLupOption || isBialaPorcelanaOption);
 
-                        const isDisabled = !!customBaseImage || !!customTablewareImage || isStyleLockedBistro || isStyleLockedStreetFood;
+                        const isDisabled =
+                          !!customBaseImage ||
+                          !!customTablewareImage ||
+                          isStyleLockedBistro ||
+                          isStyleLockedStreetFood ||
+                          isStyleLockedFineDining ||
+                          isStyleLockedRustic;
 
                         return (
                           <button
                             key={opt.value}
                             onClick={() => setParams({ ...params, plateType: opt.value })}
                             disabled={isDisabled}
-                            title={isStyleLockedBistro ? bistroLifestyleTooltipText : undefined}
+                            title={
+                              isStyleLockedBistro
+                                ? bistroLifestyleTooltipText
+                                : isStyleLockedFineDining
+                                  ? 'Styl Fine Dining nie obejmuje drewnianej deski — wybierz inne podłoże.'
+                                  : isStyleLockedRustic
+                                    ? rusticPlateLockTooltip
+                                    : undefined
+                            }
                             className={`p-4 rounded-2xl text-xs font-black border-2 transition-all ${
                               params.plateType === opt.value ? 'bg-chef-dark text-white border-chef-dark' : 'bg-white text-slate-500 border-slate-50'
                             } disabled:opacity-30 disabled:cursor-not-allowed`}

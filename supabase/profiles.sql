@@ -72,7 +72,7 @@ begin
     end if;
 
     if has_ai_credits then
-      execute 'update public.profiles set ai_credits = coalesce(ai_credits, 5) where id = $1'
+      execute 'update public.profiles set ai_credits = coalesce(ai_credits, 20) where id = $1'
       using new.id;
     end if;
 
@@ -109,6 +109,15 @@ create policy "profiles_select_own"
   on public.profiles
   for select
   using (auth.uid() = id);
+
+-- Public Menu Live: gość skanuje QR w przeglądarce bez logowania — musi móc odczytać branding (kolory, logo, nazwa).
+-- Bez tej polityki tylko zalogowany właściciel widzi zapisany wygląd; anon widzi domyślne kolory.
+drop policy if exists "profiles_select_public_menu" on public.profiles;
+create policy "profiles_select_public_menu"
+  on public.profiles
+  for select
+  to anon, authenticated
+  using (true);
 
 drop policy if exists "profiles_update_own" on public.profiles;
 create policy "profiles_update_own"

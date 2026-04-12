@@ -73,11 +73,20 @@ export async function generateDishImageWithAI(
     }),
   });
 
+  const raw = await response.text();
   let data: any;
   try {
-    data = await response.json();
+    data = raw ? JSON.parse(raw) : null;
   } catch {
-    throw new Error('Invalid server response');
+    const hint =
+      response.status === 502 || response.status === 503 || response.status === 504
+        ? ' Serwer API Chef Vision (domyślnie port 3002, STRIPE_API_PORT) prawdopodobnie nie działa — uruchom `npm run dev` (Vite + backend), nie samo `vite`.'
+        : response.status === 404
+          ? ' Endpoint /api nie istnieje — w trybie dev potrzebny jest backend Chef Vision (proxy na STRIPE_API_PORT / 3002); `vite preview` sam z siebie nie obsługuje /api.'
+          : '';
+    throw new Error(
+      `Nieprawidłowa odpowiedź serwera (HTTP ${response.status}).${hint}`
+    );
   }
 
   if (!response.ok) {

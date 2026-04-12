@@ -1,12 +1,14 @@
 /** Logo w `public/logo.png` */
 export const BRAND_LOGO_SRC = '/logo.png';
 
-export const LIGHTING_OPTIONS = [
-  { label: 'Złota Godzina', value: 'Golden Hour (warm, soft sunlight)' },
-  { label: 'Studio White', value: 'Studio lighting, clean white, clinical' },
-  { label: 'Dark Mood', value: 'Moody, high contrast, dark shadows' },
-  { label: 'Naturalne', value: 'Natural daylight' },
-];
+/** Początkowa liczba kredytów AI dla kont trial / darmowych (nie-Premium). */
+export const TRIAL_AI_CREDITS = 20;
+
+/** Domyślne oświetlenie w promptach AI (brak wyboru w UI). */
+export const DEFAULT_LIGHTING = {
+  label: 'Złota Godzina',
+  value: 'Golden Hour (warm, soft sunlight)',
+} as const;
 
 export const PLATE_OPTIONS = [
   { label: 'Kamień/Łupek', value: 'Natural dark stone platter' },

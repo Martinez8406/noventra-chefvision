@@ -73,7 +73,8 @@ app.post('/api/generate-image', async (req, res) => {
   return res.status(result.status).json(result.body);
 });
 
-const PORT = process.env.STRIPE_API_PORT || 3001;
+// Domyślnie 3002 — 3001 często zajęty przez inną stronę (np. chefvision.pl) równolegle w dev.
+const PORT = process.env.STRIPE_API_PORT || 3002;
 app.listen(PORT, () => {
   console.log(`Stripe API: http://localhost:${PORT}`);
 });

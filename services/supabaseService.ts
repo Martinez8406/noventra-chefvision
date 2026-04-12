@@ -1,6 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
+import { TRIAL_AI_CREDITS } from '../constants';
 import { Dish, UserProfile, DishStatus, SubscriptionStatus } from '../types';
 
 // Vite exposes env vars via import.meta.env (only keys prefixed with VITE_).
@@ -304,7 +305,7 @@ export const authService = {
     
     // Jeśli nie ma Supabase (Tryb Demo)
     if (!supabase) {
-      const credits = Math.max(0, 5 - localGens);
+      const credits = Math.max(0, TRIAL_AI_CREDITS - localGens);
       const status: SubscriptionStatus = localPremiumFlag
         ? 'premium'
         : credits <= 0 ? 'free_limited' : 'trial';
@@ -324,20 +325,20 @@ export const authService = {
 
       let { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       
-      // Nowy użytkownik: utwórz profil z 5 kredytami
+      // Nowy użytkownik: utwórz profil z kredytami trial
       if (!profileData) {
         const { data: inserted } = await supabase.from('profiles').upsert({
           id: user.id,
           name: user.email?.split('@')[0] || 'Restauracja',
           email: user.email,
-          ai_credits: 5,
+          ai_credits: TRIAL_AI_CREDITS,
           subscription_status: 'trial'
         }).select().single();
         profileData = inserted;
       }
 
       const gensUsed = profileData?.generations_used ?? localGens;
-      const aiCredits = profileData?.ai_credits ?? 5;
+      const aiCredits = profileData?.ai_credits ?? TRIAL_AI_CREDITS;
       const isPremiumFromDb = profileData?.subscription_status === 'premium';
       const isPremium = isPremiumFromDb || localPremiumFlag;
       
@@ -346,7 +347,7 @@ export const authService = {
         status = 'premium';
       } else if (aiCredits <= 0) {
         status = 'free_limited';
-      } else if (gensUsed >= 5) {
+      } else if (gensUsed >= TRIAL_AI_CREDITS) {
         status = 'free_limited';
       }
 
@@ -376,7 +377,7 @@ export const authService = {
         email: data.email,
         subscriptionStatus: (data.subscription_status as SubscriptionStatus) ?? 'trial',
         generationsUsed: data.generations_used ?? 0,
-        credits: data.ai_credits ?? 5
+        credits: data.ai_credits ?? TRIAL_AI_CREDITS
       };
     } catch (e) {
       console.error('Błąd pobierania profilu po ID:', e);
@@ -394,9 +395,9 @@ export const authService = {
       try {
         const { data: profile } = await supabase.from('profiles').select('ai_credits, subscription_status').eq('id', userId).single();
         const isPremium = profile?.subscription_status === 'premium';
-        if (!isPremium && profile && (profile.ai_credits ?? 5) > 0) {
+        if (!isPremium && profile && (profile.ai_credits ?? TRIAL_AI_CREDITS) > 0) {
           await supabase.from('profiles').update({
-            ai_credits: Math.max(0, (profile.ai_credits ?? 5) - 1),
+            ai_credits: Math.max(0, (profile.ai_credits ?? TRIAL_AI_CREDITS) - 1),
           }).eq('id', userId);
         }
       } catch (e) {
@@ -407,7 +408,7 @@ export const authService = {
     const { data: updated } = supabase
       ? await supabase.from('profiles').select('ai_credits').eq('id', userId).single()
       : { data: null };
-    const credits = updated?.ai_credits ?? Math.max(0, 5 - newGens);
+    const credits = updated?.ai_credits ?? Math.max(0, TRIAL_AI_CREDITS - newGens);
     return { generationsUsed: newGens, credits };
   },
 
