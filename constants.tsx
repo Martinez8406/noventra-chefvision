@@ -33,3 +33,22 @@ export const STYLE_OPTIONS = [
 export const ALLERGENS_LIST: string[] = [
   'Gluten', 'Laktoza', 'Orzechy', 'Skorupiaki', 'Jaja', 'Ryby', 'Soja', 'Gorczyca'
 ];
+
+/** Kategorie menu cyfrowego — kolejność = kolejność sekcji u gościa. „Inne” = fallback (brak kategorii / stare wpisy). */
+export const MENU_CATEGORIES = [
+  'Śniadania',
+  'Przystawki',
+  'Zupy',
+  'Sałatki',
+  'Dania główne',
+  'Burgery / Sandwicze',
+  'Menu dla dzieci',
+  'Dania wegetariańskie / wegańskie',
+  'Desery',
+  'Dodatki (frytki, sosy, pieczywo)',
+  'Napoje zimne',
+  'Napoje gorące',
+  'Alkohole',
+  'Oferta sezonowa',
+  'Inne',
+] as const;

@@ -3,6 +3,7 @@ import { Dish } from '../types';
 import { PublicDishCard } from './PublicDishCard';
 import { PublicDishDetail } from './PublicDishDetail';
 import { supabase } from '../services/supabaseService';
+import { MENU_CATEGORIES } from '../constants';
 
 interface Props {
   dishes: Dish[];
@@ -14,7 +15,7 @@ interface Props {
   loading?: boolean;
 }
 
-const CATEGORY_ORDER = ['Przystawka', 'Zupy', 'Sałatki', 'Dania główne', 'Desery', 'Napoje', 'Inne'];
+const CATEGORY_ORDER = [...MENU_CATEGORIES];
 
 /**
  * Publiczny widok menu dla gości – bez logowania.

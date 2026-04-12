@@ -3,9 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Dish } from '../types';
 import { Link2, Eye, EyeOff, ExternalLink, QrCode, Trash2, Edit } from 'lucide-react';
 import { supabase } from '../services/supabaseService';
+import { MENU_CATEGORIES } from '../constants';
 import { UploadCover } from './UploadCover';
-
-const CATEGORIES = ['Przystawka', 'Zupy', 'Sałatki', 'Dania główne', 'Desery', 'Napoje', 'Inne'] as const;
 
 interface Props {
   dishes: Dish[];
@@ -252,7 +251,7 @@ export const MenuManager: React.FC<Props> = ({
                     className="w-36 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
                   >
                     <option value="">— brak —</option>
-                    {CATEGORIES.map((cat) => (
+                    {MENU_CATEGORIES.map((cat) => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
