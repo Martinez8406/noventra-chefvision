@@ -6,6 +6,7 @@ import { BackdropLab } from './components/BackdropLab';
 import { PublicMenu } from './components/PublicMenu';
 import { QRGenerator } from './components/QRGenerator';
 import { UploadLogo } from './components/UploadLogo';
+import { GoogleReviewsSettings } from './components/GoogleReviewsSettings';
 import { KitchenWall } from './components/KitchenWall';
 import { MenuManager } from './components/MenuManager';
 import { DishDetailPanel } from './components/DishDetailPanel';
@@ -484,6 +485,7 @@ const App: React.FC = () => {
                 </div>
               )}
               <QRGenerator userId={currentUser?.id ?? null} />
+              <GoogleReviewsSettings userId={currentUser?.id ?? null} />
             </div>
           )}
         </div>
