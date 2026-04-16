@@ -5,4 +5,4 @@ alter table public.dishes
   add column if not exists translations jsonb default null;
 
 comment on column public.dishes.translations is
-  'Tłumaczenia menu: {"en":{"name":"...","description":"..."},"uk":{...},"de":{...}}';
+  'Tłumaczenia opisu i alergenów: {"en":{"description":"...","allergens":[]},...}; nazwa zawsze w Dish.name';

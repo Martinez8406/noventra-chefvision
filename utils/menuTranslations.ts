@@ -33,7 +33,7 @@ export function getPublicDishCopy(
   }
   const t = dish.translations?.[locale];
   return {
-    name: (t?.name?.trim() || dish.name) as string,
+    name: dish.name,
     description: (t?.description?.trim() || dish.description) as string,
   };
 }

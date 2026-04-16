@@ -104,7 +104,7 @@ export async function generateDishImageWithAI(
 }
 
 /**
- * Wywołuje serwerowe tłumaczenie nazwy i opisu dania (OpenAI) i zapis w Supabase.
+ * Wywołuje serwerowe tłumaczenie opisu i alergenów (OpenAI); nazwa zostaje z bazy.
  * Nie rzuca przy błędzie HTTP — zwraca null (log w konsoli).
  */
 export async function requestMenuTranslations(

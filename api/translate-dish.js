@@ -35,11 +35,9 @@ function validateTranslations(data, sourceAllergens) {
   for (const code of ['en', 'uk', 'de']) {
     const entry = data[code];
     if (!entry || typeof entry !== 'object') return null;
-    const name = entry.name;
     const description = entry.description;
-    if (typeof name !== 'string' || typeof description !== 'string') return null;
-    if (!name.trim() || !description.trim()) return null;
-    const base = { name: name.trim(), description: description.trim() };
+    if (typeof description !== 'string' || !description.trim()) return null;
+    const base = { description: description.trim() };
     if (n === 0) {
       if (entry.allergens === undefined) {
         base.allergens = [];
@@ -61,7 +59,7 @@ function validateTranslations(data, sourceAllergens) {
 }
 
 /**
- * Tłumaczy nazwę i opis dania (PL → EN, UK, DE) i zapisuje w kolumnie `translations`.
+ * Tłumaczy opis i alergeny (PL → EN, UK, DE) do kolumny `translations`. Nazwa dania nie jest tłumaczona.
  * Wymaga JWT + roli właściciela rekordu (`userId`).
  */
 export async function handleTranslateDish({ authorization, body = {} }) {
@@ -133,17 +131,17 @@ Brak zaznaczonych alergenów po stronie PL – dla każdego języka ustaw "aller
 
   const schemaExample =
     allergensPL.length > 0
-      ? '{"en":{"name":"...","description":"...","allergens":["..."]},"uk":{"name":"...","description":"...","allergens":["..."]},"de":{"name":"...","description":"...","allergens":["..."]}}'
-      : '{"en":{"name":"...","description":"...","allergens":[]},"uk":{"name":"...","description":"...","allergens":[]},"de":{"name":"...","description":"...","allergens":[]}}';
+      ? '{"en":{"description":"...","allergens":["..."]},"uk":{"description":"...","allergens":["..."]},"de":{"description":"...","allergens":["..."]}}'
+      : '{"en":{"description":"...","allergens":[]},"uk":{"description":"...","allergens":[]},"de":{"description":"...","allergens":[]}}';
 
-  const prompt = `Jesteś profesjonalnym tłumaczem kulinarnym. Przetłumacz poniższą nazwę i opis dania na języki: angielski, ukraiński i niemiecki. Zachowaj oryginalne nazwy własne (np. "Pierogi Ruskie", "Żurek", "Oscypek") — nie tłumacz ich dosłownie na inny język; jeśli potrzeba, krótko wyjaśnij w opisie.
+  const prompt = `Jesteś profesjonalnym tłumaczem kulinarnym. NIE tłumacz nazwy dania — nazwa własna pozostaje w oryginale; w menu jest już zapisana osobno. Przetłumacz WYŁĄCZNIE poniższy opis marketingowy na języki: angielski, ukraiński i niemiecki. Zachowaj sens, ton restauracji i ewentualne nazwy własne składników w opisie w naturalny sposób.
 ${allergenBlock}
 
-Zwróć WYŁĄCZNIE jeden obiekt JSON (bez markdown, bez komentarzy) o dokładnie takiej strukturze:
+Zwróć WYŁĄCZNIE jeden obiekt JSON (bez markdown, bez komentarzy) — każdy z kluczy en, uk, de zawiera TYLKO pola "description" i "allergens" (bez pola "name"):
 ${schemaExample}
 
-Nazwa dania (PL): ${name}
-Opis dania (PL): ${description}`;
+Nazwa dania (nie tłumacz, tylko kontekst): ${name}
+Opis dania do przetłumaczenia (PL): ${description}`;
 
   const openai = new OpenAI({ apiKey });
 

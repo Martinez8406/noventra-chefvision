@@ -23,8 +23,8 @@ export type Allergen = 'Gluten' | 'Laktoza' | 'Orzechy' | 'Skorupiaki' | 'Jaja' 
 /** Języki w publicznym menu (UI); `pl` = oryginał z panelu (polski). */
 export type PublicMenuLocale = 'pl' | 'en' | 'uk' | 'de';
 
+/** Nazwa dania jest zawsze z `Dish.name` (PL) — nie tłumaczymy w API. */
 export interface MenuTranslationEntry {
-  name: string;
   description: string;
   /** Etykiety alergenów w danym języku — ta sama kolejność co `dish.allergens` (PL). */
   allergens?: string[];
@@ -43,7 +43,7 @@ export interface Dish {
   menuPrice?: string | null;
   /** Kategoria w karcie menu */
   category?: string | null;
-  /** Tłumaczenia nazwy i opisu (JSONB w Supabase). Klucze: en, uk, de. */
+  /** Tłumaczenia opisu i alergenów (JSONB). Klucze: en, uk, de. Nazwa zawsze z pola `name`. */
   translations?: Partial<Record<'en' | 'uk' | 'de', MenuTranslationEntry>> | null;
   isStandard: boolean;
   isOnline: boolean;
