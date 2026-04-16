@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Dish } from '../types';
+import { Dish, PublicMenuLocale } from '../types';
 import { PublicDishCard } from './PublicDishCard';
 import { PublicDishDetail } from './PublicDishDetail';
+import { MenuLanguageSwitcher } from './MenuLanguageSwitcher';
 import { supabase } from '../services/supabaseService';
 import { MENU_CATEGORIES } from '../constants';
 
@@ -16,6 +17,11 @@ interface Props {
 }
 
 const CATEGORY_ORDER = [...MENU_CATEGORIES];
+
+const MENU_LOCALE_KEY = (uid: string) => `chefvision_public_menu_locale:${uid}`;
+
+const isPublicLocale = (v: string): v is PublicMenuLocale =>
+  v === 'pl' || v === 'en' || v === 'uk' || v === 'de';
 
 /**
  * Publiczny widok menu dla gości – bez logowania.
@@ -42,6 +48,26 @@ export const PublicMenu: React.FC<Props> = ({
   const [restaurantName, setRestaurantName] = useState<string | null>(null);
   const [googlePlaceId, setGooglePlaceId] = useState<string | null>(null);
   const [showReviewTooltip, setShowReviewTooltip] = useState(false);
+  const [menuLocale, setMenuLocale] = useState<PublicMenuLocale>('pl');
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(MENU_LOCALE_KEY(userId));
+      if (raw && isPublicLocale(raw)) setMenuLocale(raw);
+      else setMenuLocale('pl');
+    } catch {
+      setMenuLocale('pl');
+    }
+  }, [userId]);
+
+  const persistMenuLocale = (locale: PublicMenuLocale) => {
+    setMenuLocale(locale);
+    try {
+      localStorage.setItem(MENU_LOCALE_KEY(userId), locale);
+    } catch {
+      /* ignore */
+    }
+  };
 
   useEffect(() => {
     if (!supabase || !userId) return;
@@ -101,7 +127,14 @@ export const PublicMenu: React.FC<Props> = ({
     if (dish) {
       return (
         <>
-          <PublicDishDetail dish={dish} onBack={goBack} showWatermark={showWatermark} fontFamily={fontFamily} />
+          <MenuLanguageSwitcher value={menuLocale} onChange={persistMenuLocale} />
+          <PublicDishDetail
+            dish={dish}
+            menuLocale={menuLocale}
+            onBack={goBack}
+            showWatermark={showWatermark}
+            fontFamily={fontFamily}
+          />
           {hasGoogleReviews && (
             <div className="fixed bottom-6 right-6 z-[120] flex items-center gap-2">
               {showReviewTooltip && (
@@ -141,6 +174,7 @@ export const PublicMenu: React.FC<Props> = ({
 
   return (
     <div className="min-h-screen pb-20 px-4 sm:px-6" style={{ backgroundColor: secondaryColor, fontFamily }}>
+      <MenuLanguageSwitcher value={menuLocale} onChange={persistMenuLocale} />
       <div className="max-w-6xl mx-auto pt-5 sm:pt-7">
         {/* HERO + tożsamość restauracji pod zdjęciem */}
         <section className="relative">
@@ -216,6 +250,7 @@ export const PublicMenu: React.FC<Props> = ({
                 <PublicDishCard
                   key={dish.id}
                   dish={dish}
+                  menuLocale={menuLocale}
                   basePath={menuBasePath}
                   baseHash={menuBaseHash}
                   usePathRouting={!!usePathRouting}

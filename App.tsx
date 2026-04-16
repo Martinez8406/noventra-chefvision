@@ -14,6 +14,8 @@ import { Auth } from './components/Auth';
 import { SuccessPage } from './components/SuccessPage';
 import { BRAND_LOGO_SRC, TRIAL_AI_CREDITS } from './constants';
 import { supabase, db, authService, uploadDishImage } from './services/supabaseService';
+import { requestMenuTranslations } from './services/aiService';
+import { shouldRequestMenuTranslation } from './utils/menuTranslations';
 import { createCheckoutSession, confirmPremiumSession } from './services/stripeService';
 import { 
   LayoutDashboard, 
@@ -219,12 +221,31 @@ const App: React.FC = () => {
 
   const handleUpdateDish = async (updatedDish: Dish) => {
     setIsSyncing(true);
-    const saved = await db.saveDish(updatedDish);
-    if (saved) {
-      setDishes(prev => prev.map(d => d.id === saved.id ? saved : d));
-      setSelectedDishId(null);
+    try {
+      const saved = await db.saveDish(updatedDish);
+      if (saved) {
+        setDishes((prev) => prev.map((d) => (d.id === saved.id ? saved : d)));
+        setSelectedDishId(null);
+        if (supabase && shouldRequestMenuTranslation(saved)) {
+          void requestMenuTranslations(saved.id).then((patch) => {
+            if (patch?.translations) {
+              setDishes((prev) =>
+                prev.map((d) =>
+                  d.id === saved.id ? { ...d, translations: patch.translations } : d
+                )
+              );
+            } else {
+              setStatusToast(
+                'Tłumaczenia menu: błąd (sprawdź konsolę, OPENAI_API_KEY, migrację kolumny translations).'
+              );
+              setTimeout(() => setStatusToast(null), 8000);
+            }
+          });
+        }
+      }
+    } finally {
+      setIsSyncing(false);
     }
-    setIsSyncing(false);
   };
 
   const handleApprove = async (id: string) => {

@@ -1,12 +1,14 @@
 
 import React from 'react';
-import { Dish } from '../types';
+import { Dish, PublicMenuLocale } from '../types';
+import { getPublicAllergenDisplay, getPublicDishCopy } from '../utils/menuTranslations';
 import { Youtube, Instagram, Link2, Music2, ChevronLeft, Info, Utensils, UtensilsCrossed } from 'lucide-react';
 import { BRAND_LOGO_SRC } from '../constants';
 import { WatermarkWrapper } from './WatermarkWrapper';
 
 interface Props {
   dish: Dish;
+  menuLocale?: PublicMenuLocale;
   onBack: () => void;
   showWatermark?: boolean;
   fontFamily?: string;
@@ -26,15 +28,22 @@ const renderSocialIcon = (url: string) => {
   return <Link2 size={32} />;
 };
 
-export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark, fontFamily }) => {
+export const PublicDishDetail: React.FC<Props> = ({
+  dish,
+  menuLocale = 'pl',
+  onBack,
+  showWatermark,
+  fontFamily,
+}) => {
+  const copy = getPublicDishCopy(dish, menuLocale);
+  const allergensUi = getPublicAllergenDisplay(dish, menuLocale);
   const ingredients = dish.ingredients || [];
-  const allergens = dish.allergens || [];
   return (
     <div className="min-h-screen bg-white animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ fontFamily: fontFamily || 'Inter' }}>
       {/* Hero Image Section – wysokość tak, by całe danie + znak wodny były widoczne */}
       <WatermarkWrapper show={!!showWatermark} className="h-[75vh] md:h-[85vh] min-h-[400px] overflow-hidden bg-slate-950">
         <>
-          <img src={dish.imageUrl} alt={dish.name} className="w-full h-full object-cover object-center scale-150" />
+          <img src={dish.imageUrl} alt={copy.name} className="w-full h-full object-cover object-center scale-150" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
           <button 
@@ -45,7 +54,7 @@ export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark,
           </button>
 
           <div className="absolute bottom-8 left-8 right-8 text-white">
-            <h1 className="text-4xl md:text-6xl font-serif italic mb-2 tracking-tight">{dish.name}</h1>
+            <h1 className="text-4xl md:text-6xl font-serif italic mb-2 tracking-tight">{copy.name}</h1>
           </div>
         </>
       </WatermarkWrapper>
@@ -55,20 +64,20 @@ export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark,
         {/* Alergeny (zamienione z sekcją "O daniu") */}
         <div className="space-y-3 bg-amber-50/60 border border-amber-100 rounded-2xl p-4">
           <h2 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.3em] flex items-center gap-2">
-            <UtensilsCrossed size={14} className="text-amber-600" /> Alergeny
+            <UtensilsCrossed size={14} className="text-amber-600" /> {allergensUi.sectionTitle}
           </h2>
           <div className="flex flex-wrap gap-2">
-            {allergens.length > 0 ? (
-              allergens.map((a) => (
+            {allergensUi.labels.length > 0 ? (
+              allergensUi.labels.map((a, i) => (
                 <span
-                  key={a}
+                  key={`${dish.id}-allergen-${i}`}
                   className="bg-amber-50 text-amber-900 px-4 py-2 rounded-xl text-xs font-black uppercase border border-amber-100"
                 >
                   {a}
                 </span>
               ))
             ) : (
-              <span className="text-slate-400 text-sm font-medium">Brak głównych alergenów</span>
+              <span className="text-slate-400 text-sm font-medium">{allergensUi.noAllergensMessage}</span>
             )}
           </div>
         </div>
@@ -95,7 +104,7 @@ export const PublicDishDetail: React.FC<Props> = ({ dish, onBack, showWatermark,
               <Info size={14} className="text-amber-500" /> O daniu
             </h3>
             <p className="text-base text-slate-700 leading-relaxed font-medium">
-              {dish.description}
+              {copy.description}
             </p>
           </div>
         </div>

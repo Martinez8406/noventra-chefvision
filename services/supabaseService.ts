@@ -88,6 +88,7 @@ const mapRow = (row: any): Dish => ({
   videoUrl: row.social_link ?? row.video_url ?? row.videoUrl ?? undefined,
   menuPrice: row.menu_price ?? row.menuPrice ?? null,
   category: row.category ?? null,
+  translations: row.translations ?? null,
 });
 
 export const db = {
@@ -143,6 +144,7 @@ export const db = {
       payload.social_link = (dish as any).videoUrl ?? (dish as any).social_link ?? null;
       payload.menu_price  = (dish as any).menuPrice ?? (dish as any).menu_price ?? null;
       payload.category    = (dish as any).category ?? null;
+      if (dish.translations !== undefined) payload.translations = dish.translations;
 
       const { data, error } = await supabase
         .from('dishes')

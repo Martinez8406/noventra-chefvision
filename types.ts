@@ -20,6 +20,16 @@ export enum BlurLevel {
 
 export type Allergen = 'Gluten' | 'Laktoza' | 'Orzechy' | 'Skorupiaki' | 'Jaja' | 'Ryby' | 'Soja' | 'Gorczyca';
 
+/** Języki w publicznym menu (UI); `pl` = oryginał z panelu (polski). */
+export type PublicMenuLocale = 'pl' | 'en' | 'uk' | 'de';
+
+export interface MenuTranslationEntry {
+  name: string;
+  description: string;
+  /** Etykiety alergenów w danym języku — ta sama kolejność co `dish.allergens` (PL). */
+  allergens?: string[];
+}
+
 export interface Dish {
   id: string;
   name: string;
@@ -33,6 +43,8 @@ export interface Dish {
   menuPrice?: string | null;
   /** Kategoria w karcie menu */
   category?: string | null;
+  /** Tłumaczenia nazwy i opisu (JSONB w Supabase). Klucze: en, uk, de. */
+  translations?: Partial<Record<'en' | 'uk' | 'de', MenuTranslationEntry>> | null;
   isStandard: boolean;
   isOnline: boolean;
   status: DishStatus;

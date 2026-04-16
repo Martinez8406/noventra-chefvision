@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
+import { getSupabaseServerCredentials } from './supabaseServerEnv.js';
 
 // ─── Prompt constants (mirrors aiService.ts) ──────────────────────────────────
 
@@ -246,12 +247,6 @@ export async function runGeneration(body) {
 
 // ─── Auth helper ─────────────────────────────────────────────────────────────
 
-function getSupabaseCredentials() {
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  return { url, key };
-}
-
 async function verifyToken(authHeader) {
   const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
   if (!token) {
@@ -259,7 +254,7 @@ async function verifyToken(authHeader) {
     return null;
   }
 
-  const { url, key } = getSupabaseCredentials();
+  const { url, key } = getSupabaseServerCredentials();
   if (!url || !key) {
     console.error('[verifyToken] Missing Supabase credentials on server. url:', !!url, 'key:', !!key);
     return null;
@@ -297,7 +292,7 @@ export async function handleGenerateImage({ authorization, body = {} }) {
   let userClient     = null;
 
   if (requestType === 'dish') {
-    const { url: supabaseUrl, key: supabaseKey } = getSupabaseCredentials();
+    const { url: supabaseUrl, key: supabaseKey } = getSupabaseServerCredentials();
 
     if (supabaseUrl && supabaseKey) {
       userClient = createClient(supabaseUrl, supabaseKey, {

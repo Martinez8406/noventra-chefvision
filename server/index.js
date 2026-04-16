@@ -4,6 +4,7 @@ import Stripe from 'stripe';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { handleGenerateImage } from '../api/generate-image.js';
+import { handleTranslateDish } from '../api/translate-dish.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(__dirname, '..', '.env.local') });
@@ -67,6 +68,14 @@ app.get('/api/confirm-premium', async (req, res) => {
 
 app.post('/api/generate-image', async (req, res) => {
   const result = await handleGenerateImage({
+    authorization: req.headers.authorization,
+    body: req.body || {},
+  });
+  return res.status(result.status).json(result.body);
+});
+
+app.post('/api/translate-dish', async (req, res) => {
+  const result = await handleTranslateDish({
     authorization: req.headers.authorization,
     body: req.body || {},
   });

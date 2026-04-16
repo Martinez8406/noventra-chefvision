@@ -1,11 +1,13 @@
 
 import React from 'react';
-import { Dish } from '../types';
+import { Dish, PublicMenuLocale } from '../types';
+import { getPublicAllergenDisplay, getPublicDishCopy } from '../utils/menuTranslations';
 import { Youtube, Instagram, Link2, Music2, Info, UtensilsCrossed } from 'lucide-react';
 import { WatermarkWrapper } from './WatermarkWrapper';
 
 interface Props {
   dish: Dish;
+  menuLocale?: PublicMenuLocale;
   basePath?: string;
   baseHash?: string;
   usePathRouting?: boolean;
@@ -27,7 +29,17 @@ const renderSocialIcon = (url: string) => {
   return <Link2 size={16} className="text-slate-200" />;
 };
 
-export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo', baseHash = '#/menu/demo', usePathRouting, onPathChange, showWatermark }) => {
+export const PublicDishCard: React.FC<Props> = ({
+  dish,
+  menuLocale = 'pl',
+  basePath = '/menu/demo',
+  baseHash = '#/menu/demo',
+  usePathRouting,
+  onPathChange,
+  showWatermark,
+}) => {
+  const copy = getPublicDishCopy(dish, menuLocale);
+  const allergensUi = getPublicAllergenDisplay(dish, menuLocale);
   const openDetail = () => {
     if (usePathRouting) {
       history.pushState({}, '', `${basePath}/dish/${dish.id}`);
@@ -46,7 +58,7 @@ export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo',
       <WatermarkWrapper show={!!showWatermark} className="h-64 overflow-hidden">
         <img
           src={dish.imageUrl}
-          alt={dish.name}
+          alt={copy.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
       </WatermarkWrapper>
@@ -55,7 +67,7 @@ export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo',
         {dish.menuPrice ? (
           <div className="mb-2 flex items-baseline gap-2">
             <h3 className="font-serif text-2xl text-slate-900 leading-tight">
-              {dish.name}
+              {copy.name}
             </h3>
             <div className="flex-1 border-b border-dotted border-slate-200" />
             <span className="text-lg font-semibold text-slate-900 whitespace-nowrap tabular-nums">
@@ -64,11 +76,11 @@ export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo',
           </div>
         ) : (
           <h3 className="font-serif text-2xl text-slate-900 mb-2 leading-tight">
-            {dish.name}
+            {copy.name}
           </h3>
         )}
         <p className="text-slate-600 text-sm mb-4 line-clamp-3 leading-relaxed">
-          {dish.description}
+          {copy.description}
         </p>
 
         {/* Ingredients & Allergens */}
@@ -110,9 +122,9 @@ export const PublicDishCard: React.FC<Props> = ({ dish, basePath = '/menu/demo',
         <div className="mt-4 bg-amber-50 border border-amber-100 p-3 rounded-xl flex items-start gap-3">
           <UtensilsCrossed className="text-amber-700 shrink-0 mt-0.5" size={16} />
           <div>
-            <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wide">Alergeny</p>
+            <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wide">{allergensUi.sectionTitle}</p>
             <p className="text-xs text-slate-600">
-              {dish.allergens.length > 0 ? dish.allergens.join(', ') : 'Brak głównych alergenów'}
+              {allergensUi.labels.length > 0 ? allergensUi.labels.join(', ') : allergensUi.noAllergensMessage}
             </p>
           </div>
         </div>

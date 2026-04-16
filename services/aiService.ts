@@ -1,4 +1,4 @@
-import { GeneratorParams } from '../types';
+import { GeneratorParams, MenuTranslationEntry } from '../types';
 import { supabase } from './supabaseService';
 
 export interface GenerationResult {
@@ -101,4 +101,35 @@ export async function generateDishImageWithAI(
     creditsRemaining: data.creditsRemaining,
     generationsUsed:  data.generationsUsed,
   };
+}
+
+/**
+ * Wywołuje serwerowe tłumaczenie nazwy i opisu dania (OpenAI) i zapis w Supabase.
+ * Nie rzuca przy błędzie HTTP — zwraca null (log w konsoli).
+ */
+export async function requestMenuTranslations(
+  dishId: string
+): Promise<{ translations: Record<'en' | 'uk' | 'de', MenuTranslationEntry> } | null> {
+  const response = await fetch('/api/translate-dish', {
+    method: 'POST',
+    headers: await getAuthHeaders(),
+    body: JSON.stringify({ dishId }),
+  });
+
+  const raw = await response.text();
+  let data: { translations?: Record<'en' | 'uk' | 'de', MenuTranslationEntry>; error?: string } | null = null;
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {
+    console.warn('[translate-dish] Nieprawidłowa odpowiedź JSON z serwera.');
+    return null;
+  }
+
+  if (!response.ok) {
+    console.warn('[translate-dish]', data?.error || `HTTP ${response.status}`, data);
+    return null;
+  }
+
+  if (!data?.translations) return null;
+  return { translations: data.translations };
 }
