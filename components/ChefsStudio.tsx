@@ -22,8 +22,25 @@ import {
   AlertCircle,
   Layers,
   Lock,
-  Crown
+  Crown,
+  Share2,
+  Download
 } from 'lucide-react';
+
+const safeImageFileBase = (name: string) =>
+  name.replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_').trim().slice(0, 80) || 'danie';
+
+async function dataUrlToFile(dataUrl: string, baseName: string): Promise<File> {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  const ext = blob.type.includes('jpeg')
+    ? 'jpg'
+    : blob.type.includes('webp')
+      ? 'webp'
+      : 'png';
+  const mime = blob.type || 'image/png';
+  return new File([blob], `${baseName}.${ext}`, { type: mime });
+}
 
 interface Props {
   onSaveStandard: (imageUrl: string, params: GeneratorParams) => void;
@@ -60,6 +77,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
   const [isBackdropSelectorOpen, setIsBackdropSelectorOpen] = useState(false);
   const [isUploadingCustom, setIsUploadingCustom] = useState(false);
   const [isUploadingDishRef, setIsUploadingDishRef] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const tablewareInputRef = useRef<HTMLInputElement>(null);
   const dishRefInputRef = useRef<HTMLInputElement>(null);
 
@@ -294,6 +312,71 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const shareCaptionEncoded = () => {
+    const name = params.dishName || 'Danie';
+    return encodeURIComponent(`🍽 ${name}\n\nZdjęcie przygotowane w Chefvision.`);
+  };
+
+  /** Udostępnienie przez menu systemowe (na Androidzie/iOS — natywny panel jak na zrzucie ekranu). */
+  type NativeShareOutcome = 'shared' | 'cancelled' | 'unavailable';
+
+  const openNativeImageShare = async (): Promise<NativeShareOutcome> => {
+    const src = generatedImages[0];
+    if (!src) return 'unavailable';
+    try {
+      const file = await dataUrlToFile(src, safeImageFileBase(params.dishName));
+      const data: ShareData = {
+        files: [file],
+        title: params.dishName || 'Danie',
+        text: 'Zdjęcie z Chefvision',
+      };
+      if (!navigator.share || (navigator.canShare && !navigator.canShare(data))) {
+        return 'unavailable';
+      }
+      await navigator.share(data);
+      return 'shared';
+    } catch (e: unknown) {
+      const err = e as { name?: string };
+      if (err?.name === 'AbortError') return 'cancelled';
+      return 'unavailable';
+    }
+  };
+
+  const onShareButtonClick = () => {
+    void (async () => {
+      const outcome = await openNativeImageShare();
+      if (outcome === 'unavailable') setShareModalOpen(true);
+      else setShareModalOpen(false);
+    })();
+  };
+
+  const shareViaSystem = async () => {
+    const outcome = await openNativeImageShare();
+    if (outcome === 'shared') {
+      setShareModalOpen(false);
+      return;
+    }
+    if (outcome === 'cancelled') return;
+    alert(
+      'Udostępnianie pliku nie jest dostępne w tej przeglądarce. Użyj „Pobierz zdjęcie”, a następnie dodaj plik w wybranej aplikacji (np. Instagram, Facebook).'
+    );
+  };
+
+  const downloadGeneratedImage = () => {
+    const src = generatedImages[0];
+    if (!src) return;
+    const a = document.createElement('a');
+    a.href = src;
+    a.download = `${safeImageFileBase(params.dishName)}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const openSocialUrl = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -578,11 +661,122 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
               {isGenerating ? 'REGENERUJĘ...' : 'REGENERUJ'}
             </button>
             <button
+              type="button"
+              onClick={onShareButtonClick}
+              className="flex-1 py-6 bg-white text-chef-dark border-2 border-chef-dark rounded-full font-black text-xl flex items-center justify-center gap-3 shadow-xl hover:bg-slate-50 transition-all"
+            >
+              <Share2 size={28} /> UDOSTĘPNIJ
+            </button>
+            <button
               onClick={() => onSaveStandard(generatedImages[0], params)}
               className="flex-1 py-6 bg-chef-gold text-white rounded-full font-black text-2xl flex items-center justify-center gap-3 shadow-2xl hover:bg-chef-gold2 transition-all"
             >
               <CheckCircle size={32} /> ZAPISZ JAKO STANDARD
             </button>
+          </div>
+        </div>
+      )}
+
+      {shareModalOpen && (
+        <div
+          className="fixed inset-0 z-[500] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="share-modal-title"
+        >
+          <div className="bg-white rounded-[32px] w-full max-w-md p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start gap-4 mb-4">
+              <h3 id="share-modal-title" className="text-xl font-black text-slate-900">
+                Udostępnij zdjęcie
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShareModalOpen(false)}
+                className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 shrink-0"
+                aria-label="Zamknij"
+              >
+                <X size={22} />
+              </button>
+            </div>
+            <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+              Na telefonie lub tablecie najwygodniej użyć <strong>menu udostępniania systemowego</strong> — wybierzesz
+              Instagram, Facebook, WhatsApp, Wiadomości itd. Jeśli przeglądarka nie pozwala, pobierz plik i wgraj go w
+              aplikacji danej sieci.
+            </p>
+
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => void shareViaSystem()}
+                className="w-full py-4 rounded-2xl bg-chef-dark text-white font-black text-sm flex items-center justify-center gap-2 hover:bg-chef-dark2 transition-colors"
+              >
+                <Share2 size={20} /> Udostępnij przez system (zdjęcie)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  downloadGeneratedImage();
+                }}
+                className="w-full py-4 rounded-2xl border-2 border-slate-200 text-slate-800 font-black text-sm flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
+              >
+                <Download size={20} /> Pobierz zdjęcie
+              </button>
+            </div>
+
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-6 mb-3">
+              Szybkie linki (tekst — dołącz zdjęcie po pobraniu)
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  openSocialUrl(`https://wa.me/?text=${shareCaptionEncoded()}`)
+                }
+                className="py-3 px-2 rounded-xl bg-[#25D366]/15 text-[#128C7E] font-black text-xs hover:bg-[#25D366]/25 transition-colors"
+              >
+                WhatsApp
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  openSocialUrl(
+                    `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}&quote=${shareCaptionEncoded()}`
+                  )
+                }
+                className="py-3 px-2 rounded-xl bg-[#1877F2]/15 text-[#1877F2] font-black text-xs hover:bg-[#1877F2]/25 transition-colors"
+              >
+                Facebook
+              </button>
+              <button
+                type="button"
+                onClick={() => openSocialUrl(`https://twitter.com/intent/tweet?text=${shareCaptionEncoded()}`)}
+                className="py-3 px-2 rounded-xl bg-slate-900/10 text-slate-800 font-black text-xs hover:bg-slate-900/15 transition-colors"
+              >
+                X (Twitter)
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  openSocialUrl(
+                    `https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${shareCaptionEncoded()}`
+                  )
+                }
+                className="py-3 px-2 rounded-xl bg-sky-500/15 text-sky-700 font-black text-xs hover:bg-sky-500/25 transition-colors"
+              >
+                Telegram
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  openSocialUrl(
+                    `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin)}`
+                  )
+                }
+                className="py-3 px-2 rounded-xl col-span-2 bg-blue-700/10 text-blue-800 font-black text-xs hover:bg-blue-700/20 transition-colors"
+              >
+                LinkedIn
+              </button>
+            </div>
           </div>
         </div>
       )}
