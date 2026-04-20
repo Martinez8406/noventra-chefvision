@@ -1,5 +1,6 @@
 
 import React, { useState, useRef } from 'react';
+import { MAX_USER_BACKDROPS } from '../constants';
 import { BlurLevel } from '../types';
 import { processBackdropImage } from '../services/geminiService';
 import { 
@@ -17,7 +18,7 @@ import {
 } from 'lucide-react';
 
 interface Props {
-  onSaveBackdrop: (imageUrl: string) => void;
+  onSaveBackdrop: (imageUrl: string) => void | Promise<void>;
   isTrial?: boolean;
 }
 
@@ -25,6 +26,7 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [blurLevel, setBlurLevel] = useState<BlurLevel>(BlurLevel.NATURAL);
   const [isSaved, setIsSaved] = useState(false);
   
@@ -55,10 +57,16 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
     }
   };
 
-  const handleSave = () => {
-    if (processedImage) {
-      onSaveBackdrop(processedImage);
+  const handleSave = async () => {
+    if (!processedImage || isSaving) return;
+    setIsSaving(true);
+    try {
+      await onSaveBackdrop(processedImage);
       setIsSaved(true);
+    } catch {
+      alert('Nie udało się zapisać tła.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -207,14 +215,23 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
               <div className="mt-8 bg-indigo-50 p-6 rounded-3xl border border-indigo-100 space-y-4">
                 <p className="text-[10px] font-black uppercase text-indigo-400 tracking-widest">Akcje</p>
                 <button
-                  onClick={handleSave}
-                  disabled={isSaved}
+                  onClick={() => void handleSave()}
+                  disabled={isSaved || isSaving}
                   className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 transition-all hover:bg-indigo-700 disabled:bg-green-600 disabled:cursor-not-allowed"
                 >
-                  {isSaved ? <CheckCircle2 size={18} /> : <Save size={18} />}
-                  {isSaved ? 'TŁO ZAPISANE W STUDIO' : 'ZAPISZ JAKO BAZĘ DO STUDIO'}
+                  {isSaving ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : isSaved ? (
+                    <CheckCircle2 size={18} />
+                  ) : (
+                    <Save size={18} />
+                  )}
+                  {isSaving ? 'ZAPISYWANIE...' : isSaved ? 'TŁO ZAPISANE W STUDIO' : 'ZAPISZ JAKO BAZĘ DO STUDIO'}
                 </button>
-                <p className="text-xs text-indigo-500 text-center">Będziesz mógł/mogła użyć tego tła w Chef's Studio.</p>
+                <p className="text-xs text-indigo-500 text-center">
+                  Będziesz mógł/mogła użyć tego tła w Chef&apos;s Studio. Na koncie zapisujemy do {MAX_USER_BACKDROPS}{' '}
+                  teł w chmurze (przy kolejnym zapisie najstarsze jest zastępowane).
+                </p>
               </div>
             ) : (
               <div className="mt-8 grid grid-cols-2 gap-4">

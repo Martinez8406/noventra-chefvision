@@ -1,8 +1,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
-import { TRIAL_AI_CREDITS } from '../constants';
-import { Dish, UserProfile, DishStatus, SubscriptionStatus } from '../types';
+import { TRIAL_AI_CREDITS, MAX_USER_BACKDROPS } from '../constants';
+import { Dish, UserProfile, DishStatus, SubscriptionStatus, Backdrop } from '../types';
 
 // Vite exposes env vars via import.meta.env (only keys prefixed with VITE_).
 // We still keep process.env fallback for server-like environments.
@@ -29,6 +29,7 @@ const isRealSupabase = !!SUPABASE_URL && !SUPABASE_URL.includes('placeholder') &
 export const supabase = isRealSupabase ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
 const LOCAL_STORAGE_KEY = 'chefvision_dishes_v1';
+const LOCAL_BACKDROPS_KEY = 'chefvision_backdrops_v1';
 const USER_GENS_KEY = 'chefvision_user_gens';
 const FOOD_IMAGES_BUCKET = 'food-images';
 const DISH_IMAGES_BUCKET = 'dish-images';
@@ -81,6 +82,78 @@ export async function uploadDishImage(dataUrl: string, userId: string): Promise<
   }
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
+}
+
+/** Upload tła (data URL) do Storage — ścieżka `{userId}/backdrops/...` (zgodna z politykami folderu użytkownika). */
+export async function uploadBackdropImage(dataUrl: string, userId: string): Promise<string> {
+  if (!supabase) throw new Error('Supabase nie jest skonfigurowany.');
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) throw new Error('Nieprawidłowy format obrazu (oczekiwano data URL).');
+  const mimeType = match[1];
+  const base64 = match[2];
+  const ext = mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
+  const path = `${userId}/backdrops/${uuidv4()}.${ext}`;
+  const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  const bucket = DISH_IMAGES_BUCKET;
+  const { error } = await supabase.storage.from(bucket).upload(path, binary, {
+    contentType: mimeType,
+    upsert: false,
+  });
+  if (error) {
+    const fallback = await supabase.storage.from(FOOD_IMAGES_BUCKET).upload(path, binary, {
+      contentType: mimeType,
+      upsert: false,
+    });
+    if (fallback.error) throw new Error(fallback.error.message || 'Błąd przesyłania tła.');
+    const { data } = supabase.storage.from(FOOD_IMAGES_BUCKET).getPublicUrl(path);
+    return data.publicUrl;
+  }
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+type LocalBackdropRow = { id: string; userId: string; imageUrl: string; createdAt: number };
+
+function useLocalBackdropsOnly(userId: string): boolean {
+  return !supabase || userId === 'local-chef';
+}
+
+function readLocalBackdropRows(): LocalBackdropRow[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_BACKDROPS_KEY);
+    return raw ? (JSON.parse(raw) as LocalBackdropRow[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalBackdropRows(rows: LocalBackdropRow[]) {
+  localStorage.setItem(LOCAL_BACKDROPS_KEY, JSON.stringify(rows));
+}
+
+async function removeBackdropFileFromStorageIfAppOwned(imageUrl: string): Promise<void> {
+  if (!supabase) return;
+  const info = getBucketAndPathFromImageUrl(imageUrl);
+  if (!info) return;
+  try {
+    await supabase.storage.from(info.bucket).remove([info.path]);
+  } catch {
+    /* ignore */
+  }
+}
+
+async function fetchBackdropsFromSupabase(userId: string): Promise<Backdrop[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('user_backdrops')
+    .select('id, image_url')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error || !data) return [];
+  return data.map((row: { id: string; image_url: string }) => ({
+    id: row.id,
+    imageUrl: row.image_url,
+  }));
 }
 
 const mapRow = (row: any): Dish => ({
@@ -292,7 +365,85 @@ export const db = {
     );
     saveLocalDishes(updated);
     return true;
-  }
+  },
+
+  /** Zapisane tła Studio (tylko pamięć przeglądarki w trybie demo / bez Supabase). */
+  async getBackdrops(userId: string): Promise<Backdrop[]> {
+    if (useLocalBackdropsOnly(userId)) {
+      return readLocalBackdropRows()
+        .filter((r) => r.userId === userId)
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .map((r) => ({ id: r.id, imageUrl: r.imageUrl }));
+    }
+    return fetchBackdropsFromSupabase(userId);
+  },
+
+  /**
+   * Zapisuje tło (upload data URL do Storage + rekord w `user_backdrops`).
+   * Limit MAX_USER_BACKDROPS — przy przekroczeniu usuwa najstarsze (rekord + plik w Storage, jeśli nasz).
+   */
+  async saveBackdrop(userId: string, imageUrl: string): Promise<Backdrop[]> {
+    if (useLocalBackdropsOnly(userId)) {
+      let rows = readLocalBackdropRows();
+      while (rows.filter((r) => r.userId === userId).length >= MAX_USER_BACKDROPS) {
+        const mine = rows
+          .filter((r) => r.userId === userId)
+          .sort((a, b) => a.createdAt - b.createdAt);
+        const oldest = mine[0];
+        if (!oldest) break;
+        rows = rows.filter((r) => r.id !== oldest.id);
+      }
+      const newRow: LocalBackdropRow = {
+        id: `backdrop_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+        userId,
+        imageUrl,
+        createdAt: Date.now(),
+      };
+      rows.push(newRow);
+      try {
+        writeLocalBackdropRows(rows);
+      } catch (e: any) {
+        if (e?.name === 'QuotaExceededError' || e?.code === 22) {
+          throw new Error('Brak miejsca w przeglądarce — zaloguj się (Supabase), aby zapisywać tła w chmurze.');
+        }
+        throw e;
+      }
+      return db.getBackdrops(userId);
+    }
+
+    if (!supabase) throw new Error('Supabase nie jest skonfigurowany.');
+
+    let finalUrl = imageUrl;
+    if (imageUrl.startsWith('data:')) {
+      finalUrl = await uploadBackdropImage(imageUrl, userId);
+    }
+
+    const { data: existing, error: selErr } = await supabase
+      .from('user_backdrops')
+      .select('id, image_url')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true });
+
+    if (selErr) throw new Error(selErr.message || 'Błąd odczytu teł.');
+
+    const ordered = existing || [];
+    let toTrim = [...ordered];
+    while (toTrim.length >= MAX_USER_BACKDROPS) {
+      const victim = toTrim.shift();
+      if (!victim) break;
+      await removeBackdropFileFromStorageIfAppOwned(victim.image_url);
+      const { error: delErr } = await supabase.from('user_backdrops').delete().eq('id', victim.id);
+      if (delErr) console.warn('[saveBackdrop] delete oldest:', delErr.message);
+    }
+
+    const { error: insErr } = await supabase.from('user_backdrops').insert({
+      user_id: userId,
+      image_url: finalUrl,
+    });
+    if (insErr) throw new Error(insErr.message || 'Nie udało się zapisać tła.');
+
+    return fetchBackdropsFromSupabase(userId);
+  },
 };
 
 export const authService = {

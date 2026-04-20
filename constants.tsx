@@ -4,6 +4,9 @@ export const BRAND_LOGO_SRC = '/logo.png';
 /** Początkowa liczba kredytów AI dla kont trial / darmowych (nie-Premium). */
 export const TRIAL_AI_CREDITS = 20;
 
+/** Maks. liczba zapisanych teł na użytkownika (Supabase + tryb lokalny). */
+export const MAX_USER_BACKDROPS = 5;
+
 /** Domyślne oświetlenie w promptach AI (brak wyboru w UI). */
 export const DEFAULT_LIGHTING = {
   label: 'Złota Godzina',

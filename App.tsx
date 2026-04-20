@@ -116,6 +116,7 @@ const App: React.FC = () => {
         }
         const data = await db.getDishesForPublicMenu(publicMenuUserId);
         setDishes(data);
+        setSavedBackdrops([]);
       } else {
         if (session?.user?.id === 'demo') {
           const demoProfile: UserProfile = {
@@ -129,6 +130,12 @@ const App: React.FC = () => {
           setCurrentUser(demoProfile);
           const data = await db.getDishes('local-chef');
           setDishes(data);
+          try {
+            setSavedBackdrops(await db.getBackdrops('local-chef'));
+          } catch (e) {
+            console.warn('Tła (demo):', e);
+            setSavedBackdrops([]);
+          }
         } else {
           let profile = await authService.getCurrentProfile();
           if (!profile && session?.user) {
@@ -145,6 +152,12 @@ const App: React.FC = () => {
           const restaurantId = profile ? profile.id : 'local-chef';
           const data = await db.getDishes(restaurantId);
           setDishes(data);
+          try {
+            setSavedBackdrops(await db.getBackdrops(restaurantId));
+          } catch (e) {
+            console.warn('Tła: nie zsynchronizowano (dodaj tabelę user_backdrops w Supabase — plik supabase/user_backdrops.sql):', e);
+            setSavedBackdrops([]);
+          }
         }
       }
     } catch (e) { 
@@ -158,12 +171,21 @@ const App: React.FC = () => {
   const isPremium = currentUser?.subscriptionStatus === 'premium';
   const isTrial = currentUser?.subscriptionStatus === 'trial';
 
-  const handleSaveBackdrop = (imageUrl: string) => {
-    const newBackdrop: Backdrop = {
-      id: `backdrop_${Date.now()}`,
-      imageUrl,
-    };
-    setSavedBackdrops(prev => [newBackdrop, ...prev]);
+  const handleSaveBackdrop = async (imageUrl: string) => {
+    const uid = session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id;
+    if (!uid) {
+      alert('Zaloguj się, aby zapisywać tła.');
+      return;
+    }
+    try {
+      const list = await db.saveBackdrop(uid, imageUrl);
+      setSavedBackdrops(list);
+      setStatusToast('Tło zapisane (max 5 — dostępne po każdym zalogowaniu).');
+      setTimeout(() => setStatusToast(null), 5000);
+    } catch (e) {
+      console.error(e);
+      alert(e instanceof Error ? e.message : 'Nie udało się zapisać tła.');
+    }
   };
 
   const hashMatch = hash.match(/#\/menu\/([^/?#]+)(?:\/dish\/([^/?#]+))?/);
@@ -371,7 +393,7 @@ const App: React.FC = () => {
 
   const navItems = [
     { id: 'kuchnia', label: 'Panel menu', icon: LayoutDashboard, protected: false },
-    { id: 'studio', label: 'Chef’s Studio', icon: Camera, protected: false },
+    { id: 'studio', label: 'Studio zdjęć', icon: Camera, protected: false },
     { id: 'backdrops', label: 'Studio Tła', icon: Layers, protected: false },
     { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen, protected: false },
     { id: 'qr', label: 'Kod QR / Logo / Opinie Google', icon: MenuIcon, protected: false },
@@ -401,7 +423,7 @@ const App: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => { setActiveTab(tab.id as any); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl text-sm font-black transition-all group ${activeTab === tab.id ? 'bg-chef-gold text-white shadow-2xl' : 'text-slate-400 hover:text-white hover:bg-chef-dark2'}`}
+                className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl text-sm font-black transition-all group ${activeTab === tab.id ? 'bg-orange-500 text-white shadow-2xl' : 'text-slate-400 hover:text-white hover:bg-chef-dark2'}`}
               >
                 <div className="flex items-center gap-4">
                   <tab.icon size={20} /> {tab.label}

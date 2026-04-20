@@ -42,6 +42,24 @@ async function dataUrlToFile(dataUrl: string, baseName: string): Promise<File> {
   return new File([blob], `${baseName}.${ext}`, { type: mime });
 }
 
+/**
+ * Serwer AI (parseImagePart w api/generate-image.js) akceptuje obraz tylko jako data URL.
+ * Tła zapisane w Supabase Storage wracają jako HTTPS URL, więc zanim wyślemy je do Gemini
+ * musimy ściągnąć plik i zamienić go lokalnie na base64 (fetch + FileReader).
+ */
+async function fetchImageAsDataUrl(url: string): Promise<string> {
+  if (url.startsWith('data:')) return url;
+  const res = await fetch(url, { credentials: 'omit' });
+  if (!res.ok) throw new Error(`Nie udało się pobrać tła (HTTP ${res.status}).`);
+  const blob = await res.blob();
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Błąd konwersji obrazu na data URL.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
 interface Props {
   onSaveStandard: (imageUrl: string, params: GeneratorParams) => void;
   savedBackdrops: Backdrop[];
@@ -294,9 +312,35 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
     setIsGenerating(true);
     try {
       const aiSettings = buildAiSettings(effectiveParams);
-      const result: GenerationResult = await generateDishImageWithAI(effectiveParams, aiSettings, {
-        backdropImage: customBaseImage || undefined,
-        tablewareImage: customTablewareImage || undefined,
+
+      let backdropForApi = customBaseImage || undefined;
+      if (backdropForApi && !backdropForApi.startsWith('data:')) {
+        try {
+          backdropForApi = await fetchImageAsDataUrl(backdropForApi);
+        } catch (e) {
+          console.warn('[generate] Nie udało się pobrać tła ze Storage — generuję bez niego.', e);
+          backdropForApi = undefined;
+        }
+      }
+      let tablewareForApi = customTablewareImage || undefined;
+      if (tablewareForApi && !tablewareForApi.startsWith('data:')) {
+        try {
+          tablewareForApi = await fetchImageAsDataUrl(tablewareForApi);
+        } catch (e) {
+          console.warn('[generate] Nie udało się pobrać zastawy ze Storage — generuję bez niej.', e);
+          tablewareForApi = undefined;
+        }
+      }
+
+      const resolvedSettings: AiDishSettings = {
+        ...aiSettings,
+        hasCustomBackdrop: !!backdropForApi,
+        hasCustomTableware: !!tablewareForApi,
+      };
+
+      const result: GenerationResult = await generateDishImageWithAI(effectiveParams, resolvedSettings, {
+        backdropImage: backdropForApi,
+        tablewareImage: tablewareForApi,
         dishReferenceImage: dishReferenceImage || undefined,
         ingredientsHint: ingredientsText.trim() || undefined,
       });
@@ -385,7 +429,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="p-4 bg-indigo-50 text-indigo-600 rounded-3xl"><Palette size={32} /></div>
-            <h2 className="text-3xl font-black text-slate-800 tracking-tight italic">Chef’s Studio</h2>
+            <h2 className="text-3xl font-black text-slate-800 tracking-tight italic">Studio zdjęć</h2>
           </div>
           {!isSubscribed && (
             <div className="text-[10px] font-black uppercase tracking-widest">
@@ -658,7 +702,7 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
               className="flex-1 py-6 bg-chef-dark text-white rounded-full font-black text-xl flex items-center justify-center gap-3 shadow-xl hover:bg-chef-dark2 transition-all disabled:opacity-50 disabled:cursor-not-allowed border-2 border-chef-dark"
             >
               {isGenerating ? <Loader2 className="animate-spin" size={28} /> : <RefreshCw size={28} />}
-              {isGenerating ? 'REGENERUJĘ...' : 'REGENERUJ'}
+              {isGenerating ? 'TWORZĘ PONOWNIE...' : 'STWÓRZ PONOWNIE'}
             </button>
             <button
               type="button"
@@ -788,11 +832,30 @@ export const ChefsStudio: React.FC<Props> = ({ onSaveStandard, savedBackdrops, i
               <h3 className="text-2xl font-black">Twoje Studio Tła</h3>
               <button onClick={() => setIsBackdropSelectorOpen(false)}><X/></button>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              {savedBackdrops.map(b => (
-                <img key={b.id} src={b.imageUrl} onClick={() => { setCustomBaseImage(b.imageUrl); setIsBackdropSelectorOpen(false); }} className="rounded-2xl cursor-pointer hover:ring-4 ring-indigo-500 transition-all" />
-              ))}
-            </div>
+            {savedBackdrops.length === 0 ? (
+              <p className="text-sm text-slate-500">Brak zapisanych teł. Przejdź do „Studio Tła”, aby zapisać pierwsze.</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                {savedBackdrops.map(b => (
+                  <img
+                    key={b.id}
+                    src={b.imageUrl}
+                    onClick={async () => {
+                      try {
+                        setError(null);
+                        setIsBackdropSelectorOpen(false);
+                        const dataUrl = await fetchImageAsDataUrl(b.imageUrl);
+                        setCustomBaseImage(dataUrl);
+                      } catch (e: any) {
+                        console.error('[selectBackdrop]', e);
+                        setError(e?.message || 'Nie udało się wczytać wybranego tła.');
+                      }
+                    }}
+                    className="rounded-2xl cursor-pointer hover:ring-4 ring-indigo-500 transition-all"
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
