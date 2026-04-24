@@ -1,16 +1,16 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   TRIAL_AI_CREDITS,
   MAX_ENHANCE_PREVIEWS,
-  ENHANCE_STYLES,
+  SEASONAL_THEMES,
   DEFAULT_LIGHTING,
   PLATE_OPTIONS,
   ANGLE_OPTIONS,
   STYLE_OPTIONS,
-  type EnhanceStyleId,
+  type SeasonalThemeId,
 } from '../constants';
 import { compressImageForUpload } from '../services/imageService';
-import { enhanceDishImage, type EnhanceSettings, type GenerationResult } from '../services/aiService';
+import { enhanceDishImage, type GenerationResult } from '../services/aiService';
 import {
   addFreeWatermark,
   downloadDataUrl,
@@ -26,21 +26,22 @@ import {
   Download,
   Image as ImageIcon,
   Loader2,
-  Palette,
   Save,
   Share2,
   Sparkles,
-  Trash2,
+  Plus,
   Upload,
   Wand2,
   X,
 } from 'lucide-react';
+import type { Backdrop } from '../types';
 
 interface Props {
   onSaveStandard: (imageUrl: string, params: GeneratorParams) => void;
   isSubscribed: boolean;
   generationsUsed: number;
   credits: number;
+  savedBackdrops?: Backdrop[];
   onGenerationSuccess?: () => void;
   onCreditsUpdated?: (credits: number) => void;
   onBuyPremium?: () => void;
@@ -49,106 +50,48 @@ interface Props {
 const STEP_LABEL_CLS = 'text-[10px] font-black uppercase tracking-widest text-slate-400';
 const STEP_CARD_CLS = 'bg-white border border-slate-100 rounded-[32px] p-6 space-y-4 shadow-sm';
 
-function StepHeader({ n, title, required, disabled }: { n: number; title: string; required?: boolean; disabled?: boolean }) {
-  return (
-    <div className="flex items-center gap-3">
-      <div
-        className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black ${disabled ? 'bg-slate-100 text-slate-300' : 'bg-slate-900 text-white'}`}
-      >
-        {n}
-      </div>
-      <h4 className={`text-sm font-black tracking-tight ${disabled ? 'text-slate-300' : 'text-slate-800'}`}>
-        {title}
-        {required && <span className="ml-1 text-red-500">*</span>}
-      </h4>
-    </div>
-  );
-}
+const THEME_GRADIENTS: Record<SeasonalThemeId, string> = {
+  christmas: 'from-rose-600 via-rose-500 to-emerald-700',
+  easter: 'from-pink-300 via-yellow-200 to-emerald-300',
+  halloween: 'from-amber-700 via-stone-800 to-black',
+  summer: 'from-sky-400 via-amber-300 to-yellow-200',
+  valentine: 'from-rose-500 via-pink-400 to-rose-700',
+};
 
-function EnhanceStyleCard({
-  option,
-  active,
-  onSelect,
-}: {
-  option: (typeof ENHANCE_STYLES)[number];
-  active: boolean;
-  onSelect: () => void;
-}) {
-  const [imageFailed, setImageFailed] = useState(false);
-
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={active}
-      title={option.label}
-      className={`group relative aspect-square h-[148px] w-[148px] overflow-hidden rounded-2xl border-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-chef-gold focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
-        active
-          ? 'border-chef-gold shadow-[0_0_0_3px_rgba(187,152,96,0.35)]'
-          : 'border-slate-200 hover:border-slate-300'
-      }`}
-    >
-      <div className={`absolute inset-0 bg-gradient-to-br ${option.cardPlaceholder}`} aria-hidden />
-      {!imageFailed && (
-        <img
-          src={option.cardImage}
-          alt=""
-          className="absolute inset-0 z-[1] h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-          onError={() => setImageFailed(true)}
-        />
-      )}
-      <div
-        className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-t from-black/90 via-black/30 to-transparent"
-        aria-hidden
-      />
-      <span className="pointer-events-none absolute bottom-2.5 left-2.5 right-2 z-[3] text-left text-[13px] font-black leading-tight tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)]">
-        {option.label}
-      </span>
-    </button>
-  );
-}
-
-export const ChefsStudio: React.FC<Props> = ({
+export const SeasonalThemes: React.FC<Props> = ({
   onSaveStandard,
   isSubscribed,
   generationsUsed,
   credits,
+  savedBackdrops = [],
   onGenerationSuccess,
   onCreditsUpdated,
   onBuyPremium,
 }) => {
-  // ── Step 1: uploaded dish photo ─────────────────────────────────────────────
   const [dishReference, setDishReference] = useState<string | null>(null);
   const [isUploadingRef, setIsUploadingRef] = useState(false);
-  const [isDraggingRef, setIsDraggingRef] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const dishRefInputRef = useRef<HTMLInputElement>(null);
 
-  // ── Step 2: settings ─────────────────────────────────────────────────────────
-  // Uwaga: TŁO jest ustalane automatycznie przez styl (backend, STYLE_DEFAULT_BG).
-  const [style, setStyle] = useState<EnhanceStyleId | null>(null);
+  const [theme, setTheme] = useState<SeasonalThemeId | null>(null);
+  const [customThemeImage, setCustomThemeImage] = useState<string | null>(null);
+  const [customThemeLabel, setCustomThemeLabel] = useState<string | null>(null);
+  const [isCustomThemeMenuOpen, setIsCustomThemeMenuOpen] = useState(false);
+  const [isPickingStudioTheme, setIsPickingStudioTheme] = useState(false);
+  const customThemeInputRef = useRef<HTMLInputElement>(null);
 
-  // ── Generation state ───────────────────────────────────────────────────────
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Save-to-menu state ─────────────────────────────────────────────────────
   const [saveTargetImage, setSaveTargetImage] = useState<string | null>(null);
   const [saveDishName, setSaveDishName] = useState('');
-
-  // ── Share state ────────────────────────────────────────────────────────────
   const [shareTargetImage, setShareTargetImage] = useState<string | null>(null);
 
   const isFreeTrialOver = !isSubscribed && generationsUsed >= TRIAL_AI_CREDITS;
   const hasNoCredits = !isSubscribed && credits <= 0;
-  const canGenerate = !!dishReference && !!style && !isGenerating && !hasNoCredits;
-
-  const currentEnhanceSettings: EnhanceSettings = useMemo(
-    () => ({
-      style: style ?? undefined,
-    }),
-    [style]
-  );
+  const hasThemeSelected = !!theme || !!customThemeImage;
+  const canGenerate = !!dishReference && hasThemeSelected && !isGenerating && !hasNoCredits;
 
   const onReferenceFile = async (file: File) => {
     if (!file.type.startsWith('image/')) return;
@@ -172,7 +115,7 @@ export const ChefsStudio: React.FC<Props> = ({
 
   const handleReferenceDrop = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
-    setIsDraggingRef(false);
+    setIsDragging(false);
     const f = e.dataTransfer.files?.[0];
     if (f) void onReferenceFile(f);
   };
@@ -182,8 +125,8 @@ export const ChefsStudio: React.FC<Props> = ({
       setError('Wgraj zdjęcie dania (krok 1).');
       return;
     }
-    if (!style) {
-      setError('Wybierz styl zdjęcia (krok 2).');
+    if (!theme && !customThemeImage) {
+      setError('Wybierz motyw sezonowy lub dodaj własny motyw (krok 2).');
       return;
     }
     if (hasNoCredits) {
@@ -193,20 +136,17 @@ export const ChefsStudio: React.FC<Props> = ({
     setError(null);
     setIsGenerating(true);
     try {
-      const result: GenerationResult = await enhanceDishImage(
-        dishReference,
-        currentEnhanceSettings
-      );
+      const result: GenerationResult = await enhanceDishImage(dishReference, {
+        theme: customThemeImage ? undefined : theme ?? undefined,
+        customThemeImage: customThemeImage ?? undefined,
+      });
       let img = result.image;
       if (isFreeTrialOver) img = await addFreeWatermark(img);
-      setGeneratedImages((prev) => {
-        const next = [img, ...prev];
-        return next.slice(0, MAX_ENHANCE_PREVIEWS);
-      });
+      setGeneratedImages((prev) => [img, ...prev].slice(0, MAX_ENHANCE_PREVIEWS));
       if (result.creditsRemaining !== undefined) onCreditsUpdated?.(result.creditsRemaining);
       onGenerationSuccess?.();
     } catch (err: any) {
-      setError(err?.message || 'Błąd wizualizacji.');
+      setError(err?.message || 'Błąd generacji.');
     } finally {
       setIsGenerating(false);
     }
@@ -238,8 +178,43 @@ export const ChefsStudio: React.FC<Props> = ({
     );
   };
 
-  const removeGeneratedImage = (indexToRemove: number) => {
-    setGeneratedImages((prev) => prev.filter((_, index) => index !== indexToRemove));
+  const onCustomThemeFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) return;
+    setError(null);
+    try {
+      const dataUrl = await compressImageForUpload(file);
+      setTheme(null);
+      setCustomThemeImage(dataUrl);
+      setCustomThemeLabel(file.name || 'Własny motyw');
+    } catch (e: any) {
+      setError(e?.message || 'Błąd wczytywania motywu z dysku.');
+    }
+  };
+
+  const handleCustomThemeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (f) void onCustomThemeFile(f);
+  };
+
+  const pickStudioBackdrop = async (bg: Backdrop) => {
+    setError(null);
+    try {
+      // Backdrops from Studio are usually URLs; convert to data URL so API can forward inline image data.
+      const response = await fetch(bg.imageUrl);
+      if (!response.ok) throw new Error('Nie udało się pobrać tła ze Studio.');
+      const blob = await response.blob();
+      const ext = blob.type.includes('png') ? 'png' : 'jpg';
+      const file = new File([blob], `studio-backdrop.${ext}`, { type: blob.type || 'image/jpeg' });
+      const dataUrl = await compressImageForUpload(file);
+
+      setTheme(null);
+      setCustomThemeImage(dataUrl);
+      setCustomThemeLabel('Motyw ze Studio tła');
+      setIsPickingStudioTheme(false);
+    } catch (e: any) {
+      setError(e?.message || 'Nie udało się użyć tła ze Studio jako motywu.');
+    }
   };
 
   return (
@@ -247,12 +222,14 @@ export const ChefsStudio: React.FC<Props> = ({
       {/* Header */}
       <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="p-4 bg-indigo-50 text-indigo-600 rounded-3xl">
-            <Palette size={28} />
+          <div className="p-4 bg-rose-50 text-rose-600 rounded-3xl">
+            <Sparkles size={28} />
           </div>
           <div>
-            <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight italic">Studio zdjęć</h2>
-            <p className="text-xs text-slate-500 mt-1">Ulepszanie prawdziwych zdjęć dań — krok po kroku.</p>
+            <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight italic">Motywy sezonowe</h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Wybierz motyw — AI zamieni otoczenie zdjęcia w świąteczną scenę, samo danie zostaje bez zmian.
+            </p>
           </div>
         </div>
         {!isSubscribed && (
@@ -270,7 +247,7 @@ export const ChefsStudio: React.FC<Props> = ({
             <Crown className="text-amber-500" />
             <div>
               <p className="font-black">Brak kredytów</p>
-              <p className="text-xs opacity-60">Aby dalej ulepszać zdjęcia, przejdź na plan Premium.</p>
+              <p className="text-xs opacity-60">Przejdź na plan Premium, aby korzystać z motywów.</p>
             </div>
           </div>
           <button
@@ -279,16 +256,6 @@ export const ChefsStudio: React.FC<Props> = ({
           >
             Plan Premium
           </button>
-        </div>
-      )}
-
-      {isFreeTrialOver && !hasNoCredits && (
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-[30px] flex items-center gap-4 text-white">
-          <Crown className="text-amber-500" />
-          <div>
-            <p className="font-black">Tryb Free – Znak Wodny</p>
-            <p className="text-xs opacity-60">Wykorzystałeś limit. Zdjęcia będą miały logo Chefvision.</p>
-          </div>
         </div>
       )}
 
@@ -305,13 +272,17 @@ export const ChefsStudio: React.FC<Props> = ({
         </div>
       )}
 
-      {/* 2-col layout: Controls (left) + Preview (right) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* ───── LEFT: controls ───── */}
+        {/* LEFT: controls */}
         <div className="space-y-5">
           {/* Step 1 — Upload */}
           <div className={STEP_CARD_CLS}>
-            <StepHeader n={1} title="Wgraj zdjęcie dania" required />
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black bg-slate-900 text-white">1</div>
+              <h4 className="text-sm font-black tracking-tight text-slate-800">
+                Wgraj zdjęcie dania <span className="text-red-500">*</span>
+              </h4>
+            </div>
             <input
               ref={dishRefInputRef}
               type="file"
@@ -323,14 +294,12 @@ export const ChefsStudio: React.FC<Props> = ({
               <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
                 <img src={dishReference} alt="Wgrane danie" className="w-20 h-20 object-cover rounded-xl" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-800">Zdjęcie gotowe do ulepszenia</p>
-                  <p className="text-xs text-slate-500">Przejdź do kroku 2 — wybierz styl.</p>
+                  <p className="text-sm font-bold text-slate-800">Zdjęcie gotowe</p>
+                  <p className="text-xs text-slate-500">Wybierz motyw poniżej.</p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    setDishReference(null);
-                  }}
+                  onClick={() => setDishReference(null)}
                   className="p-2 rounded-xl text-slate-400 hover:bg-slate-200 hover:text-slate-700"
                   aria-label="Usuń zdjęcie"
                 >
@@ -341,58 +310,136 @@ export const ChefsStudio: React.FC<Props> = ({
               <label
                 onDragOver={(e) => {
                   e.preventDefault();
-                  setIsDraggingRef(true);
+                  setIsDragging(true);
                 }}
-                onDragLeave={() => setIsDraggingRef(false)}
+                onDragLeave={() => setIsDragging(false)}
                 onDrop={handleReferenceDrop}
                 className={`block border-2 border-dashed rounded-3xl p-8 text-center cursor-pointer transition-colors ${
-                  isDraggingRef ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                  isDragging ? 'border-rose-500 bg-rose-50' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                 }`}
               >
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={handleReferenceInput}
-                />
+                <input type="file" accept="image/*" className="sr-only" onChange={handleReferenceInput} />
                 <div className="flex flex-col items-center gap-3 text-slate-500">
                   {isUploadingRef ? <Loader2 className="animate-spin" size={28} /> : <Upload size={28} />}
                   <p className="text-sm font-bold text-slate-700">Przeciągnij zdjęcie lub kliknij, aby wybrać</p>
-                  <p className="text-xs text-slate-400">JPG / PNG / WEBP · do 1 MB (kompresujemy automatycznie)</p>
+                  <p className="text-xs text-slate-400">JPG / PNG / WEBP · do 1 MB</p>
                 </div>
               </label>
             )}
           </div>
 
-          {/* Step 2 — Style (required): kwadratowe karty ze zdjęciem + etykieta */}
+          {/* Step 2 — Theme (required) */}
           <div className={STEP_CARD_CLS}>
-            <StepHeader n={2} title="Wybierz styl zdjęcia" required />
-            <div className="flex gap-3 overflow-x-auto pb-1 pt-0.5 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {ENHANCE_STYLES.map((opt) => (
-                <div key={opt.id} className="shrink-0 snap-center">
-                  <EnhanceStyleCard option={opt} active={style === opt.id} onSelect={() => setStyle(opt.id)} />
-                </div>
-              ))}
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black bg-slate-900 text-white">2</div>
+              <h4 className="text-sm font-black tracking-tight text-slate-800">
+                Wybierz motyw <span className="text-red-500">*</span>
+              </h4>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              {SEASONAL_THEMES.map((opt) => {
+                const active = theme === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setTheme(opt.id)}
+                    className={`relative rounded-2xl p-4 text-left text-sm font-black transition-all border-2 overflow-hidden text-white bg-gradient-to-br ${THEME_GRADIENTS[opt.id]} ${active ? 'border-slate-900 ring-4 ring-slate-900/20 scale-[1.02]' : 'border-transparent hover:scale-[1.01]'}`}
+                  >
+                    {'cardImage' in opt && opt.cardImage && (
+                      <img
+                        src={opt.cardImage}
+                        alt={opt.label}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    )}
+                    <span className="relative z-10 drop-shadow-md">{opt.label}</span>
+                    {active && (
+                      <span className="absolute top-2 right-2 bg-white/90 text-slate-900 rounded-full p-1 z-10">
+                        <CheckCircle size={14} />
+                      </span>
+                    )}
+                    <div className="absolute inset-0 bg-black/25" />
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setIsCustomThemeMenuOpen(true)}
+                className={`relative rounded-2xl p-4 text-left text-sm font-black transition-all border-2 overflow-hidden text-white ${
+                  customThemeImage
+                    ? 'border-slate-900 ring-4 ring-slate-900/20 scale-[1.02]'
+                    : 'border-transparent hover:scale-[1.01]'
+                } bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800`}
+              >
+                {customThemeImage && (
+                  <img
+                    src={customThemeImage}
+                    alt="Własny motyw"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                )}
+                <span className="relative z-10 drop-shadow-md flex items-center gap-2">
+                  <Plus size={14} /> Własny motyw
+                </span>
+                {customThemeImage && (
+                  <span className="absolute top-2 right-2 bg-white/90 text-slate-900 rounded-full p-1 z-10">
+                    <CheckCircle size={14} />
+                  </span>
+                )}
+                <div className="absolute inset-0 bg-black/25" />
+              </button>
+            </div>
+            <input
+              ref={customThemeInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleCustomThemeInput}
+            />
+            {customThemeImage && (
+              <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="flex items-center gap-3 min-w-0">
+                  <img src={customThemeImage} alt="Własny motyw" className="w-12 h-12 rounded-lg object-cover" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-black text-slate-800 truncate">Aktywny: własny motyw</p>
+                    <p className="text-[11px] text-slate-500 truncate">{customThemeLabel || 'Wybrane ręcznie'}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomThemeImage(null);
+                    setCustomThemeLabel(null);
+                  }}
+                  className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-700 shrink-0"
+                >
+                  Wyczyść
+                </button>
+              </div>
+            )}
+            <p className="text-[11px] text-slate-400 leading-snug">
+              Motyw zmienia wyłącznie scenerię (rekwizyty, tło, oświetlenie). Nie modyfikuje kompozycji dania ani składników.
+            </p>
           </div>
 
-          {/* Generate button */}
+          {/* Generate */}
           <button
             onClick={() => void handleGenerate()}
             disabled={!canGenerate}
             className="w-full py-5 bg-chef-dark text-white rounded-[28px] font-black text-lg flex items-center justify-center gap-3 shadow-xl hover:bg-chef-dark2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isGenerating ? <Loader2 className="animate-spin" size={22} /> : <Wand2 size={22} />}
-            {isGenerating ? 'ULEPSZAM...' : hasNoCredits ? 'BRAK KREDYTÓW' : 'ULEPSZ ZDJĘCIE'}
+            {isGenerating ? 'TWORZĘ SCENĘ...' : hasNoCredits ? 'BRAK KREDYTÓW' : 'WYGENERUJ MOTYW'}
           </button>
         </div>
 
-        {/* ───── RIGHT: preview ───── */}
+        {/* RIGHT: preview */}
         <div className="space-y-4">
           <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-sm sticky top-6 space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-black tracking-tight text-slate-800 flex items-center gap-2">
-                <Sparkles size={16} className="text-amber-500" /> Podgląd ({generatedImages.length}/{MAX_ENHANCE_PREVIEWS})
+                <Sparkles size={16} className="text-rose-500" /> Podgląd ({generatedImages.length}/{MAX_ENHANCE_PREVIEWS})
               </h4>
               {generatedImages.length > 0 && (
                 <button
@@ -407,22 +454,13 @@ export const ChefsStudio: React.FC<Props> = ({
             {generatedImages.length === 0 ? (
               <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 min-h-[360px] flex flex-col items-center justify-center text-center p-8 text-slate-400">
                 <ImageIcon size={40} className="mb-3" />
-                <p className="text-sm font-bold text-slate-500">Tutaj pojawi się ulepszone zdjęcie</p>
-                <p className="text-xs mt-1">Każde kolejne kliknięcie „Ulepsz zdjęcie” doda wariant (max {MAX_ENHANCE_PREVIEWS}).</p>
+                <p className="text-sm font-bold text-slate-500">Tutaj pojawi się zdjęcie w wybranym motywie</p>
+                <p className="text-xs mt-1">Każde kolejne kliknięcie doda wariant (max {MAX_ENHANCE_PREVIEWS}).</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {generatedImages.map((src, idx) => (
                   <div key={idx} className="group relative rounded-2xl overflow-hidden border border-slate-100">
-                    <button
-                      type="button"
-                      onClick={() => removeGeneratedImage(idx)}
-                      className="absolute top-2 right-2 z-10 p-2 rounded-lg bg-black/65 text-white hover:bg-red-600 transition-colors"
-                      title="Usuń zdjęcie"
-                      aria-label="Usuń zdjęcie"
-                    >
-                      <Trash2 size={16} />
-                    </button>
                     <WatermarkWrapper show={!isSubscribed} className="">
                       <img src={src} alt="Wariant" className="w-full h-auto block" />
                     </WatermarkWrapper>
@@ -538,6 +576,79 @@ export const ChefsStudio: React.FC<Props> = ({
         </div>
       )}
 
+      {isPickingStudioTheme && (
+        <div className="fixed inset-0 z-[520] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-[28px] w-full max-w-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-black text-slate-900">Wybierz tło ze Studio</h3>
+              <button
+                type="button"
+                onClick={() => setIsPickingStudioTheme(false)}
+                className="p-2 rounded-xl text-slate-400 hover:bg-slate-100"
+                aria-label="Zamknij"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            {savedBackdrops.length === 0 ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+                Brak zapisanych teł w Studio tła. Najpierw zapisz tam tło, a potem wróć tutaj.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[55vh] overflow-auto pr-1">
+                {savedBackdrops.map((bg) => (
+                  <button
+                    key={bg.id}
+                    type="button"
+                    onClick={() => pickStudioBackdrop(bg)}
+                    className="group rounded-2xl overflow-hidden border-2 border-slate-200 hover:border-slate-400"
+                  >
+                    <img src={bg.imageUrl} alt="Tło ze Studio" className="w-full aspect-[4/3] object-cover group-hover:scale-[1.02] transition-transform" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {isCustomThemeMenuOpen && (
+        <div className="fixed inset-0 z-[530] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-[28px] w-full max-w-md p-6 shadow-2xl space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-black text-slate-900">Własny motyw</h3>
+              <button
+                type="button"
+                onClick={() => setIsCustomThemeMenuOpen(false)}
+                className="p-2 rounded-xl text-slate-400 hover:bg-slate-100"
+                aria-label="Zamknij"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setIsCustomThemeMenuOpen(false);
+                customThemeInputRef.current?.click();
+              }}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-black text-slate-800 hover:bg-slate-100 flex items-center justify-center gap-2"
+            >
+              <Upload size={16} /> Pobierz z dysku
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsCustomThemeMenuOpen(false);
+                setIsPickingStudioTheme(true);
+              }}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-black text-slate-800 hover:bg-slate-100 flex items-center justify-center gap-2"
+            >
+              <Plus size={16} /> Pobierz ze Studio tła
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

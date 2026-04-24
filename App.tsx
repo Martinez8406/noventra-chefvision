@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dish, DishStatus, GeneratorParams, UserProfile, Backdrop } from './types';
 import { ChefsStudio } from './components/ChefsStudio';
+import { SeasonalThemes } from './components/SeasonalThemes';
 import { BackdropLab } from './components/BackdropLab';
 import { PublicMenu } from './components/PublicMenu';
 import { QRGenerator } from './components/QRGenerator';
@@ -27,6 +28,7 @@ import {
   Camera,
   Crown,
   Layers,
+  Sparkles,
   Loader2,
   AlertTriangle,
   Gift,
@@ -37,7 +39,7 @@ const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
-  const [activeTab, setActiveTab] = useState<'kuchnia' | 'studio' | 'backdrops' | 'menu' | 'qr'>('kuchnia');
+  const [activeTab, setActiveTab] = useState<'kuchnia' | 'studio' | 'themes' | 'backdrops' | 'menu' | 'qr'>('kuchnia');
   const [selectedDishId, setSelectedDishId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -394,6 +396,7 @@ const App: React.FC = () => {
   const navItems = [
     { id: 'kuchnia', label: 'Panel menu', icon: LayoutDashboard, protected: false },
     { id: 'studio', label: 'Studio zdjęć', icon: Camera, protected: false },
+    { id: 'themes', label: 'Motywy sezonowe', icon: Sparkles, protected: false },
     { id: 'backdrops', label: 'Studio Tła', icon: Layers, protected: false },
     { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen, protected: false },
     { id: 'qr', label: 'Kod QR / Logo / Opinie Google', icon: MenuIcon, protected: false },
@@ -425,8 +428,11 @@ const App: React.FC = () => {
                 onClick={() => { setActiveTab(tab.id as any); setIsSidebarOpen(false); }}
                 className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl text-sm font-black transition-all group ${activeTab === tab.id ? 'bg-orange-500 text-white shadow-2xl' : 'text-slate-400 hover:text-white hover:bg-chef-dark2'}`}
               >
-                <div className="flex items-center gap-4">
-                  <tab.icon size={20} /> {tab.label}
+                <div className="flex items-center gap-4 text-left">
+                  <span className="w-5 shrink-0 flex justify-center">
+                    <tab.icon size={20} />
+                  </span>
+                  <span className="leading-tight">{tab.label}</span>
                 </div>
               </button>
             ))}
@@ -489,7 +495,6 @@ const App: React.FC = () => {
             currentUser ? (
               <ChefsStudio 
                 onSaveStandard={handleSaveStandard} 
-                savedBackdrops={savedBackdrops} 
                 isSubscribed={isPremium}
                 generationsUsed={currentUser.generationsUsed}
                 credits={currentUser.credits}
@@ -502,6 +507,25 @@ const App: React.FC = () => {
                 <Loader2 className="animate-spin text-chef-gold mb-4" size={40} />
                 <p className="font-medium">Ładowanie profilu...</p>
                 <p className="text-sm mt-1">Za chwilę Chef’s Studio będzie dostępne.</p>
+              </div>
+            )
+          )}
+          {activeTab === 'themes' && (
+            currentUser ? (
+              <SeasonalThemes
+                onSaveStandard={handleSaveStandard}
+                isSubscribed={isPremium}
+                generationsUsed={currentUser.generationsUsed}
+                credits={currentUser.credits}
+                savedBackdrops={savedBackdrops}
+                onGenerationSuccess={handleGenerationSuccess}
+                onCreditsUpdated={(credits) => setCurrentUser(prev => prev ? { ...prev, credits } : null)}
+                onBuyPremium={handleBuyPremium}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-24 text-center text-slate-500 min-h-[50vh]">
+                <Loader2 className="animate-spin text-chef-gold mb-4" size={40} />
+                <p className="font-medium">Ładowanie profilu...</p>
               </div>
             )
           )}

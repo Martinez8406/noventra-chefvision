@@ -56,6 +56,318 @@ function buildHybridPrompt(ingredientsHint) {
   return lines.join('\n');
 }
 
+// ─── Enhance flow (Studio zdjęć + Motywy sezonowe) ────────────────────────────
+
+const STYLE_CONFIGS = {
+  street_food: {
+    prompt: `
+Transform this food image into a high-quality street food style presentation.
+
+Style characteristics:
+- authentic street food aesthetic, not luxury or fine dining
+- casual, urban, vibrant atmosphere
+- natural imperfections allowed (slightly messy, realistic textures)
+
+Lighting:
+- natural or slightly harsh directional light
+- stronger highlights and shadows for depth
+- avoid soft studio lighting
+
+Background:
+- enhance or replace the background with a street food environment (wood, metal, street surface)
+- slightly textured and realistic
+- subtle depth of field allowed
+
+Color & mood:
+- warm, rich colors (reds, yellows, browns)
+- slightly increased contrast and saturation
+- bold and appetizing look
+
+Details:
+- preserve realistic textures (crispy, juicy, melted elements)
+
+Quality:
+- ultra realistic, high detail
+- no artificial or plastic look
+
+STRICT RULES:
+- DO NOT change the plate, bowl, packaging, or serving dish
+- DO NOT change camera angle or composition
+- DO NOT reposition the food
+- preserve original structure and proportions
+
+IMPORTANT:
+- keep the original dish recognizable
+- prioritize realism over perfection
+`,
+    strength: 0.65,
+  },
+  rustic: {
+    prompt: `
+Transform this food image into a high-quality rustic food photography style.
+
+Style characteristics:
+- warm, natural, homely atmosphere
+- rustic kitchen or countryside aesthetic
+- authentic, slightly imperfect presentation
+- no luxury or fine dining feel
+
+Lighting:
+- soft natural light (like window light)
+- warm tones
+- gentle shadows, not dramatic
+
+Background:
+- natural materials (wooden table, linen cloth, stone surface)
+- slightly textured and organic
+- cozy and real, not clean studio
+- subtle depth of field allowed
+
+Color & mood:
+- warm, earthy tones (browns, beiges, soft greens)
+- slightly muted colors (not oversaturated)
+- cozy and inviting mood
+
+Details:
+- preserve natural food textures
+- allow small imperfections (crumbs, uneven edges)
+- emphasize homemade feeling
+
+Quality:
+- ultra realistic, high detail
+- soft but sharp focus on food
+- no artificial or plastic look
+
+STRICT RULES:
+- DO NOT change the plate, bowl, or serving dish
+- DO NOT change camera angle or composition
+- DO NOT reposition the food
+- preserve original structure and proportions
+
+IMPORTANT:
+- keep the dish fully recognizable
+- prioritize authenticity over perfection
+- avoid modern or minimalistic styling
+`,
+    strength: 0.56,
+  },
+  fine_dining: {
+    prompt: `
+Transform this food image into a high-end fine dining presentation.
+
+Style characteristics:
+- elegant, refined, Michelin-level aesthetic
+- minimalistic and luxurious presentation
+- clean composition with strong attention to detail
+
+Lighting:
+- soft, diffused lighting
+- subtle highlights, no harsh shadows
+- controlled reflections for a premium look
+
+Background:
+- refined, minimal, and elegant environment
+- dark, neutral, or softly blurred upscale restaurant background
+- no clutter, no textures that distract from the dish
+
+Color & mood:
+- slightly desaturated tones
+- balanced contrast
+- clean, calm, premium color grading
+
+Details:
+- emphasize precision and cleanliness
+- smooth textures, refined surfaces
+- no mess, no spills, no crumbs unless extremely subtle
+
+Focus:
+- sharp focus on the main subject
+- gentle depth of field for background separation
+
+Quality:
+- ultra realistic, high-end food photography
+- polished but still natural (not artificial or plastic)
+- magazine-quality result
+
+STRICT RULES:
+- DO NOT change the plate, bowl, or serving dish
+- DO NOT change camera angle or composition
+- DO NOT reposition the food
+- preserve original structure and proportions
+
+IMPORTANT:
+- maintain full recognizability of the original dish
+- elevate the presentation without altering its identity
+- the result should feel expensive, clean, and professionally styled
+`,
+    strength: 0.58,
+  },
+  lifestyle: {
+    prompt: `
+Create a high-end lifestyle food photography image while STRICTLY preserving the original dish structure.
+
+INPUT IMAGE RULE:
+The dish composition, ingredients placement, proportions, shapes, and arrangement MUST remain unchanged.
+Do NOT add, remove, or rearrange any food elements.
+Do NOT modify portion sizes or plating structure.
+Only enhance styling, lighting, colors, and environment.
+
+Scene:
+Place the dish on a textured pastel surface (light pink, beige, warm stone). Background should be minimal, tactile, slightly imperfect (subtle grain, soft texture).
+
+Composition:
+
+Dish remains the central focus, unchanged.
+Add negative space around the plate.
+
+Lighting:
+Soft natural light, directional (left or right), gentle shadows, bright and airy look.
+
+Props (around the dish ONLY — never touching or modifying it):
+- Colored glass (orange, purple, amber)
+- Small fork or spoon placed casually
+- Linen napkin (natural folds)
+- Raw ingredients matching the dish (placed loosely nearby, not on plate)
+- Optional bold accent object (e.g. colorful teapot)
+
+Styling:
+Modern lifestyle aesthetic, slightly playful but controlled.
+Allow minimal natural imperfections outside the plate (crumbs, herbs).
+
+Colors:
+Pastel base + strong accent colors (blue cutlery, pink objects, purple glass, orange drink).
+
+Food styling:
+DO NOT restyle the food itself.
+No fine dining reconstruction.
+No ingredient swaps.
+No garnishing changes.
+
+Camera:
+High resolution, sharp focus on dish, subtle depth of field.
+
+Mood:
+Warm, inviting, modern, premium lifestyle, brand-consistent.
+
+STRICT NEGATIVE RULES:
+- No changes to dish structure
+- No added sauces, garnishes, or decorations on food
+- No removal of existing elements
+- No reshaping or repositioning of ingredients
+- No fake enhancements that alter realism
+- No dark or moody scenes
+- No clutter
+
+Goal:
+Make the SAME dish look like a premium lifestyle photoshoot without changing what is on the plate.
+`,
+    strength: 0.55,
+  },
+};
+
+function normalizeEnhanceStyle(style) {
+  if (!style || typeof style !== 'string') return null;
+  const normalized = style.trim().toLowerCase();
+  const aliases = {
+    'fine-dining': 'fine_dining',
+    'street-food': 'street_food',
+  };
+  return aliases[normalized] || normalized;
+}
+
+function buildEnhancePrompt(settings) {
+  const s = settings || {};
+  const styleKey = normalizeEnhanceStyle(s.style);
+  const styleConfig = styleKey ? STYLE_CONFIGS[styleKey] : null;
+  const blocks = [];
+
+  if (!styleConfig) {
+    throw { status: 400, message: 'Wybierz styl zdjecia przed generowaniem.' };
+  }
+
+  blocks.push(
+    'ENHANCE TASK: The reference image shows a real dish photograph. Keep the same dish and improve it into a premium restaurant editorial photo.'
+  );
+  blocks.push(styleConfig.prompt.trim());
+
+  blocks.push(
+    'QUALITY: hyper-realistic textures, restaurant-menu editorial quality, balanced natural colors, razor-sharp focus on the food, shallow depth of field.'
+  );
+  blocks.push(`STYLE STRENGTH: ${styleConfig.strength}.`);
+
+  const styleNegative =
+    styleKey === 'street_food'
+      ? ' Strictly exclude from the final image: kraft paper, parchment paper, wax paper, paper liners or sheets under or around the dish, disposable paper tray liners, newspaper, paper napkins used as a surface under the food, brown paper bag texture as the tabletop, any obvious paper substrate under the plate or bowl — use only solid wood, metal, concrete or similar non-paper street surfaces.'
+      : '';
+
+  blocks.push(`${NEGATIVE_PROMPT}${styleNegative}`);
+  blocks.push('OUTPUT: a single photorealistic culinary image, 4:3 aspect ratio.');
+
+  return blocks.join('\n\n');
+}
+
+function buildEnhanceFollowUp() {
+  return 'FINAL REMINDER: Keep the exact same dish and only improve style, atmosphere, background and camera framing.';
+}
+
+function buildCustomThemePrompt() {
+  return [
+    'Transform the provided dish photo using the SECOND reference image as the scene/theme direction.',
+    'Use the second image for atmosphere, props, colors, background texture and lighting mood.',
+    'CRITICAL: Do NOT modify the dish itself. Keep exactly the same ingredients, plating, proportions and camera composition from the dish reference.',
+    'Only change the surrounding scene to match the custom theme reference.',
+    'Hyper-realistic textures, shallow depth of field, editorial food-magazine quality.',
+    NEGATIVE_PROMPT,
+    'Output: a single photorealistic culinary image, 4:3 aspect ratio.',
+  ].join('\n');
+}
+
+const SEASONAL_THEME_MAP = {
+  christmas: [
+    'Transform the provided dish photo into a festive CHRISTMAS editorial food photograph.',
+    'Atmosphere: warm candle-lit glow, cozy winter evening, rich reds and deep forest greens with touches of gold.',
+    'Props around the dish: pine branches with tiny cones, small red berries, cinnamon sticks, a couple of gold baubles, a velvet Christmas ribbon, a light dusting of powdered sugar, blurred string-light bokeh in the background.',
+    'Background: dark wooden table with a linen napkin in burgundy or forest green; warm Christmas lights softly blurred behind.',
+  ],
+  easter: [
+    'Transform the provided dish photo into a bright EASTER editorial food photograph.',
+    'Atmosphere: fresh spring morning, airy and pastel, warm diffused daylight.',
+    'Props around the dish: pastel Easter eggs, small tulips or daffodils, sprigs of fresh green herbs, a linen napkin in pastel pink / mint / yellow, a small woven basket with eggs.',
+    'Background: light wood or pale stone surface, soft window light coming from the side.',
+  ],
+  halloween: [
+    'Transform the provided dish photo into a moody HALLOWEEN editorial food photograph.',
+    'Atmosphere: dark and mysterious, warm orange candlelight glow, gentle smoke/mist haze.',
+    'Props around the dish: small pumpkins and tiny gourds, dried autumn leaves, black candles with a soft flame, dark berries, a rustic dark cloth, twisted twigs subtly in the background.',
+    'Background: dark weathered wood or black stone surface, low-key dramatic lighting with warm orange accents.',
+  ],
+  summer: [
+    'Transform the provided dish photo into a vibrant SUMMER editorial food photograph.',
+    'Atmosphere: bright sunny afternoon, high-key lighting, fresh and energetic.',
+    'Props around the dish: fresh citrus slices, fresh herbs (mint, basil), tiny wildflowers, a cold drink glass with ice and condensation, a light blue / white striped linen napkin.',
+    'Background: sun-bleached wood or a sun-lit terrace table, natural sunlight with crisp shadows.',
+  ],
+  valentine: [
+    'Transform the provided dish photo into a romantic VALENTINE editorial food photograph.',
+    'Atmosphere: intimate dinner for two, warm candlelight, soft romantic glow.',
+    'Props around the dish: fresh red and pink rose petals scattered nearby, a couple of small red roses, a lit candle with a soft bokeh flame, a glass of red wine partially visible, a soft velvet ribbon, tiny heart-shaped chocolates.',
+    'Background: elegant dark wooden or marble surface, deep reds and pinks with golden warm accents, shallow depth of field with bokeh.',
+  ],
+};
+
+function buildThemePrompt(theme) {
+  const themeLines = SEASONAL_THEME_MAP[theme];
+  if (!themeLines) return buildEnhancePrompt({});
+  const lines = [
+    ...themeLines,
+    'CRITICAL: Do NOT modify the dish itself. Keep the exact same ingredients, plating and composition as in the reference photo. Only change the surrounding scene, props, colors and lighting to match the theme.',
+    'Hyper-realistic textures, shallow depth of field, editorial food-magazine quality.',
+    NEGATIVE_PROMPT,
+    'Output: a single photorealistic culinary image, 4:3 aspect ratio.',
+  ];
+  return lines.join('\n');
+}
+
 function buildDishPrompt(settings, ingredientsHint) {
   const { dishName, styleLabel, lightingLabel, plateLabel, angleLabel, hasCustomBackdrop, hasCustomTableware } =
     settings;
@@ -137,6 +449,43 @@ function buildDishPrompt(settings, ingredientsHint) {
   return parts.join('\n');
 }
 
+const GENERATION_RETRY_DELAYS_MS = [1200, 2500];
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableGeminiError(err) {
+  const status = err?.status ?? err?.error?.code ?? err?.code;
+  const message = String(err?.message ?? err?.error?.message ?? '');
+  const normalized = message.toLowerCase();
+
+  return (
+    status === 503 ||
+    status === '503' ||
+    normalized.includes('deadline expired') ||
+    normalized.includes('service unavailable') ||
+    normalized.includes('status":"unavailable"') ||
+    normalized.includes("status: 'unavailable'") ||
+    normalized.includes('temporarily unavailable')
+  );
+}
+
+function toUserFacingGenerateError(err) {
+  if (isRetryableGeminiError(err)) {
+    return {
+      status: 503,
+      message:
+        'Generator AI chwilowo nie odpowiedzial na czas. Sprobuj ponownie za kilka sekund.',
+    };
+  }
+
+  return {
+    status: err?.status || 500,
+    message: err?.message || 'Blad generacji AI.',
+  };
+}
+
 function parseImagePart(dataUrl) {
   if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) return null;
   try {
@@ -204,12 +553,54 @@ export async function runGeneration(body) {
 
     parts = [imagePart, { text: prompt }];
 
+  } else if (type === 'enhance' || body.enhanceSettings) {
+    // Nowy tryb — „Ulepsz zdjęcie” (Studio zdjęć + Motywy sezonowe).
+    extraConfig = { imageConfig: { aspectRatio: '4:3' } };
+
+    const dishPart = parseImagePart(images.dishReference);
+    if (!dishPart) {
+      throw { status: 400, message: 'Brak zdjęcia dania (wymagane w trybie „Ulepsz zdjęcie”).' };
+    }
+    const customThemePart = parseImagePart(images.customTheme);
+
+    const enhance = body.enhanceSettings || {};
+    const normalizedEnhanceStyle = normalizeEnhanceStyle(enhance.style);
+
+    if (!enhance.theme && !normalizedEnhanceStyle && !customThemePart) {
+      throw { status: 400, message: 'Wybierz styl zdjecia przed generowaniem.' };
+    }
+    if (!enhance.theme && normalizedEnhanceStyle && !STYLE_CONFIGS[normalizedEnhanceStyle]) {
+      throw { status: 400, message: 'Nieprawidlowy styl zdjecia.' };
+    }
+
+    if (normalizedEnhanceStyle) {
+      enhance.style = normalizedEnhanceStyle;
+    }
+
+    const prompt = customThemePart
+      ? buildCustomThemePrompt()
+      : enhance.theme
+        ? buildThemePrompt(enhance.theme)
+        : buildEnhancePrompt(enhance);
+
+    const followUp = customThemePart
+      ? 'FINAL REMINDER: Dish stays unchanged. Match only the environment/style from the second reference image.'
+      : enhance.theme
+        ? 'FINAL REMINDER: Keep the exact same dish and only change the surrounding seasonal scene.'
+        : buildEnhanceFollowUp();
+
+    // For image models, leading with the instruction helps reduce anchoring on the
+    // original serving plate visible in the first reference image.
+    parts = [{ text: prompt }, dishPart];
+    if (customThemePart) parts.push(customThemePart);
+
+    parts.push({ text: followUp });
+
   } else {
-    // Dish generation (full ChefsStudio or legacy DishGenerator)
+    // Dish generation (legacy flow — na wypadek wywołań z innych komponentów).
     extraConfig = { imageConfig: { aspectRatio: '4:3' } };
 
     if (images.dishReference) {
-      // Hybrid mode
       const dishPart = parseImagePart(images.dishReference);
       if (!dishPart) throw { status: 400, message: 'Nieprawidłowe zdjęcie referencyjne dania.' };
       const hybridPrompt =
@@ -226,11 +617,34 @@ export async function runGeneration(body) {
     }
   }
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-image',
-    contents: [{ parts }],
-    config: { ...baseConfig, ...extraConfig },
-  });
+  let response = null;
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= GENERATION_RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: [{ parts }],
+        config: { ...baseConfig, ...extraConfig },
+      });
+      lastError = null;
+      break;
+    } catch (err) {
+      lastError = err;
+      if (!isRetryableGeminiError(err) || attempt === GENERATION_RETRY_DELAYS_MS.length) {
+        throw err;
+      }
+
+      const delayMs = GENERATION_RETRY_DELAYS_MS[attempt];
+      console.warn(
+        `[generate-image] Gemini retryable error, retrying in ${delayMs}ms (attempt ${attempt + 1}/${GENERATION_RETRY_DELAYS_MS.length + 1})`,
+        err
+      );
+      await sleep(delayMs);
+    }
+  }
+
+  if (!response && lastError) throw lastError;
 
   if (!response.candidates || response.candidates.length === 0) {
     throw { status: 500, message: 'Model nie zwrócił żadnych propozycji.' };
@@ -284,14 +698,15 @@ export async function handleGenerateImage({ authorization, body = {} }) {
   }
 
   const requestType = body.type ?? 'dish';
+  const isCreditedRequest = requestType === 'dish' || requestType === 'enhance';
 
-  // ─── Credit reservation + generation (dish only) ───────────────────────────
+  // ─── Credit reservation + generation (dish / enhance) ──────────────────────
   let isPremium      = false;
   let profileCredits = 0;
   let creditReserved = false;
   let userClient     = null;
 
-  if (requestType === 'dish') {
+  if (isCreditedRequest) {
     const { url: supabaseUrl, key: supabaseKey } = getSupabaseServerCredentials();
 
     if (supabaseUrl && supabaseKey) {
@@ -342,7 +757,7 @@ export async function handleGenerateImage({ authorization, body = {} }) {
     // 4 — SUCCESS: credit already decremented (reservation confirmed)
     const creditsRemaining = isPremium ? 999999 : Math.max(0, profileCredits - 1);
 
-    if (requestType === 'dish') {
+    if (isCreditedRequest) {
       return { status: 200, body: { image, creditsRemaining } };
     }
 
@@ -358,10 +773,9 @@ export async function handleGenerateImage({ authorization, body = {} }) {
         .eq('id', user.id);
     }
 
-    const status  = err?.status  || 500;
-    const message = err?.message || 'Błąd generacji AI.';
-    console.error('[generate-image]', message, err);
-    return { status, body: { error: message } };
+    const mapped = toUserFacingGenerateError(err);
+    console.error('[generate-image]', mapped.message, err);
+    return { status: mapped.status, body: { error: mapped.message } };
   }
 }
 

@@ -1,4 +1,5 @@
 import { GeneratorParams, MenuTranslationEntry } from '../types';
+import type { EnhanceStyleId, SeasonalThemeId } from '../constants';
 import { supabase } from './supabaseService';
 
 export interface GenerationResult {
@@ -87,6 +88,58 @@ export async function generateDishImageWithAI(
     throw new Error(
       `Nieprawidłowa odpowiedź serwera (HTTP ${response.status}).${hint}`
     );
+  }
+
+  if (!response.ok) {
+    const msg = data?.error || 'Błąd generacji AI.';
+    if (msg === 'API_KEY_REQUIRED') throw new Error('API_KEY_REQUIRED');
+    throw new Error(msg);
+  }
+
+  if (!data.image) throw new Error('Brak danych obrazu w odpowiedzi serwera.');
+  return {
+    image:            data.image,
+    creditsRemaining: data.creditsRemaining,
+    generationsUsed:  data.generationsUsed,
+  };
+}
+
+/** Nowy tryb — „Ulepsz zdjęcie”: wymaga zdjęcia referencyjnego dania. */
+export interface EnhanceSettings {
+  style?: EnhanceStyleId;
+  theme?: SeasonalThemeId;
+  customThemeImage?: string;
+}
+
+export async function enhanceDishImage(
+  dishReferenceImage: string,
+  settings: EnhanceSettings
+): Promise<GenerationResult> {
+  const response = await fetch('/api/generate-image', {
+    method: 'POST',
+    headers: await getAuthHeaders(),
+    body: JSON.stringify({
+      type: 'enhance',
+      enhanceSettings: settings,
+      images: {
+        dishReference: dishReferenceImage,
+        customTheme: settings.customThemeImage ?? null,
+      },
+    }),
+  });
+
+  const raw = await response.text();
+  let data: any;
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {
+    const hint =
+      response.status === 502 || response.status === 503 || response.status === 504
+        ? ' Serwer API Chef Vision (domyślnie port 3002, STRIPE_API_PORT) prawdopodobnie nie działa — uruchom `npm run dev` (Vite + backend).'
+        : response.status === 404
+          ? ' Endpoint /api nie istnieje — uruchom backend (`npm run dev`).'
+          : '';
+    throw new Error(`Nieprawidłowa odpowiedź serwera (HTTP ${response.status}).${hint}`);
   }
 
   if (!response.ok) {
