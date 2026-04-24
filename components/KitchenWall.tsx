@@ -1,17 +1,18 @@
 
 import React, { useState } from 'react';
 import { Dish, DishStatus } from '../types';
-import { Search, CheckCircle2, Clock, AlertTriangle, Download } from 'lucide-react';
+import { Search, CheckCircle2, Clock, AlertTriangle, Download, Trash2 } from 'lucide-react';
 
 interface Props {
   dishes: Dish[];
   onApprove: (id: string) => void;
   onOpenTraining: (dish: Dish) => void;
   onSelect: (id: string) => void;
+  onDelete: (id: string) => void;
   selectedId: string | null;
 }
 
-export const KitchenWall: React.FC<Props> = ({ dishes, onApprove, onOpenTraining, onSelect, selectedId }) => {
+export const KitchenWall: React.FC<Props> = ({ dishes, onApprove, onOpenTraining, onSelect, onDelete, selectedId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'approved' | 'pending'>('all');
 
@@ -100,6 +101,16 @@ export const KitchenWall: React.FC<Props> = ({ dishes, onApprove, onOpenTraining
                   title="Pobierz zdjęcie na urządzenie"
                 >
                   <Download size={18} strokeWidth={3} />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(dish.id);
+                  }}
+                  className="bg-red-600/85 backdrop-blur-md text-white p-2.5 rounded-2xl shadow-xl border border-white/10 hover:bg-red-600 transition-all hover:scale-110 active:scale-95"
+                  title="Usuń zdjęcie"
+                >
+                  <Trash2 size={18} strokeWidth={3} />
                 </button>
               </div>
               

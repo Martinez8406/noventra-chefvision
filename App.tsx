@@ -481,12 +481,13 @@ const App: React.FC = () => {
         <div className="p-6 md:p-10 max-w-5xl mx-auto min-h-0 w-full">
           {activeTab === 'kuchnia' && (
             <div className="space-y-8">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">Status Kuchni</h2>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">Panel menu</h2>
               <KitchenWall 
                 dishes={dishes} 
                 onApprove={handleApprove} 
                 onOpenTraining={() => {}} 
                 onSelect={setSelectedDishId} 
+                onDelete={handleDeleteDish}
                 selectedId={selectedDishId} 
               />
             </div>
