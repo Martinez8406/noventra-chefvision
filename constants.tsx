@@ -120,7 +120,7 @@ export const ALLERGENS_LIST: string[] = [
   'Gluten', 'Laktoza', 'Orzechy', 'Skorupiaki', 'Jaja', 'Ryby', 'Soja', 'Gorczyca'
 ];
 
-/** Kategorie menu cyfrowego — kolejność = kolejność sekcji u gościa. „Inne” = fallback (brak kategorii / stare wpisy). */
+/** Kategorie menu cyfrowego — kolejność = kolejność sekcji u gościa. */
 export const MENU_CATEGORIES = [
   'Śniadania',
   'Przystawki',
@@ -136,5 +136,4 @@ export const MENU_CATEGORIES = [
   'Napoje gorące',
   'Alkohole',
   'Oferta sezonowa',
-  'Inne',
 ] as const;

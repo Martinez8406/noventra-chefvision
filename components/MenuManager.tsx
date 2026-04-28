@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dish } from '../types';
-import { Link2, Eye, EyeOff, ExternalLink, QrCode, Trash2, Edit } from 'lucide-react';
+import { Link2, Eye, EyeOff, ExternalLink, QrCode, Trash2, Edit, Settings } from 'lucide-react';
 import { supabase } from '../services/supabaseService';
 import { MENU_CATEGORIES } from '../constants';
 import { UploadCover } from './UploadCover';
@@ -27,9 +27,17 @@ export const MenuManager: React.FC<Props> = ({
   onUpdateCategory,
   menuUserId,
 }) => {
+  const CUSTOM_CATEGORY_VALUE = '__custom_category__';
+  const MENU_CATEGORIES_STORAGE_KEY = (uid: string) => `chefvision_menu_categories:${uid}`;
   const [justToggledId, setJustToggledId] = useState<string | null>(null);
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [draftPrice, setDraftPrice] = useState<string>('');
+  const [customCategoryDrafts, setCustomCategoryDrafts] = useState<Record<string, string>>({});
+  const [customCategoryEnabled, setCustomCategoryEnabled] = useState<Record<string, boolean>>({});
+  const [menuCategories, setMenuCategories] = useState<string[]>([...MENU_CATEGORIES]);
+  const [categoryManagerOpenForDishId, setCategoryManagerOpenForDishId] = useState<string | null>(null);
+  const [categoryEditName, setCategoryEditName] = useState<string | null>(null);
+  const [categoryEditDraft, setCategoryEditDraft] = useState<string>('');
   const [primaryColor, setPrimaryColor] = useState('#6366f1');
   const [secondaryColor, setSecondaryColor] = useState('#ffffff');
   const [fontFamily, setFontFamily] = useState('Inter');
@@ -55,6 +63,46 @@ export const MenuManager: React.FC<Props> = ({
         }
       });
   }, [menuUserId]);
+
+  useEffect(() => {
+    if (!menuUserId) return;
+    try {
+      const raw = localStorage.getItem(MENU_CATEGORIES_STORAGE_KEY(menuUserId));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.every((x) => typeof x === 'string')) {
+          const cleaned = parsed.map((s) => s.trim()).filter(Boolean);
+          if (cleaned.length) {
+            setMenuCategories([...new Set(cleaned)]);
+            return;
+          }
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+
+    // Fallback: stałe + wykryte kategorie z dań
+    const extra = Array.from(
+      new Set(
+        (dishes || [])
+          .map((d) => (d.category ?? '').trim())
+          .filter(Boolean)
+          .filter((c) => !MENU_CATEGORIES.includes(c as any)),
+      ),
+    );
+    setMenuCategories([...MENU_CATEGORIES, ...extra]);
+  }, [menuUserId, dishes]);
+
+  const persistMenuCategories = (next: string[]) => {
+    setMenuCategories(next);
+    if (!menuUserId) return;
+    try {
+      localStorage.setItem(MENU_CATEGORIES_STORAGE_KEY(menuUserId), JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
+  };
 
   const getBrightness = (hex: string) => {
     const c = hex.replace('#', '');
@@ -111,6 +159,32 @@ export const MenuManager: React.FC<Props> = ({
     onUpdatePrice(dishId, draftPrice);
     setEditingPriceId(null);
     setDraftPrice('');
+  };
+
+  const isKnownCategory = (category: string) => menuCategories.includes(category);
+
+  const ensureCategoryExists = (category: string) => {
+    const trimmed = category.trim();
+    if (!trimmed) return;
+    if (menuCategories.includes(trimmed)) return;
+    persistMenuCategories([...menuCategories, trimmed]);
+  };
+
+  const renameCategoryEverywhere = (oldName: string, newName: string) => {
+    const from = oldName.trim();
+    const to = newName.trim();
+    if (!from || !to) return;
+    if (from === to) return;
+
+    // 1) Zaktualizuj listę kategorii (pozycja w tej samej kolejności)
+    const updatedCategories = menuCategories.map((c) => (c === from ? to : c));
+    persistMenuCategories(Array.from(new Set(updatedCategories)));
+
+    // 2) Zaktualizuj wszystkie dania z tą kategorią
+    for (const dish of dishes) {
+      const current = (dish.category ?? '').trim();
+      if (current === from) onUpdateCategory(dish.id, to);
+    }
   };
 
   const getBaseUrl = () =>
@@ -245,16 +319,160 @@ export const MenuManager: React.FC<Props> = ({
 
                 {/* Kategoria */}
                 <td className="px-6 py-4">
-                  <select
-                    value={dish.category || ''}
-                    onChange={(e) => onUpdateCategory(dish.id, e.target.value || null)}
-                    className="w-36 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
-                  >
-                    <option value="">— brak —</option>
-                    {MENU_CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
+                  {(() => {
+                    const normalizedCategory = dish.category?.trim() || '';
+                    const hasCustomCategory = !!normalizedCategory && !isKnownCategory(normalizedCategory);
+                    const customEnabled = customCategoryEnabled[dish.id] || hasCustomCategory;
+                    const customValue = customCategoryDrafts[dish.id] ?? (dish.category ?? '');
+
+                    return (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={customEnabled ? CUSTOM_CATEGORY_VALUE : normalizedCategory}
+                            onChange={(e) => {
+                              const next = e.target.value;
+                              if (next === CUSTOM_CATEGORY_VALUE) {
+                                setCustomCategoryEnabled((prev) => ({ ...prev, [dish.id]: true }));
+                                setCustomCategoryDrafts((prev) => ({
+                                  ...prev,
+                                  [dish.id]: dish.category ?? (prev[dish.id] ?? ''),
+                                }));
+                                return;
+                              }
+
+                              setCustomCategoryEnabled((prev) => ({ ...prev, [dish.id]: false }));
+                              onUpdateCategory(dish.id, next || null);
+                            }}
+                            className="w-44 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
+                          >
+                            <option value="">— brak —</option>
+                            {menuCategories.map((cat) => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                            <option value={CUSTOM_CATEGORY_VALUE} className="font-bold italic">
+                              Nowa kategoria (wpisz)
+                            </option>
+                          </select>
+
+                          <button
+                            type="button"
+                            onClick={() => setCategoryManagerOpenForDishId((prev) => (prev === dish.id ? null : dish.id))}
+                            className="p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors"
+                            title="Zarządzaj kategoriami"
+                          >
+                            <Settings size={16} />
+                          </button>
+                        </div>
+
+                        {categoryManagerOpenForDishId === dish.id && (
+                          <div className="w-[18.5rem] rounded-xl border border-slate-200 bg-white shadow-lg p-3">
+                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                              Kategorie
+                            </div>
+                            <div className="space-y-1 max-h-48 overflow-auto pr-1">
+                              {menuCategories.map((cat) => {
+                                const isEditingThis = categoryEditName === cat;
+                                return (
+                                  <div key={cat} className="flex items-center gap-2">
+                                    {isEditingThis ? (
+                                      <>
+                                        <input
+                                          autoFocus
+                                          type="text"
+                                          value={categoryEditDraft}
+                                          onChange={(e) => setCategoryEditDraft(e.target.value)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                              renameCategoryEverywhere(cat, categoryEditDraft);
+                                              setCategoryEditName(null);
+                                              setCategoryEditDraft('');
+                                            } else if (e.key === 'Escape') {
+                                              setCategoryEditName(null);
+                                              setCategoryEditDraft('');
+                                            }
+                                          }}
+                                          className="flex-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                          placeholder="Nowa nazwa kategorii"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            renameCategoryEverywhere(cat, categoryEditDraft);
+                                            setCategoryEditName(null);
+                                            setCategoryEditDraft('');
+                                          }}
+                                          className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wide rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+                                        >
+                                          Zapisz
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <div className="flex-1 text-xs font-semibold text-slate-700 truncate" title={cat}>
+                                          {cat}
+                                        </div>
+                                        <div className="relative">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              // „Koło zębate” → opcja Edycja (tu: od razu włącza tryb edycji)
+                                              setCategoryEditName(cat);
+                                              setCategoryEditDraft(cat);
+                                            }}
+                                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+                                            title="Edycja"
+                                          >
+                                            <Settings size={14} />
+                                          </button>
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <div className="mt-2 pt-2 border-t border-slate-100 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCategoryManagerOpenForDishId(null);
+                                  setCategoryEditName(null);
+                                  setCategoryEditDraft('');
+                                }}
+                                className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wide rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200"
+                              >
+                                Zamknij
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {customEnabled && (
+                          <input
+                            type="text"
+                            value={customValue}
+                            onChange={(e) => {
+                              const nextValue = e.target.value;
+                              setCustomCategoryDrafts((prev) => ({ ...prev, [dish.id]: nextValue }));
+                              // Nie trimujemy na bieżąco, żeby działały spacje (np. "Dania dnia").
+                              // Trim robimy dopiero na blur.
+                              onUpdateCategory(dish.id, nextValue.length ? nextValue : null);
+                            }}
+                            onBlur={() => {
+                              const raw = customCategoryDrafts[dish.id] ?? (dish.category ?? '');
+                              const trimmed = raw.trim();
+                              setCustomCategoryDrafts((prev) => ({ ...prev, [dish.id]: trimmed }));
+                              onUpdateCategory(dish.id, trimmed ? trimmed : null);
+                              if (trimmed) ensureCategoryExists(trimmed);
+                            }}
+                            placeholder="Wpisz własną kategorię"
+                            className="w-44 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          />
+                        )}
+                      </div>
+                    );
+                  })()}
                 </td>
 
                 {/* Status Online */}
