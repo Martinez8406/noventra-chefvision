@@ -54,6 +54,8 @@ export const PublicMenu: React.FC<Props> = ({
   const [showReviewTooltip, setShowReviewTooltip] = useState(false);
   const [menuLocale, setMenuLocale] = useState<PublicMenuLocale>('pl');
   const [customCategoryTranslations, setCustomCategoryTranslations] = useState<Record<string, Partial<Record<PublicMenuLocale, string>>>>({});
+  const [profileMenuCategories, setProfileMenuCategories] = useState<string[]>([]);
+  const [profileCategoryTranslations, setProfileCategoryTranslations] = useState<Record<string, Partial<Record<PublicMenuLocale, string>>>>({});
 
   // Track in-flight category translation requests to avoid duplicates
   const [inFlightKeys, setInFlightKeys] = useState<Record<string, true>>({});
@@ -96,7 +98,7 @@ export const PublicMenu: React.FC<Props> = ({
     if (!supabase || !userId) return;
     supabase
       .from('profiles')
-      .select('logo_url, cover_url, primary_color, secondary_color, font_family, restaurant_name, google_place_id')
+      .select('logo_url, cover_url, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations')
       .eq('id', userId)
       .single()
       .then(({ data }) => {
@@ -107,6 +109,18 @@ export const PublicMenu: React.FC<Props> = ({
         if (data?.font_family) setFontFamily(data.font_family);
         if (data?.restaurant_name) setRestaurantName(data.restaurant_name);
         setGooglePlaceId(data?.google_place_id?.trim() || null);
+        if (Array.isArray((data as any)?.menu_categories)) {
+          const list = (data as any).menu_categories.map((x: any) => String(x).trim()).filter(Boolean);
+          setProfileMenuCategories(list);
+        } else {
+          setProfileMenuCategories([]);
+        }
+        const tr = (data as any)?.menu_category_translations;
+        if (tr && typeof tr === 'object') {
+          setProfileCategoryTranslations(tr);
+        } else {
+          setProfileCategoryTranslations({});
+        }
       });
   }, [userId]);
 
@@ -296,10 +310,12 @@ export const PublicMenu: React.FC<Props> = ({
     groups[key].push(dish);
   }
 
+  const categoryOrder = profileMenuCategories.length > 0 ? profileMenuCategories : CATEGORY_ORDER;
+
   // Sekcje w ustalonej kolejności; dodatkowe kategorie (spoza listy) na końcu
   const orderedKeys = [
-    ...CATEGORY_ORDER.filter((c) => groups[c]?.length),
-    ...Object.keys(groups).filter((c) => !CATEGORY_ORDER.includes(c) && groups[c]?.length),
+    ...categoryOrder.filter((c) => groups[c]?.length),
+    ...Object.keys(groups).filter((c) => !categoryOrder.includes(c) && groups[c]?.length),
   ];
 
   // Pre-translate custom categories (not covered by our static map) and cache in localStorage.
@@ -529,8 +545,18 @@ export const PublicMenu: React.FC<Props> = ({
                 {(() => {
                   const base = getPublicMenuCategoryDisplay(category, menuLocale);
                   if (menuLocale === 'pl') return base;
-                  if (base !== category) return base;
                   const key = normalizeCategoryKey(category);
+
+                  // 1) translations persisted in Supabase profiles
+                  const fromProfile = Object.entries(profileCategoryTranslations || {}).find(
+                    ([k]) => normalizeCategoryKey(String(k)) === key
+                  )?.[1]?.[menuLocale];
+                  if (typeof fromProfile === 'string' && fromProfile.trim()) return fromProfile;
+
+                  // 2) static map for built-in categories
+                  if (base !== category) return base;
+
+                  // 3) local cache / fallback
                   return customCategoryTranslations[key]?.[menuLocale] || category;
                 })()}
               </h2>

@@ -46,12 +46,16 @@ export const MenuManager: React.FC<Props> = ({
   const [nameSaved, setNameSaved] = useState(false);
   const [colorSaving, setColorSaving] = useState(false);
   const [colorSaved, setColorSaved] = useState(false);
+  const [categoriesSaving, setCategoriesSaving] = useState(false);
+  const [categoriesSaved, setCategoriesSaved] = useState(false);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [hasProfileMenuCategories, setHasProfileMenuCategories] = useState(false);
 
   useEffect(() => {
     if (!menuUserId || !supabase) return;
     supabase
       .from('profiles')
-      .select('primary_color, secondary_color, font_family, restaurant_name')
+      .select('primary_color, secondary_color, font_family, restaurant_name, menu_categories')
       .eq('id', menuUserId)
       .single()
       .then(({ data }) => {
@@ -60,12 +64,26 @@ export const MenuManager: React.FC<Props> = ({
           if (data.secondary_color) setSecondaryColor(data.secondary_color);
           if (data.font_family) setFontFamily(data.font_family);
           if (data.restaurant_name) setRestaurantName(data.restaurant_name);
+          if (Array.isArray((data as any).menu_categories) && (data as any).menu_categories.length > 0) {
+            const normalized = (data as any).menu_categories
+              .map((x: any) => String(x).trim())
+              .filter(Boolean);
+            if (normalized.length > 0) {
+              setMenuCategories(Array.from(new Set(normalized)));
+              setHasProfileMenuCategories(true);
+            } else {
+              setHasProfileMenuCategories(false);
+            }
+          } else {
+            setHasProfileMenuCategories(false);
+          }
         }
       });
   }, [menuUserId]);
 
   useEffect(() => {
     if (!menuUserId) return;
+    if (hasProfileMenuCategories) return;
     try {
       const raw = localStorage.getItem(MENU_CATEGORIES_STORAGE_KEY(menuUserId));
       if (raw) {
@@ -92,7 +110,7 @@ export const MenuManager: React.FC<Props> = ({
       ),
     );
     setMenuCategories([...MENU_CATEGORIES, ...extra]);
-  }, [menuUserId, dishes]);
+  }, [menuUserId, dishes, hasProfileMenuCategories]);
 
   const persistMenuCategories = (next: string[]) => {
     setMenuCategories(next);
@@ -101,6 +119,46 @@ export const MenuManager: React.FC<Props> = ({
       localStorage.setItem(MENU_CATEGORIES_STORAGE_KEY(menuUserId), JSON.stringify(next));
     } catch {
       /* ignore */
+    }
+  };
+
+  const handleCommitMenuCategories = async () => {
+    if (!menuUserId) return;
+    const cleaned = Array.from(new Set(menuCategories.map((c) => c.trim()).filter(Boolean)));
+    persistMenuCategories(cleaned);
+    setCategoriesError(null);
+
+    if (!supabase) {
+      setCategoriesSaved(true);
+      setTimeout(() => setCategoriesSaved(false), 2000);
+      return;
+    }
+
+    setCategoriesSaving(true);
+    try {
+      // Refresh auth/session first
+      await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+
+      const resp = await fetch('/api/save-menu-categories', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ categories: cleaned }),
+      });
+      const data = await resp.json().catch(() => null);
+      if (!resp.ok) {
+        throw new Error(data?.error || `HTTP ${resp.status}`);
+      }
+      const next = Array.isArray(data?.menuCategories) ? data.menuCategories.map((x: any) => String(x).trim()).filter(Boolean) : cleaned;
+      persistMenuCategories(Array.from(new Set(next)));
+      setCategoriesSaved(true);
+      setTimeout(() => setCategoriesSaved(false), 2500);
+    } catch (e: any) {
+      setCategoriesError(e?.message || 'Nie udało się zapisać kategorii.');
+    } finally {
+      setCategoriesSaving(false);
     }
   };
 
@@ -287,6 +345,24 @@ export const MenuManager: React.FC<Props> = ({
             <UploadCover userId={menuUserId} />
           </div>
         )}
+
+        <div className="mt-6 pt-6 border-t border-slate-200 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => void handleCommitMenuCategories()}
+            disabled={categoriesSaving || !menuUserId}
+            className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-slate-900 text-white hover:bg-slate-800"
+          >
+            {categoriesSaving
+              ? 'Zatwierdzanie zakładek...'
+              : categoriesSaved
+                ? 'Zakładki zapisane i przetłumaczone ✓'
+                : 'Zatwierdź nazwy zakładek'}
+          </button>
+          {categoriesError && (
+            <p className="text-xs font-semibold text-red-600">{categoriesError}</p>
+          )}
+        </div>
       </div>
 
       <div className="overflow-x-auto">

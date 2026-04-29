@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { handleGenerateImage } from '../api/generate-image.js';
 import { handleTranslateDish } from '../api/translate-dish.js';
 import { handleTranslateCategory } from '../api/translate-category.js';
+import { handleSaveMenuCategories } from '../api/save-menu-categories.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(__dirname, '..', '.env.local') });
@@ -86,6 +87,14 @@ app.post('/api/translate-dish', async (req, res) => {
 app.post('/api/translate-category', async (req, res) => {
   const result = await handleTranslateCategory({
     req,
+    body: req.body || {},
+  });
+  return res.status(result.status).json(result.body);
+});
+
+app.post('/api/save-menu-categories', async (req, res) => {
+  const result = await handleSaveMenuCategories({
+    authorization: req.headers.authorization,
     body: req.body || {},
   });
   return res.status(result.status).json(result.body);
