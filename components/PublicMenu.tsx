@@ -127,6 +127,102 @@ export const PublicMenu: React.FC<Props> = ({
     if (dish) {
       return (
         <>
+          <style>
+            {`
+            @keyframes googleReviewFloat {
+              0%, 100% { transform: translateY(0); }
+              50% { transform: translateY(-3px); }
+            }
+
+            .google-review-fab-wrap {
+              position: fixed;
+              bottom: 24px;
+              right: 24px;
+              z-index: 120;
+            }
+
+            .google-review-fab-tooltip {
+              position: absolute;
+              right: 0;
+              bottom: calc(100% + 10px);
+              background: #ffffff;
+              color: #3c4043;
+              font-weight: 600;
+              font-size: 12px;
+              padding: 10px 14px;
+              border-radius: 14px;
+              box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+              border: 1px solid rgba(60, 64, 67, 0.12);
+              white-space: nowrap;
+            }
+
+            .google-review-fab {
+              display: inline-flex;
+              align-items: center;
+              gap: 12px;
+
+              padding: 12px 24px;
+              border-radius: 50px;
+
+              background: #ffffff;
+              color: #3c4043;
+              text-decoration: none;
+              font-family: Roboto, "Open Sans", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+              font-weight: 500;
+
+              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+              transition: transform 180ms ease, box-shadow 180ms ease;
+
+              animation: googleReviewFloat 3.8s ease-in-out infinite;
+            }
+
+            .google-review-fab:hover {
+              transform: translateY(-1px);
+              box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+            }
+
+            .google-review-fab:focus-visible {
+              outline: none;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 0 0 4px rgba(66, 133, 244, 0.25);
+            }
+
+            .google-review-fab__icon {
+              display: block;
+              width: 20px;
+              height: 20px;
+              flex: 0 0 auto;
+            }
+
+            .google-review-fab__text--mobile {
+              display: none;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+              .google-review-fab {
+                animation: none;
+              }
+            }
+
+            @media (max-width: 600px) {
+              .google-review-fab-wrap {
+                bottom: 16px;
+                right: 16px;
+              }
+
+              .google-review-fab {
+                padding: 10px 16px;
+              }
+
+              .google-review-fab__text--desktop {
+                display: none;
+              }
+
+              .google-review-fab__text--mobile {
+                display: inline;
+              }
+            }
+          `}
+          </style>
           <MenuLanguageSwitcher value={menuLocale} onChange={persistMenuLocale} />
           <PublicDishDetail
             dish={dish}
@@ -136,20 +232,31 @@ export const PublicMenu: React.FC<Props> = ({
             fontFamily={fontFamily}
           />
           {hasGoogleReviews && (
-            <div className="fixed bottom-6 right-6 z-[120] flex items-center gap-2">
+            <div className="google-review-fab-wrap">
               {showReviewTooltip && (
-                <div className="bg-white text-slate-700 text-xs font-semibold px-3 py-2 rounded-xl shadow-lg border border-slate-200 whitespace-nowrap">
-                  Pomóż nam się rozwijać! 20 sek
-                </div>
+                <div className="google-review-fab-tooltip">Pomóż nam się rozwijać! 20 sek</div>
               )}
-              <button
-                type="button"
-                onClick={() => window.open(reviewUrl, '_blank', 'noopener,noreferrer')}
-                className="rounded-full px-4 py-2 text-sm font-bold text-white shadow-lg transition-transform duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                style={{ backgroundColor: '#4285F4' }}
+              <a
+                href={reviewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="google-review-fab"
+                aria-label="Oceń nas w Google"
               >
-                ⭐ Oceń nas
-              </button>
+                <img
+                  className="google-review-fab__icon"
+                  src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg"
+                  alt="Google"
+                  width={20}
+                  height={20}
+                />
+                <span className="google-review-fab__text google-review-fab__text--desktop">
+                  Oceń nas w Google
+                </span>
+                <span className="google-review-fab__text google-review-fab__text--mobile">
+                  Oceń nas
+                </span>
+              </a>
             </div>
           )}
         </>
@@ -174,6 +281,102 @@ export const PublicMenu: React.FC<Props> = ({
 
   return (
     <div className="min-h-screen pb-20 px-4 sm:px-6" style={{ backgroundColor: secondaryColor, fontFamily }}>
+      <style>
+        {`
+          @keyframes googleReviewFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+          }
+
+          .google-review-fab-wrap {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 120;
+          }
+
+          .google-review-fab-tooltip {
+            position: absolute;
+            right: 0;
+            bottom: calc(100% + 10px);
+            background: #ffffff;
+            color: #3c4043;
+            font-weight: 600;
+            font-size: 12px;
+            padding: 10px 14px;
+            border-radius: 14px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+            border: 1px solid rgba(60, 64, 67, 0.12);
+            white-space: nowrap;
+          }
+
+          .google-review-fab {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+
+            padding: 12px 24px;
+            border-radius: 50px;
+
+            background: #ffffff;
+            color: #3c4043;
+            text-decoration: none;
+            font-family: Roboto, "Open Sans", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+            font-weight: 500;
+
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: transform 180ms ease, box-shadow 180ms ease;
+
+            animation: googleReviewFloat 3.8s ease-in-out infinite;
+          }
+
+          .google-review-fab:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+          }
+
+          .google-review-fab:focus-visible {
+            outline: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 0 0 4px rgba(66, 133, 244, 0.25);
+          }
+
+          .google-review-fab__icon {
+            display: block;
+            width: 20px;
+            height: 20px;
+            flex: 0 0 auto;
+          }
+
+          .google-review-fab__text--mobile {
+            display: none;
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .google-review-fab {
+              animation: none;
+            }
+          }
+
+          @media (max-width: 600px) {
+            .google-review-fab-wrap {
+              bottom: 16px;
+              right: 16px;
+            }
+
+            .google-review-fab {
+              padding: 10px 16px;
+            }
+
+            .google-review-fab__text--desktop {
+              display: none;
+            }
+
+            .google-review-fab__text--mobile {
+              display: inline;
+            }
+          }
+        `}
+      </style>
       <MenuLanguageSwitcher value={menuLocale} onChange={persistMenuLocale} />
       <div className="max-w-6xl mx-auto pt-5 sm:pt-7">
         {/* HERO + tożsamość restauracji pod zdjęciem */}
@@ -277,20 +480,29 @@ export const PublicMenu: React.FC<Props> = ({
       </main>
 
       {hasGoogleReviews && (
-        <div className="fixed bottom-6 right-6 z-[120] flex items-center gap-2">
-          {showReviewTooltip && (
-            <div className="bg-white text-slate-700 text-xs font-semibold px-3 py-2 rounded-xl shadow-lg border border-slate-200 whitespace-nowrap">
-              Pomóż nam się rozwijać! 20 sek
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={() => window.open(reviewUrl, '_blank', 'noopener,noreferrer')}
-            className="rounded-full px-4 py-2 text-sm font-bold text-white shadow-lg transition-transform duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-300"
-            style={{ backgroundColor: '#4285F4' }}
+        <div className="google-review-fab-wrap">
+          {showReviewTooltip && <div className="google-review-fab-tooltip">Pomóż nam się rozwijać! 20 sek</div>}
+          <a
+            href={reviewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="google-review-fab"
+            aria-label="Oceń nas w Google"
           >
-            ⭐ Oceń nas
-          </button>
+            <img
+              className="google-review-fab__icon"
+              src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg"
+              alt="Google"
+              width={20}
+              height={20}
+            />
+            <span className="google-review-fab__text google-review-fab__text--desktop">
+              Oceń nas w Google
+            </span>
+            <span className="google-review-fab__text google-review-fab__text--mobile">
+              Oceń nas
+            </span>
+          </a>
         </div>
       )}
     </div>
