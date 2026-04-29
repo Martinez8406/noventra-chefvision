@@ -444,7 +444,7 @@ export const MenuManager: React.FC<Props> = ({
                         {categoryManagerOpenForDishId === dish.id && (
                           <div className="w-[18.5rem] rounded-xl border border-slate-200 bg-white shadow-lg p-3">
                             <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
-                              Kategorie
+                              Edytuj nazwę
                             </div>
                             <div className="space-y-1 max-h-48 overflow-auto pr-1">
                               {menuCategories.map((cat) => {
