@@ -28,10 +28,27 @@ function normalizeAllergens(row) {
   return [];
 }
 
-function validateTranslations(data, sourceAllergens) {
+function validateTranslations(data, sourceAllergens, sourceIngredients) {
   if (!data || typeof data !== 'object') return null;
   const n = sourceAllergens.length;
+  const m = sourceIngredients.length;
   const out = {};
+
+  const normalizeTranslatedIngredients = (value) => {
+    if (Array.isArray(value)) {
+      return value
+        .map((x) => (typeof x === 'string' ? x.trim() : ''))
+        .filter((x) => x.length > 0);
+    }
+    if (typeof value === 'string') {
+      return value
+        .split(/[\n,;]+/g)
+        .map((x) => x.trim())
+        .filter((x) => x.length > 0);
+    }
+    return [];
+  };
+
   for (const code of ['en', 'uk', 'de']) {
     const entry = data[code];
     if (!entry || typeof entry !== 'object') return null;
@@ -52,6 +69,30 @@ function validateTranslations(data, sourceAllergens) {
         if (typeof a !== 'string' || !a.trim()) return null;
       }
       base.allergens = entry.allergens.map((a) => a.trim());
+    }
+
+    // Ingredients (PL -> translated list with the same count/order).
+    // Tolerancyjnie: normalizujemy do długości `m`, a brakujące pozycje uzupełniamy PL,
+    // żeby UI prawie zawsze pokazywało tłumaczenie (nawet jeśli AI format się trochę rozjechał).
+    if (m === 0) {
+      if (entry.ingredients === undefined) {
+        base.ingredients = [];
+      } else if (Array.isArray(entry.ingredients) && entry.ingredients.length === 0) {
+        base.ingredients = [];
+      } else {
+        base.ingredients = [];
+      }
+    } else {
+      const fallback = sourceIngredients.map((x) => (typeof x === 'string' ? x.trim() : String(x).trim()));
+      const normalized = normalizeTranslatedIngredients(entry.ingredients);
+      if (normalized.length === 0) {
+        base.ingredients = fallback;
+      } else if (normalized.length >= m) {
+        base.ingredients = normalized.slice(0, m);
+      } else {
+        // Take translated ones first, then fill remainder with PL
+        base.ingredients = [...normalized, ...fallback.slice(normalized.length, m)];
+      }
     }
     out[code] = base;
   }
@@ -120,6 +161,8 @@ export async function handleTranslateDish({ authorization, body = {} }) {
 
   const allergensPL = normalizeAllergens(row);
   const allergensJson = JSON.stringify(allergensPL);
+  const ingredientsPL = Array.isArray(row.ingredients) ? row.ingredients.map((x) => String(x)) : [];
+  const ingredientsJson = JSON.stringify(ingredientsPL);
 
   const allergenBlock =
     allergensPL.length > 0
@@ -131,13 +174,16 @@ Brak zaznaczonych alergenów po stronie PL – dla każdego języka ustaw "aller
 
   const schemaExample =
     allergensPL.length > 0
-      ? '{"en":{"description":"...","allergens":["..."]},"uk":{"description":"...","allergens":["..."]},"de":{"description":"...","allergens":["..."]}}'
-      : '{"en":{"description":"...","allergens":[]},"uk":{"description":"...","allergens":[]},"de":{"description":"...","allergens":[]}}';
+      ? `{"en":{"description":"...","allergens":["..."],"ingredients":["..."]},"uk":{"description":"...","allergens":["..."],"ingredients":["..."]},"de":{"description":"...","allergens":["..."],"ingredients":["..."]}}`
+      : `{"en":{"description":"...","allergens":[],"ingredients":["..."]},"uk":{"description":"...","allergens":[],"ingredients":["..."]},"de":{"description":"...","allergens":[],"ingredients":["..."]}}`;
 
-  const prompt = `Jesteś profesjonalnym tłumaczem kulinarnym. NIE tłumacz nazwy dania — nazwa własna pozostaje w oryginale; w menu jest już zapisana osobno. Przetłumacz WYŁĄCZNIE poniższy opis marketingowy na języki: angielski, ukraiński i niemiecki. Zachowaj sens, ton restauracji i ewentualne nazwy własne składników w opisie w naturalny sposób.
+  const prompt = `Jesteś profesjonalnym tłumaczem kulinarnym. NIE tłumacz nazwy dania — nazwa własna pozostaje w oryginale; w menu jest już zapisana osobno. Przetłumacz WYŁĄCZNIE poniższy opis marketingowy oraz listę składników i zwróć też etykiety alergenów na języki: angielski, ukraiński i niemiecki. Zachowaj sens i ton restauracji w naturalny sposób.
 ${allergenBlock}
 
-Zwróć WYŁĄCZNIE jeden obiekt JSON (bez markdown, bez komentarzy) — każdy z kluczy en, uk, de zawiera TYLKO pola "description" i "allergens" (bez pola "name"):
+Lista składników (język źródłowy PL – dokładnie w tej kolejności, ${ingredientsPL.length} pozycji): ${ingredientsJson}
+Dla każdego języka (en, uk, de) dodaj pole "ingredients": tablica stringów — ta sama liczba elementów i ta sama kolejność co powyżej. Przetłumacz każdą nazwę składnika na naturalny, zwięzły odpowiednik w danym języku (np. miód → honey / мед / Honig).
+
+Zwróć WYŁĄCZNIE jeden obiekt JSON (bez markdown, bez komentarzy) — każdy z kluczy en, uk, de zawiera TYLKO pola "description", "allergens" i "ingredients" (bez pola "name"):
 ${schemaExample}
 
 Nazwa dania (nie tłumacz, tylko kontekst): ${name}
@@ -172,7 +218,7 @@ Opis dania do przetłumaczenia (PL): ${description}`;
       return { status: 502, body: { error: 'Nieprawidłowy JSON z modelu.' } };
     }
 
-    const translations = validateTranslations(parsed, allergensPL);
+    const translations = validateTranslations(parsed, allergensPL, ingredientsPL);
     if (!translations) {
       return { status: 502, body: { error: 'Niepoprawna struktura tłumaczeń.' } };
     }

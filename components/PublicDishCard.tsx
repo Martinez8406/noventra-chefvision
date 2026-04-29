@@ -1,7 +1,12 @@
 
 import React from 'react';
 import { Dish, PublicMenuLocale } from '../types';
-import { getPublicAllergenDisplay, getPublicDishCopy } from '../utils/menuTranslations';
+import {
+  getPublicAllergenDisplay,
+  getPublicDishCopy,
+  getPublicIngredientsDisplay,
+  getPublicIngredientsMoreLabel,
+} from '../utils/menuTranslations';
 import { Youtube, Instagram, Link2, Music2, Info, UtensilsCrossed } from 'lucide-react';
 import { WatermarkWrapper } from './WatermarkWrapper';
 
@@ -40,6 +45,7 @@ export const PublicDishCard: React.FC<Props> = ({
 }) => {
   const copy = getPublicDishCopy(dish, menuLocale);
   const allergensUi = getPublicAllergenDisplay(dish, menuLocale);
+  const ingredientsUi = getPublicIngredientsDisplay(dish, menuLocale);
   const openDetail = () => {
     if (usePathRouting) {
       history.pushState({}, '', `${basePath}/dish/${dish.id}`);
@@ -86,12 +92,14 @@ export const PublicDishCard: React.FC<Props> = ({
         {/* Ingredients & Allergens */}
         <div className="space-y-4 mb-6">
           <div className="flex flex-wrap gap-2">
-            {dish.ingredients.slice(0, 4).map((ing, i) => (
+            {ingredientsUi.slice(0, 4).map((ing, i) => (
               <span key={i} className="text-[11px] font-medium bg-slate-100 text-slate-600 px-2 py-1 rounded-md capitalize">
                 {ing}
               </span>
             ))}
-            {dish.ingredients.length > 4 && <span className="text-[11px] text-slate-400">+{dish.ingredients.length - 4} więcej</span>}
+            {ingredientsUi.length > 4 && (
+              <span className="text-[11px] text-slate-400">{getPublicIngredientsMoreLabel(menuLocale, ingredientsUi.length - 4)}</span>
+            )}
           </div>
         </div>
 

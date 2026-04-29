@@ -1,7 +1,12 @@
 
 import React from 'react';
 import { Dish, PublicMenuLocale } from '../types';
-import { getPublicAllergenDisplay, getPublicDishCopy } from '../utils/menuTranslations';
+import {
+  getPublicAllergenDisplay,
+  getPublicDishCopy,
+  getPublicIngredientsDisplay,
+  getPublicIngredientsSectionTitle,
+} from '../utils/menuTranslations';
 import { Youtube, Instagram, Link2, Music2, ChevronLeft, Info, Utensils, UtensilsCrossed } from 'lucide-react';
 import { BRAND_LOGO_SRC } from '../constants';
 import { WatermarkWrapper } from './WatermarkWrapper';
@@ -37,7 +42,7 @@ export const PublicDishDetail: React.FC<Props> = ({
 }) => {
   const copy = getPublicDishCopy(dish, menuLocale);
   const allergensUi = getPublicAllergenDisplay(dish, menuLocale);
-  const ingredients = dish.ingredients || [];
+  const ingredients = getPublicIngredientsDisplay(dish, menuLocale);
   return (
     <div className="min-h-screen bg-white animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ fontFamily: fontFamily || 'Inter' }}>
       {/* Hero Image Section – wysokość tak, by całe danie + znak wodny były widoczne */}
@@ -86,7 +91,7 @@ export const PublicDishDetail: React.FC<Props> = ({
           {/* Ingredients */}
           <div className="space-y-3">
             <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] flex items-center gap-2">
-              <Utensils size={14} className="text-amber-500" /> Składniki
+              <Utensils size={14} className="text-amber-500" /> {getPublicIngredientsSectionTitle(menuLocale)}
             </h3>
             <ul className="space-y-2">
               {ingredients.map((ing, i) => (

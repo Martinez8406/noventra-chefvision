@@ -108,6 +108,42 @@ function EnhanceStyleCard({
   );
 }
 
+function QuickAddOriginalCard({
+  disabled,
+  onClick,
+}: {
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={disabled ? 'Najpierw wgraj zdjęcie w kroku 1' : 'Dodaj zdjęcie bez ulepszania'}
+      className={`group relative aspect-square h-[148px] w-[148px] overflow-hidden rounded-2xl border-2 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-chef-gold focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
+        disabled
+          ? 'cursor-not-allowed border-slate-100 bg-slate-50'
+          : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'
+      }`}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700" aria-hidden />
+      <div className="absolute inset-0 z-[1] bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.16),rgba(255,255,255,0)_55%)]" aria-hidden />
+      <div className="relative z-[2] flex h-full flex-col items-start justify-between p-3.5">
+        <span className="inline-flex items-center gap-1 rounded-xl bg-white/15 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+          <Upload size={12} />
+          Bez AI
+        </span>
+        <span className="text-[13px] font-black leading-tight tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)]">
+          Dodaj zdjęcie
+          <br />
+          bez ulepszania
+        </span>
+      </div>
+    </button>
+  );
+}
+
 export const ChefsStudio: React.FC<Props> = ({
   onSaveStandard,
   isSubscribed,
@@ -242,6 +278,16 @@ export const ChefsStudio: React.FC<Props> = ({
     setGeneratedImages((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
+  const handleQuickAddOriginal = () => {
+    if (!dishReference) {
+      setError('Najpierw wgraj zdjęcie dania (krok 1).');
+      return;
+    }
+    setError(null);
+    setSaveTargetImage(dishReference);
+    setSaveDishName('');
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-24">
       {/* Header */}
@@ -373,6 +419,9 @@ export const ChefsStudio: React.FC<Props> = ({
                   <EnhanceStyleCard option={opt} active={style === opt.id} onSelect={() => setStyle(opt.id)} />
                 </div>
               ))}
+              <div className="shrink-0 snap-center">
+                <QuickAddOriginalCard disabled={!dishReference} onClick={handleQuickAddOriginal} />
+              </div>
             </div>
           </div>
 

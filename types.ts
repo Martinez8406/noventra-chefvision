@@ -28,6 +28,8 @@ export interface MenuTranslationEntry {
   description: string;
   /** Etykiety alergenów w danym języku — ta sama kolejność co `dish.allergens` (PL). */
   allergens?: string[];
+  /** Nazwy składników w danym języku — ta sama kolejność co `dish.ingredients` (PL). */
+  ingredients?: string[];
 }
 
 export interface Dish {

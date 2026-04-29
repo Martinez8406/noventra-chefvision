@@ -5,6 +5,7 @@ import { PublicDishDetail } from './PublicDishDetail';
 import { MenuLanguageSwitcher } from './MenuLanguageSwitcher';
 import { supabase } from '../services/supabaseService';
 import { MENU_CATEGORIES } from '../constants';
+import { getPublicMenuCategoryDisplay } from '../utils/menuTranslations';
 
 interface Props {
   dishes: Dish[];
@@ -37,6 +38,9 @@ export const PublicMenu: React.FC<Props> = ({
   showWatermark,
   loading = false,
 }) => {
+  const CATEGORY_TRANSLATIONS_KEY = (uid: string) => `chefvision_public_category_translations:${uid}`;
+  const normalizeCategoryKey = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+
   const menuBasePath = `/menu/${userId}`;
   const menuBaseHash = `#/menu/${userId}`;
 
@@ -49,6 +53,10 @@ export const PublicMenu: React.FC<Props> = ({
   const [googlePlaceId, setGooglePlaceId] = useState<string | null>(null);
   const [showReviewTooltip, setShowReviewTooltip] = useState(false);
   const [menuLocale, setMenuLocale] = useState<PublicMenuLocale>('pl');
+  const [customCategoryTranslations, setCustomCategoryTranslations] = useState<Record<string, Partial<Record<PublicMenuLocale, string>>>>({});
+
+  // Track in-flight category translation requests to avoid duplicates
+  const [inFlightKeys, setInFlightKeys] = useState<Record<string, true>>({});
 
   useEffect(() => {
     try {
@@ -58,6 +66,21 @@ export const PublicMenu: React.FC<Props> = ({
     } catch {
       setMenuLocale('pl');
     }
+  }, [userId]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(CATEGORY_TRANSLATIONS_KEY(userId));
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed && typeof parsed === 'object') {
+        setCustomCategoryTranslations(parsed);
+      } else {
+        setCustomCategoryTranslations({});
+      }
+    } catch {
+      setCustomCategoryTranslations({});
+    }
+    setInFlightKeys({});
   }, [userId]);
 
   const persistMenuLocale = (locale: PublicMenuLocale) => {
@@ -279,6 +302,67 @@ export const PublicMenu: React.FC<Props> = ({
     ...Object.keys(groups).filter((c) => !CATEGORY_ORDER.includes(c) && groups[c]?.length),
   ];
 
+  // Pre-translate custom categories (not covered by our static map) and cache in localStorage.
+  // This runs even in PL so that switching language later is instant.
+  useEffect(() => {
+    const missing = orderedKeys
+      .map((c) => c.trim())
+      .filter(Boolean)
+      .filter((category) => {
+        const mappedEn = getPublicMenuCategoryDisplay(category, 'en');
+        if (mappedEn !== category) return false; // covered by static map (standard categories)
+        const key = normalizeCategoryKey(category);
+        const cached = customCategoryTranslations[key];
+        const hasAll =
+          !!cached?.en?.trim() && !!cached?.uk?.trim() && !!cached?.de?.trim();
+        if (hasAll) return false;
+        const inflight = inFlightKeys[key];
+        return !inflight;
+      });
+
+    if (missing.length === 0) return;
+
+    // Translate in small batches (endpoint is single-text; keep it light)
+    missing.slice(0, 5).forEach((category) => {
+      const key = normalizeCategoryKey(category);
+      setInFlightKeys((prev) => ({ ...prev, [key]: true }));
+      fetch('/api/translate-category', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: category }),
+      })
+        .then(async (r) => {
+          const data = await r.json().catch(() => null);
+          if (!r.ok) throw new Error(data?.error || `HTTP ${r.status}`);
+          return data;
+        })
+        .then((data) => {
+          const tr = data?.translations;
+          if (!tr || typeof tr !== 'object') return;
+          setCustomCategoryTranslations((prev) => {
+            const next = { ...prev };
+            const existing = next[key] || {};
+            next[key] = { ...existing, en: tr.en, uk: tr.uk, de: tr.de };
+            try {
+              localStorage.setItem(CATEGORY_TRANSLATIONS_KEY(userId), JSON.stringify(next));
+            } catch {
+              /* ignore */
+            }
+            return next;
+          });
+        })
+        .catch(() => {
+          // ignore errors; fallback will keep original category label
+        })
+        .finally(() => {
+          setInFlightKeys((prev) => {
+            const { [key]: _, ...rest } = prev;
+            return rest;
+          });
+        });
+    });
+  }, [orderedKeys.join('|'), userId, customCategoryTranslations, inFlightKeys]);
+
   return (
     <div className="min-h-screen pb-20 px-4 sm:px-6" style={{ backgroundColor: secondaryColor, fontFamily }}>
       <style>
@@ -442,7 +526,13 @@ export const PublicMenu: React.FC<Props> = ({
             {/* Nagłówek kategorii */}
             <div className="flex items-center gap-4 mb-8">
               <h2 className="text-xs font-black tracking-[0.25em] uppercase whitespace-nowrap" style={{ color: primaryColor }}>
-                {category}
+                {(() => {
+                  const base = getPublicMenuCategoryDisplay(category, menuLocale);
+                  if (menuLocale === 'pl') return base;
+                  if (base !== category) return base;
+                  const key = normalizeCategoryKey(category);
+                  return customCategoryTranslations[key]?.[menuLocale] || category;
+                })()}
               </h2>
               <div className="flex-1 h-px" style={{ backgroundColor: primaryColor, opacity: 0.25 }} />
             </div>
