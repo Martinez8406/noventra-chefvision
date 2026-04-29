@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   TRIAL_AI_CREDITS,
   MAX_ENHANCE_PREVIEWS,
@@ -162,6 +162,9 @@ export const ChefsStudio: React.FC<Props> = ({
   // ── Step 2: settings ─────────────────────────────────────────────────────────
   // Uwaga: TŁO jest ustalane automatycznie przez styl (backend, STYLE_DEFAULT_BG).
   const [style, setStyle] = useState<EnhanceStyleId | null>(null);
+  const styleScrollerRef = useRef<HTMLDivElement>(null);
+  const [styleScrollValue, setStyleScrollValue] = useState(0);
+  const [hasStyleOverflow, setHasStyleOverflow] = useState(false);
 
   // ── Generation state ───────────────────────────────────────────────────────
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
@@ -185,6 +188,26 @@ export const ChefsStudio: React.FC<Props> = ({
     }),
     [style]
   );
+
+  useEffect(() => {
+    const scroller = styleScrollerRef.current;
+    if (!scroller) return;
+
+    const syncScrollState = () => {
+      const maxScrollLeft = Math.max(scroller.scrollWidth - scroller.clientWidth, 0);
+      setHasStyleOverflow(maxScrollLeft > 0);
+      setStyleScrollValue(maxScrollLeft === 0 ? 0 : (scroller.scrollLeft / maxScrollLeft) * 100);
+    };
+
+    syncScrollState();
+    scroller.addEventListener('scroll', syncScrollState);
+    window.addEventListener('resize', syncScrollState);
+
+    return () => {
+      scroller.removeEventListener('scroll', syncScrollState);
+      window.removeEventListener('resize', syncScrollState);
+    };
+  }, []);
 
   const onReferenceFile = async (file: File) => {
     if (!file.type.startsWith('image/')) return;
@@ -413,7 +436,10 @@ export const ChefsStudio: React.FC<Props> = ({
           {/* Step 2 — Style (required): kwadratowe karty ze zdjęciem + etykieta */}
           <div className={STEP_CARD_CLS}>
             <StepHeader n={2} title="Wybierz styl zdjęcia" required />
-            <div className="flex gap-3 overflow-x-auto pb-1 pt-0.5 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div
+              ref={styleScrollerRef}
+              className="flex gap-3 overflow-x-auto pb-1 pt-0.5 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
               {ENHANCE_STYLES.map((opt) => (
                 <div key={opt.id} className="shrink-0 snap-center">
                   <EnhanceStyleCard option={opt} active={style === opt.id} onSelect={() => setStyle(opt.id)} />
@@ -423,6 +449,25 @@ export const ChefsStudio: React.FC<Props> = ({
                 <QuickAddOriginalCard disabled={!dishReference} onClick={handleQuickAddOriginal} />
               </div>
             </div>
+            {hasStyleOverflow && (
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={styleScrollValue}
+                onChange={(e) => {
+                  const nextValue = Number(e.target.value);
+                  setStyleScrollValue(nextValue);
+                  const scroller = styleScrollerRef.current;
+                  if (!scroller) return;
+                  const maxScrollLeft = Math.max(scroller.scrollWidth - scroller.clientWidth, 0);
+                  scroller.scrollTo({ left: (nextValue / 100) * maxScrollLeft, behavior: 'smooth' });
+                }}
+                className="mt-2 h-2 w-full cursor-pointer accent-chef-gold"
+                aria-label="Przewijaj style zdjęcia"
+              />
+            )}
           </div>
 
           {/* Generate button */}
