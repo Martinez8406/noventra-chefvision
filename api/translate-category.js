@@ -40,6 +40,95 @@ function validateTranslations(obj) {
   return out;
 }
 
+const TOKEN_MAP_EN = {
+  dania: 'dishes',
+  danie: 'dish',
+  azjatyckie: 'asian',
+  włoskie: 'italian',
+  polskie: 'polish',
+  wegańskie: 'vegan',
+  wegetariańskie: 'vegetarian',
+  makarony: 'pasta',
+  ryby: 'fish',
+  mięsa: 'meat',
+  mięso: 'meat',
+  owoce: 'fruits',
+  morza: 'seafood',
+  owoce_morza: 'seafood',
+  streetfood: 'street food',
+  kuchnia: 'cuisine',
+};
+
+const TOKEN_MAP_UK = {
+  dania: 'страви',
+  danie: 'страва',
+  azjatyckie: 'азійські',
+  włoskie: 'італійські',
+  polskie: 'польські',
+  wegańskie: 'веганські',
+  wegetariańskie: 'вегетаріанські',
+  makarony: 'макарони',
+  ryby: 'риба',
+  mięsa: "м'ясо",
+  mięso: "м'ясо",
+  owoce: 'фрукти',
+  morza: 'морепродукти',
+  owoce_morza: 'морепродукти',
+  streetfood: 'стрітфуд',
+  kuchnia: 'кухня',
+};
+
+const TOKEN_MAP_DE = {
+  dania: 'gerichte',
+  danie: 'gericht',
+  azjatyckie: 'asiatische',
+  włoskie: 'italienische',
+  polskie: 'polnische',
+  wegańskie: 'vegane',
+  wegetariańskie: 'vegetarische',
+  makarony: 'nudeln',
+  ryby: 'fisch',
+  mięsa: 'fleisch',
+  mięso: 'fleisch',
+  owoce: 'früchte',
+  morza: 'meeresfrüchte',
+  owoce_morza: 'meeresfrüchte',
+  streetfood: 'streetfood',
+  kuchnia: 'küche',
+};
+
+function normalizeToken(token) {
+  return token
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}]+/gu, '');
+}
+
+function dictionaryTranslate(text, map) {
+  return text
+    .split(/(\s+|\/|-|\(|\)|,)/g)
+    .map((part) => {
+      const plain = normalizeToken(part);
+      if (!plain) return part;
+      // special-case for "owoce morza" likely split into two words
+      if (plain === 'owoce') return map.owoce ?? part;
+      if (plain === 'morza') return map.morza ?? part;
+      return map[plain] || part;
+    })
+    .join('')
+    .replace(/\bfruits sea(food)?\b/i, 'seafood')
+    .replace(/\bowoce morza\b/i, map.owoce_morza || 'owoce morza');
+}
+
+function fallbackTranslations(text) {
+  return {
+    en: dictionaryTranslate(text, TOKEN_MAP_EN),
+    uk: dictionaryTranslate(text, TOKEN_MAP_UK),
+    de: dictionaryTranslate(text, TOKEN_MAP_DE),
+  };
+}
+
 /**
  * Publiczny endpoint: tłumaczy krótką nazwę kategorii PL -> EN/UK/DE.
  * Nie zapisuje do bazy (cache po stronie klienta w localStorage).
@@ -51,13 +140,13 @@ export async function handleTranslateCategory({ req, body = {} }) {
   }
 
   const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) {
-    return { status: 503, body: { error: 'OPENAI_API_KEY nie jest skonfigurowany na serwerze.' } };
-  }
-
   const text = validateInput(body?.text);
   if (!text) {
     return { status: 400, body: { error: 'Wymagane pole text (max 60 znaków).' } };
+  }
+
+  if (!apiKey) {
+    return { status: 200, body: { text, translations: fallbackTranslations(text), source: 'fallback' } };
   }
 
   const openai = new OpenAI({ apiKey });
@@ -96,14 +185,13 @@ Tekst (PL): ${text}`;
 
     const translations = validateTranslations(parsed);
     if (!translations) {
-      return { status: 502, body: { error: 'Niepoprawna struktura tłumaczeń.' } };
+      return { status: 200, body: { text, translations: fallbackTranslations(text), source: 'fallback' } };
     }
 
     return { status: 200, body: { text, translations } };
   } catch (err) {
     console.error('[translate-category]', err);
-    const message = err instanceof Error ? err.message : String(err);
-    return { status: 500, body: { error: message || 'Błąd API OpenAI.' } };
+    return { status: 200, body: { text, translations: fallbackTranslations(text), source: 'fallback' } };
   }
 }
 
