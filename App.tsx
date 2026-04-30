@@ -227,7 +227,7 @@ const App: React.FC = () => {
         name: params.dishName,
         imageUrl: finalImageUrl,
         description: 'Krótki opis, który zobaczy gość...',
-        technique: 'Wpisz technologię przygotowania dania...',
+        technique: '',
         ingredients: [],
         allergens: [],
         isStandard: false,

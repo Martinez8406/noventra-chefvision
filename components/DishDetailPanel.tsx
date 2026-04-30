@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Dish, Allergen } from '../types';
 import { ALLERGENS_LIST } from '../constants';
 import { compressImageForUpload } from '../services/imageService';
@@ -24,11 +24,32 @@ interface Props {
   userId?: string;
 }
 
+const LEGACY_TECHNIQUE_DEFAULTS = [
+  'Dodaj notatki dotyczące dania...',
+  'Wpisz technologię przygotowania dania...',
+];
+
+const normalizeTechnique = (technique?: string) => {
+  const value = (technique ?? '').trim();
+  if (!value) return '';
+  return LEGACY_TECHNIQUE_DEFAULTS.includes(value) ? '' : technique ?? '';
+};
+
 export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId }) => {
-  const [editedDish, setEditedDish] = useState<Dish>({ ...dish });
+  const [editedDish, setEditedDish] = useState<Dish>({
+    ...dish,
+    technique: normalizeTechnique(dish.technique),
+  });
   const [newIngredient, setNewIngredient] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const customImageInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setEditedDish({
+      ...dish,
+      technique: normalizeTechnique(dish.technique),
+    });
+  }, [dish]);
 
   const handleCustomImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -158,12 +179,12 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
         {/* Technique */}
         <div className="space-y-4">
           <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2 flex items-center gap-2">
-            <BookOpen size={12}/> Technika Wykonania (Standard)
+            <BookOpen size={12}/> Technika wykonania (to pole jest niewidoczne w menu online dla gości. Dodaj tu notatki dla pracowników)
           </label>
           <textarea 
             value={editedDish.technique}
             onChange={(e) => setEditedDish({ ...editedDish, technique: e.target.value })}
-            placeholder="Szczegółowe kroki dla kucharza..."
+            placeholder="Dodaj notatki dotyczące dania..."
             className="w-full px-6 py-4 bg-slate-900 text-amber-50 rounded-2xl outline-none focus:ring-4 focus:ring-amber-500/20 text-xs font-medium h-40 font-mono leading-relaxed"
           />
         </div>
