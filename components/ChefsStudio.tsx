@@ -449,25 +449,24 @@ export const ChefsStudio: React.FC<Props> = ({
                 <QuickAddOriginalCard disabled={!dishReference} onClick={handleQuickAddOriginal} />
               </div>
             </div>
-            {hasStyleOverflow && (
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={1}
-                value={styleScrollValue}
-                onChange={(e) => {
-                  const nextValue = Number(e.target.value);
-                  setStyleScrollValue(nextValue);
-                  const scroller = styleScrollerRef.current;
-                  if (!scroller) return;
-                  const maxScrollLeft = Math.max(scroller.scrollWidth - scroller.clientWidth, 0);
-                  scroller.scrollTo({ left: (nextValue / 100) * maxScrollLeft, behavior: 'smooth' });
-                }}
-                className="mt-2 h-2 w-full cursor-pointer accent-chef-gold"
-                aria-label="Przewijaj style zdjęcia"
-              />
-            )}
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={styleScrollValue}
+              onChange={(e) => {
+                const nextValue = Number(e.target.value);
+                setStyleScrollValue(nextValue);
+                const scroller = styleScrollerRef.current;
+                if (!scroller) return;
+                const maxScrollLeft = Math.max(scroller.scrollWidth - scroller.clientWidth, 0);
+                scroller.scrollTo({ left: (nextValue / 100) * maxScrollLeft, behavior: 'smooth' });
+              }}
+              disabled={!hasStyleOverflow}
+              className="mt-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 disabled:cursor-default disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-slate-200 [&::-webkit-slider-thumb]:-mt-1 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-md [&::-webkit-slider-thumb]:bg-orange-500 [&::-webkit-slider-thumb]:shadow-sm [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-7 [&::-moz-range-thumb]:rounded-md [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-orange-500"
+              aria-label="Przewijaj style zdjęcia"
+            />
           </div>
 
           {/* Generate button */}
