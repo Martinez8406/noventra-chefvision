@@ -22,7 +22,15 @@ const CATEGORY_ORDER = [...MENU_CATEGORIES];
 const MENU_LOCALE_KEY = (uid: string) => `chefvision_public_menu_locale:${uid}`;
 
 const isPublicLocale = (v: string): v is PublicMenuLocale =>
-  v === 'pl' || v === 'en' || v === 'uk' || v === 'de';
+  v === 'pl' ||
+  v === 'en' ||
+  v === 'uk' ||
+  v === 'de' ||
+  v === 'es' ||
+  v === 'it' ||
+  v === 'ko' ||
+  v === 'fr' ||
+  v === 'zh';
 
 /**
  * Publiczny widok menu dla gości – bez logowania.
@@ -159,8 +167,122 @@ export const PublicMenu: React.FC<Props> = ({
     }
   };
 
+  const decodeRouteParam = (value: string | null): string | null => {
+    if (!value) return null;
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  };
+
+  // Grupowanie dań po kategorii; brak kategorii -> "Inne"
+  const groups: Record<string, Dish[]> = {};
+  for (const dish of userDishes) {
+    const key =
+      dish.category && dish.category.trim() ? dish.category.trim() : 'Inne';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(dish);
+  }
+
+  const categoryOrder = profileMenuCategories.length > 0 ? profileMenuCategories : CATEGORY_ORDER;
+
+  // Sekcje w ustalonej kolejności; dodatkowe kategorie (spoza listy) na końcu
+  const orderedKeys = [
+    ...categoryOrder.filter((c) => groups[c]?.length),
+    ...Object.keys(groups).filter((c) => !categoryOrder.includes(c) && groups[c]?.length),
+  ];
+
+  // Pre-translate custom categories (not covered by our static map) and cache in localStorage.
+  // This runs even in PL so that switching language later is instant.
+  useEffect(() => {
+    const missing = orderedKeys
+      .map((c) => c.trim())
+      .filter(Boolean)
+      .filter((category) => {
+        const mappedEn = getPublicMenuCategoryDisplay(category, 'en');
+        if (mappedEn !== category) return false; // covered by static map (standard categories)
+        const key = normalizeCategoryKey(category);
+        const cached = customCategoryTranslations[key];
+        const hasAll =
+          !!cached?.en?.trim() &&
+          !!cached?.uk?.trim() &&
+          !!cached?.de?.trim() &&
+          !!cached?.es?.trim() &&
+          !!cached?.it?.trim() &&
+          !!cached?.ko?.trim() &&
+          !!cached?.fr?.trim() &&
+          !!cached?.zh?.trim();
+        if (hasAll) return false;
+        const inflight = inFlightKeys[key];
+        return !inflight;
+      });
+
+    if (missing.length === 0) return;
+
+    // Translate in small batches (endpoint is single-text; keep it light)
+    missing.slice(0, 5).forEach((category) => {
+      const key = normalizeCategoryKey(category);
+      setInFlightKeys((prev) => ({ ...prev, [key]: true }));
+      fetch('/api/translate-category', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: category }),
+      })
+        .then(async (r) => {
+          const data = await r.json().catch(() => null);
+          if (!r.ok) throw new Error(data?.error || `HTTP ${r.status}`);
+          return data;
+        })
+        .then((data) => {
+          const tr = data?.translations;
+          if (!tr || typeof tr !== 'object') return;
+          setCustomCategoryTranslations((prev) => {
+            const next = { ...prev };
+            const existing = next[key] || {};
+            next[key] = {
+              ...existing,
+              en: tr.en,
+              uk: tr.uk,
+              de: tr.de,
+              es: tr.es,
+              it: tr.it,
+              ko: tr.ko,
+              fr: tr.fr,
+              zh: tr.zh,
+            };
+            try {
+              localStorage.setItem(CATEGORY_TRANSLATIONS_KEY(userId), JSON.stringify(next));
+            } catch {
+              /* ignore */
+            }
+            return next;
+          });
+        })
+        .catch(() => {
+          // ignore errors; fallback will keep original category label
+        })
+        .finally(() => {
+          setInFlightKeys((prev) => {
+            const { [key]: _, ...rest } = prev;
+            return rest;
+          });
+        });
+    });
+  }, [orderedKeys.join('|'), userId, customCategoryTranslations, inFlightKeys]);
+
   if (dishId) {
-    const dish = userDishes.find((d) => d.id === dishId);
+    const rawDishId = String(dishId).trim();
+    const decodedDishId = (decodeRouteParam(dishId) || '').trim();
+    const dish = userDishes.find((d) => {
+      const rowId = String(d.id || '').trim();
+      if (!rowId) return false;
+      return (
+        rowId === rawDishId ||
+        rowId === decodedDishId ||
+        encodeURIComponent(rowId) === rawDishId
+      );
+    });
     if (dish) {
       return (
         <>
@@ -299,85 +421,22 @@ export const PublicMenu: React.FC<Props> = ({
         </>
       );
     }
+
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6 text-center" style={{ backgroundColor: secondaryColor, fontFamily }}>
+        <div className="max-w-md bg-white rounded-3xl border border-slate-100 shadow-xl p-8 space-y-4">
+          <p className="text-slate-700 font-semibold">Nie znaleziono dania pod tym adresem.</p>
+          <button
+            type="button"
+            onClick={goBack}
+            className="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition-colors"
+          >
+            Wróć do menu
+          </button>
+        </div>
+      </div>
+    );
   }
-
-  // Grupowanie dań po kategorii; brak kategorii → "Inne"
-  const groups: Record<string, Dish[]> = {};
-  for (const dish of userDishes) {
-    const key =
-      dish.category && dish.category.trim() ? dish.category.trim() : 'Inne';
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(dish);
-  }
-
-  const categoryOrder = profileMenuCategories.length > 0 ? profileMenuCategories : CATEGORY_ORDER;
-
-  // Sekcje w ustalonej kolejności; dodatkowe kategorie (spoza listy) na końcu
-  const orderedKeys = [
-    ...categoryOrder.filter((c) => groups[c]?.length),
-    ...Object.keys(groups).filter((c) => !categoryOrder.includes(c) && groups[c]?.length),
-  ];
-
-  // Pre-translate custom categories (not covered by our static map) and cache in localStorage.
-  // This runs even in PL so that switching language later is instant.
-  useEffect(() => {
-    const missing = orderedKeys
-      .map((c) => c.trim())
-      .filter(Boolean)
-      .filter((category) => {
-        const mappedEn = getPublicMenuCategoryDisplay(category, 'en');
-        if (mappedEn !== category) return false; // covered by static map (standard categories)
-        const key = normalizeCategoryKey(category);
-        const cached = customCategoryTranslations[key];
-        const hasAll =
-          !!cached?.en?.trim() && !!cached?.uk?.trim() && !!cached?.de?.trim();
-        if (hasAll) return false;
-        const inflight = inFlightKeys[key];
-        return !inflight;
-      });
-
-    if (missing.length === 0) return;
-
-    // Translate in small batches (endpoint is single-text; keep it light)
-    missing.slice(0, 5).forEach((category) => {
-      const key = normalizeCategoryKey(category);
-      setInFlightKeys((prev) => ({ ...prev, [key]: true }));
-      fetch('/api/translate-category', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: category }),
-      })
-        .then(async (r) => {
-          const data = await r.json().catch(() => null);
-          if (!r.ok) throw new Error(data?.error || `HTTP ${r.status}`);
-          return data;
-        })
-        .then((data) => {
-          const tr = data?.translations;
-          if (!tr || typeof tr !== 'object') return;
-          setCustomCategoryTranslations((prev) => {
-            const next = { ...prev };
-            const existing = next[key] || {};
-            next[key] = { ...existing, en: tr.en, uk: tr.uk, de: tr.de };
-            try {
-              localStorage.setItem(CATEGORY_TRANSLATIONS_KEY(userId), JSON.stringify(next));
-            } catch {
-              /* ignore */
-            }
-            return next;
-          });
-        })
-        .catch(() => {
-          // ignore errors; fallback will keep original category label
-        })
-        .finally(() => {
-          setInFlightKeys((prev) => {
-            const { [key]: _, ...rest } = prev;
-            return rest;
-          });
-        });
-    });
-  }, [orderedKeys.join('|'), userId, customCategoryTranslations, inFlightKeys]);
 
   return (
     <div className="min-h-screen pb-20 px-4 sm:px-6" style={{ backgroundColor: secondaryColor, fontFamily }}>

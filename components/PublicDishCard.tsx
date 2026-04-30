@@ -47,11 +47,12 @@ export const PublicDishCard: React.FC<Props> = ({
   const allergensUi = getPublicAllergenDisplay(dish, menuLocale);
   const ingredientsUi = getPublicIngredientsDisplay(dish, menuLocale);
   const openDetail = () => {
+    const encodedDishId = encodeURIComponent(dish.id);
     if (usePathRouting) {
-      history.pushState({}, '', `${basePath}/dish/${dish.id}`);
+      history.pushState({}, '', `${basePath}/dish/${encodedDishId}`);
       onPathChange?.();
     } else {
-      window.location.hash = `${baseHash}/dish/${dish.id}`;
+      window.location.hash = `${baseHash}/dish/${encodedDishId}`;
     }
   };
 

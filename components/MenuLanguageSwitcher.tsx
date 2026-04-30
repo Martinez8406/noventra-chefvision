@@ -6,6 +6,11 @@ const OPTIONS: { locale: PublicMenuLocale; label: string }[] = [
   { locale: 'en', label: 'English' },
   { locale: 'uk', label: 'Українська' },
   { locale: 'de', label: 'Deutsch' },
+  { locale: 'es', label: 'Español' },
+  { locale: 'it', label: 'Italiano' },
+  { locale: 'ko', label: '한국어' },
+  { locale: 'fr', label: 'Français' },
+  { locale: 'zh', label: '中文 (简体)' },
 ];
 
 function optionFor(locale: PublicMenuLocale) {
@@ -47,6 +52,45 @@ function FlagSvg({ locale }: { locale: PublicMenuLocale }) {
           <path fill="none" stroke="#c8102e" strokeWidth="4" d="M0 0 L60 30 M60 0 L0 30" />
           <path fill="none" stroke="#ffffff" strokeWidth="10" d="M30 0 V30 M0 15 H60" />
           <path fill="none" stroke="#c8102e" strokeWidth="6" d="M30 0 V30 M0 15 H60" />
+        </svg>
+      );
+    case 'es':
+      return (
+        <svg className={cls} viewBox="0 0 16 10" aria-hidden>
+          <rect width="16" height="2.5" fill="#c60b1e" />
+          <rect y="2.5" width="16" height="5" fill="#ffc400" />
+          <rect y="7.5" width="16" height="2.5" fill="#c60b1e" />
+        </svg>
+      );
+    case 'it':
+      return (
+        <svg className={cls} viewBox="0 0 16 10" aria-hidden>
+          <rect width="5.333" height="10" fill="#009246" />
+          <rect x="5.333" width="5.334" height="10" fill="#ffffff" />
+          <rect x="10.667" width="5.333" height="10" fill="#ce2b37" />
+        </svg>
+      );
+    case 'ko':
+      return (
+        <svg className={cls} viewBox="0 0 16 10" aria-hidden>
+          <rect width="16" height="10" fill="#ffffff" />
+          <circle cx="8" cy="5" r="2.1" fill="#cd2e3a" />
+          <path d="M8 2.9a2.1 2.1 0 0 0 0 4.2a2.1 2.1 0 0 1 0-4.2z" fill="#0047a0" />
+        </svg>
+      );
+    case 'fr':
+      return (
+        <svg className={cls} viewBox="0 0 16 10" aria-hidden>
+          <rect width="5.333" height="10" fill="#0055a4" />
+          <rect x="5.333" width="5.334" height="10" fill="#ffffff" />
+          <rect x="10.667" width="5.333" height="10" fill="#ef4135" />
+        </svg>
+      );
+    case 'zh':
+      return (
+        <svg className={cls} viewBox="0 0 16 10" aria-hidden>
+          <rect width="16" height="10" fill="#de2910" />
+          <polygon points="3,2 3.5,3.3 4.9,3.3 3.8,4.1 4.2,5.4 3,4.6 1.8,5.4 2.2,4.1 1.1,3.3 2.5,3.3" fill="#ffde00" />
         </svg>
       );
     default:

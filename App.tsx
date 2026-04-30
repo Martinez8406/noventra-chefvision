@@ -36,6 +36,15 @@ import {
 } from 'lucide-react';
 
 const App: React.FC = () => {
+  const safeDecodeRouteParam = (value: string | undefined): string | null => {
+    if (!value) return null;
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  };
+
   const [session, setSession] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
@@ -107,7 +116,8 @@ const App: React.FC = () => {
     try {
       const hashMatch = hash.match(/#\/menu\/([^/?#]+)(?:\/dish\/([^/?#]+))?/);
       const pathMatch = pathname.match(/^\/menu\/([^/]+)(?:\/dish\/([^/]+))?\/?$/);
-      const publicMenuUserId = hashMatch?.[1] ?? pathMatch?.[1] ?? null;
+      const publicMenuUserId =
+        safeDecodeRouteParam(hashMatch?.[1]) ?? safeDecodeRouteParam(pathMatch?.[1]);
       if (publicMenuUserId) {
         const ownerProfile = await authService.getProfileById(publicMenuUserId);
         if (ownerProfile) {
@@ -192,8 +202,10 @@ const App: React.FC = () => {
 
   const hashMatch = hash.match(/#\/menu\/([^/?#]+)(?:\/dish\/([^/?#]+))?/);
   const pathMatch = pathname.match(/^\/menu\/([^/]+)(?:\/dish\/([^/]+))?\/?$/);
-  const publicMenuUserId = hashMatch?.[1] ?? pathMatch?.[1] ?? null;
-  const publicDishId = hashMatch?.[2] ?? pathMatch?.[2] ?? null;
+  const publicMenuUserId =
+    safeDecodeRouteParam(hashMatch?.[1]) ?? safeDecodeRouteParam(pathMatch?.[1]);
+  const publicDishId =
+    safeDecodeRouteParam(hashMatch?.[2]) ?? safeDecodeRouteParam(pathMatch?.[2]);
   const isPublicMenu = !!publicMenuUserId;
   const isSuccessPage = hash.includes('#/success');
 

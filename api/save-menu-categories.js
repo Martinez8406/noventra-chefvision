@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseServerCredentials } from './supabaseServerEnv.js';
 
-const TARGET_LOCALES = ['en', 'uk', 'de'];
+const TARGET_LOCALES = ['en', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'zh'];
 
 async function verifyToken(authHeader) {
   const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
@@ -45,7 +45,7 @@ function validateTranslationMap(raw, categories) {
 function fallbackTranslations(categories) {
   const out = {};
   for (const c of categories) {
-    out[c] = { en: c, uk: c, de: c };
+    out[c] = { en: c, uk: c, de: c, es: c, it: c, ko: c, fr: c, zh: c };
   }
   return out;
 }
@@ -73,7 +73,7 @@ export async function handleSaveMenuCategories({ authorization, body = {} }) {
   if (apiKey) {
     try {
       const openai = new OpenAI({ apiKey });
-      const prompt = `Przetłumacz poniższe nazwy kategorii menu z języka polskiego na en, uk i de.
+      const prompt = `Przetłumacz poniższe nazwy kategorii menu z języka polskiego na en, uk, de, es, it, ko, fr i zh (chiński uproszczony).
 Zasady:
 - zachowaj styl etykiet menu (krótkie, naturalne)
 - nie dodawaj nowych kategorii
@@ -84,7 +84,7 @@ ${JSON.stringify(categories)}
 
 Zwróć WYŁĄCZNIE JSON w formacie:
 {
-  "Nazwa kategorii PL": { "en": "...", "uk": "...", "de": "..." }
+  "Nazwa kategorii PL": { "en": "...", "uk": "...", "de": "...", "es": "...", "it": "...", "ko": "...", "fr": "...", "zh": "..." }
 }`;
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',

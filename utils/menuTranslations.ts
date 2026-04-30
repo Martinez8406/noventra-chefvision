@@ -1,10 +1,23 @@
 import type { Dish, PublicMenuLocale } from '../types';
 
+const toStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => (typeof item === 'string' ? item : String(item ?? '')))
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
 const ALLERGENS_SECTION_TITLE: Record<PublicMenuLocale, string> = {
   pl: 'Alergeny',
   en: 'Allergens',
   uk: 'Алергени',
   de: 'Allergene',
+  es: 'Alérgenos',
+  it: 'Allergeni',
+  ko: '알레르기 유발 성분',
+  fr: 'Allergènes',
+  zh: '过敏原',
 };
 
 const NO_ALLERGENS_LABEL: Record<PublicMenuLocale, string> = {
@@ -12,6 +25,11 @@ const NO_ALLERGENS_LABEL: Record<PublicMenuLocale, string> = {
   en: 'No major allergens',
   uk: 'Немає основних алергенів',
   de: 'Keine Hauptallergene',
+  es: 'Sin alérgenos principales',
+  it: 'Nessun allergene principale',
+  ko: '주요 알레르기 성분 없음',
+  fr: 'Aucun allergène majeur',
+  zh: '无主要过敏原',
 };
 
 const INGREDIENTS_SECTION_TITLE: Record<PublicMenuLocale, string> = {
@@ -19,6 +37,11 @@ const INGREDIENTS_SECTION_TITLE: Record<PublicMenuLocale, string> = {
   en: 'Ingredients',
   uk: 'Інгредієнти',
   de: 'Zutaten',
+  es: 'Ingredientes',
+  it: 'Ingredienti',
+  ko: '재료',
+  fr: 'Ingrédients',
+  zh: '配料',
 };
 
 const INGREDIENTS_MORE_LABEL: Record<PublicMenuLocale, string> = {
@@ -26,15 +49,20 @@ const INGREDIENTS_MORE_LABEL: Record<PublicMenuLocale, string> = {
   en: 'more',
   uk: 'більше',
   de: 'mehr',
+  es: 'más',
+  it: 'altro',
+  ko: '더보기',
+  fr: 'plus',
+  zh: '更多',
 };
 
 /** Domyślny opis przy zapisie z ChefsStudio – uznajemy za brak własnego opisu (bez tłumaczenia AI). */
 export const DEFAULT_DISH_DESCRIPTION_PLACEHOLDER = 'Krótki opis, który zobaczy gość...';
 
 export function shouldRequestMenuTranslation(dish: Dish): boolean {
-  const ingredientsPL = dish.ingredients || [];
+  const ingredientsPL = toStringArray(dish.ingredients);
   if (ingredientsPL.length > 0) {
-    const locales: PublicMenuLocale[] = ['en', 'uk', 'de'];
+    const locales: PublicMenuLocale[] = ['en', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'zh'];
     const hasIngredientsTranslationsForAllLocales = locales.every((locale) => {
       const tr = dish.translations?.[locale]?.ingredients;
       return (
@@ -71,13 +99,15 @@ export function getPublicDishCopy(
   dish: Dish,
   locale: PublicMenuLocale
 ): { name: string; description: string } {
+  const baseDescription =
+    typeof dish.description === 'string' ? dish.description : String(dish.description ?? '');
   if (locale === 'pl') {
-    return { name: dish.name, description: dish.description };
+    return { name: dish.name, description: baseDescription };
   }
   const t = dish.translations?.[locale];
   return {
     name: dish.name,
-    description: (t?.description?.trim() || dish.description) as string,
+    description: (t?.description?.trim() || baseDescription) as string,
   };
 }
 
@@ -86,7 +116,7 @@ export function getPublicAllergenDisplay(
   dish: Dish,
   locale: PublicMenuLocale
 ): { sectionTitle: string; labels: string[]; noAllergensMessage: string } {
-  const pl = dish.allergens || [];
+  const pl = toStringArray(dish.allergens);
   if (locale === 'pl') {
     return {
       sectionTitle: ALLERGENS_SECTION_TITLE.pl,
@@ -113,7 +143,7 @@ export function getPublicAllergenDisplay(
  * fallback do `dish.ingredients` (PL z bazy).
  */
 export function getPublicIngredientsDisplay(dish: Dish, locale: PublicMenuLocale): string[] {
-  const pl = dish.ingredients || [];
+  const pl = toStringArray(dish.ingredients);
   if (locale === 'pl') return pl;
   const t = dish.translations?.[locale];
   const tr = t?.ingredients;
@@ -200,6 +230,91 @@ const MENU_CATEGORY_TITLE: Record<PublicMenuLocale, Record<string, string>> = {
     'Alkohole': 'Alkohol',
     'Oferta sezonowa': 'Saisonangebote',
     'Makarony': 'Nudeln',
+  },
+  es: {
+    'Śniadania': 'Desayunos',
+    'Przystawki': 'Entrantes',
+    'Zupy': 'Sopas',
+    'Sałatki': 'Ensaladas',
+    'Dania główne': 'Platos principales',
+    'Burgery / Sandwicze': 'Hamburguesas / Sándwiches',
+    'Menu dla dzieci': 'Menú infantil',
+    'Dania wegetariańskie / wegańskie': 'Vegetariano / Vegano',
+    'Desery': 'Postres',
+    'Dodatki (frytki, sosy, pieczywo)': 'Guarniciones (patatas, salsas, pan)',
+    'Napoje zimne': 'Bebidas frías',
+    'Napoje gorące': 'Bebidas calientes',
+    'Alkohole': 'Bebidas alcohólicas',
+    'Oferta sezonowa': 'Especiales de temporada',
+    'Makarony': 'Pasta',
+  },
+  it: {
+    'Śniadania': 'Colazioni',
+    'Przystawki': 'Antipasti',
+    'Zupy': 'Zuppe',
+    'Sałatki': 'Insalate',
+    'Dania główne': 'Piatti principali',
+    'Burgery / Sandwicze': 'Burger / Panini',
+    'Menu dla dzieci': 'Menu bambini',
+    'Dania wegetariańskie / wegańskie': 'Vegetariano / Vegano',
+    'Desery': 'Dolci',
+    'Dodatki (frytki, sosy, pieczywo)': 'Contorni (patatine, salse, pane)',
+    'Napoje zimne': 'Bevande fredde',
+    'Napoje gorące': 'Bevande calde',
+    'Alkohole': 'Alcolici',
+    'Oferta sezonowa': 'Specialità stagionali',
+    'Makarony': 'Pasta',
+  },
+  ko: {
+    'Śniadania': '아침 메뉴',
+    'Przystawki': '애피타이저',
+    'Zupy': '수프',
+    'Sałatki': '샐러드',
+    'Dania główne': '메인 요리',
+    'Burgery / Sandwicze': '버거 / 샌드위치',
+    'Menu dla dzieci': '어린이 메뉴',
+    'Dania wegetariańskie / wegańskie': '채식 / 비건',
+    'Desery': '디저트',
+    'Dodatki (frytki, sosy, pieczywo)': '사이드 (감자튀김, 소스, 빵)',
+    'Napoje zimne': '차가운 음료',
+    'Napoje gorące': '따뜻한 음료',
+    'Alkohole': '주류',
+    'Oferta sezonowa': '시즌 스페셜',
+    'Makarony': '파스타',
+  },
+  fr: {
+    'Śniadania': 'Petits-déjeuners',
+    'Przystawki': 'Entrées',
+    'Zupy': 'Soupes',
+    'Sałatki': 'Salades',
+    'Dania główne': 'Plats principaux',
+    'Burgery / Sandwicze': 'Burgers / Sandwichs',
+    'Menu dla dzieci': 'Menu enfant',
+    'Dania wegetariańskie / wegańskie': 'Végétarien / Vegan',
+    'Desery': 'Desserts',
+    'Dodatki (frytki, sosy, pieczywo)': 'Accompagnements (frites, sauces, pain)',
+    'Napoje zimne': 'Boissons froides',
+    'Napoje gorące': 'Boissons chaudes',
+    'Alkohole': 'Boissons alcoolisées',
+    'Oferta sezonowa': 'Spécialités de saison',
+    'Makarony': 'Pâtes',
+  },
+  zh: {
+    'Śniadania': '早餐',
+    'Przystawki': '前菜',
+    'Zupy': '汤',
+    'Sałatki': '沙拉',
+    'Dania główne': '主菜',
+    'Burgery / Sandwicze': '汉堡 / 三明治',
+    'Menu dla dzieci': '儿童菜单',
+    'Dania wegetariańskie / wegańskie': '素食 / 纯素',
+    'Desery': '甜点',
+    'Dodatki (frytki, sosy, pieczywo)': '配菜（薯条、酱料、面包）',
+    'Napoje zimne': '冷饮',
+    'Napoje gorące': '热饮',
+    'Alkohole': '酒精饮品',
+    'Oferta sezonowa': '季节限定',
+    'Makarony': '意面',
   },
 };
 

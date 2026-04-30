@@ -49,7 +49,7 @@ function validateTranslations(data, sourceAllergens, sourceIngredients) {
     return [];
   };
 
-  for (const code of ['en', 'uk', 'de']) {
+  for (const code of ['en', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'zh']) {
     const entry = data[code];
     if (!entry || typeof entry !== 'object') return null;
     const description = entry.description;
@@ -100,7 +100,7 @@ function validateTranslations(data, sourceAllergens, sourceIngredients) {
 }
 
 /**
- * Tłumaczy opis i alergeny (PL → EN, UK, DE) do kolumny `translations`. Nazwa dania nie jest tłumaczona.
+ * Tłumaczy opis i alergeny (PL → EN, UK, DE, ES, IT, KO, FR, ZH) do kolumny `translations`. Nazwa dania nie jest tłumaczona.
  * Wymaga JWT + roli właściciela rekordu (`userId`).
  */
 export async function handleTranslateDish({ authorization, body = {} }) {
@@ -168,22 +168,22 @@ export async function handleTranslateDish({ authorization, body = {} }) {
     allergensPL.length > 0
       ? `
 Lista alergenów (język źródłowy PL – dokładnie w tej kolejności, ${allergensPL.length} pozycji): ${allergensJson}
-Dla każdego języka (en, uk, de) dodaj pole "allergens": tablica stringów — ta sama liczba elementów i ta sama kolejność co powyżej. Przetłumacz każdą etykietę na naturalny, zwięzły odpowiednik w danym języku (np. laktoza → lactose / молоко / Laktose w kontekście alergenów).`
+Dla każdego języka (en, uk, de, es, it, ko, fr, zh) dodaj pole "allergens": tablica stringów — ta sama liczba elementów i ta sama kolejność co powyżej. Przetłumacz każdą etykietę na naturalny, zwięzły odpowiednik w danym języku.`
       : `
 Brak zaznaczonych alergenów po stronie PL – dla każdego języka ustaw "allergens": [] (pusta tablica).`;
 
   const schemaExample =
     allergensPL.length > 0
-      ? `{"en":{"description":"...","allergens":["..."],"ingredients":["..."]},"uk":{"description":"...","allergens":["..."],"ingredients":["..."]},"de":{"description":"...","allergens":["..."],"ingredients":["..."]}}`
-      : `{"en":{"description":"...","allergens":[],"ingredients":["..."]},"uk":{"description":"...","allergens":[],"ingredients":["..."]},"de":{"description":"...","allergens":[],"ingredients":["..."]}}`;
+      ? `{"en":{"description":"...","allergens":["..."],"ingredients":["..."]},"uk":{"description":"...","allergens":["..."],"ingredients":["..."]},"de":{"description":"...","allergens":["..."],"ingredients":["..."]},"es":{"description":"...","allergens":["..."],"ingredients":["..."]},"it":{"description":"...","allergens":["..."],"ingredients":["..."]},"ko":{"description":"...","allergens":["..."],"ingredients":["..."]},"fr":{"description":"...","allergens":["..."],"ingredients":["..."]},"zh":{"description":"...","allergens":["..."],"ingredients":["..."]}}`
+      : `{"en":{"description":"...","allergens":[],"ingredients":["..."]},"uk":{"description":"...","allergens":[],"ingredients":["..."]},"de":{"description":"...","allergens":[],"ingredients":["..."]},"es":{"description":"...","allergens":[],"ingredients":["..."]},"it":{"description":"...","allergens":[],"ingredients":["..."]},"ko":{"description":"...","allergens":[],"ingredients":["..."]},"fr":{"description":"...","allergens":[],"ingredients":["..."]},"zh":{"description":"...","allergens":[],"ingredients":["..."]}}`;
 
-  const prompt = `Jesteś profesjonalnym tłumaczem kulinarnym. NIE tłumacz nazwy dania — nazwa własna pozostaje w oryginale; w menu jest już zapisana osobno. Przetłumacz WYŁĄCZNIE poniższy opis marketingowy oraz listę składników i zwróć też etykiety alergenów na języki: angielski, ukraiński i niemiecki. Zachowaj sens i ton restauracji w naturalny sposób.
+  const prompt = `Jesteś profesjonalnym tłumaczem kulinarnym. NIE tłumacz nazwy dania — nazwa własna pozostaje w oryginale; w menu jest już zapisana osobno. Przetłumacz WYŁĄCZNIE poniższy opis marketingowy oraz listę składników i zwróć też etykiety alergenów na języki: angielski, ukraiński, niemiecki, hiszpański, włoski, koreański, francuski i chiński uproszczony. Zachowaj sens i ton restauracji w naturalny sposób.
 ${allergenBlock}
 
 Lista składników (język źródłowy PL – dokładnie w tej kolejności, ${ingredientsPL.length} pozycji): ${ingredientsJson}
-Dla każdego języka (en, uk, de) dodaj pole "ingredients": tablica stringów — ta sama liczba elementów i ta sama kolejność co powyżej. Przetłumacz każdą nazwę składnika na naturalny, zwięzły odpowiednik w danym języku (np. miód → honey / мед / Honig).
+Dla każdego języka (en, uk, de, es, it, ko, fr, zh) dodaj pole "ingredients": tablica stringów — ta sama liczba elementów i ta sama kolejność co powyżej. Przetłumacz każdą nazwę składnika na naturalny, zwięzły odpowiednik w danym języku.
 
-Zwróć WYŁĄCZNIE jeden obiekt JSON (bez markdown, bez komentarzy) — każdy z kluczy en, uk, de zawiera TYLKO pola "description", "allergens" i "ingredients" (bez pola "name"):
+Zwróć WYŁĄCZNIE jeden obiekt JSON (bez markdown, bez komentarzy) — każdy z kluczy en, uk, de, es, it, ko, fr, zh zawiera TYLKO pola "description", "allergens" i "ingredients" (bez pola "name"):
 ${schemaExample}
 
 Nazwa dania (nie tłumacz, tylko kontekst): ${name}
