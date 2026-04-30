@@ -102,18 +102,18 @@ export const PublicDishDetail: React.FC<Props> = ({
 
         {/* Social Link Section */}
         {dish.videoUrl && (
-          <div className="pt-12 border-t border-slate-100">
+          <div className="pt-4 border-t border-slate-100">
             <a 
               href={dish.videoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="block rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+              className="block rounded-2xl overflow-hidden transition-transform duration-200 ease-out hover:-translate-y-0.5 active:-translate-y-0.5"
               aria-label="Social Link"
             >
               <img
                 src="/Gemini_Generated_Image_HD.png"
                 alt="Social Link"
-                className="w-full h-auto object-cover"
+                className="w-full h-28 object-cover object-[center_68%]"
                 loading="lazy"
               />
             </a>

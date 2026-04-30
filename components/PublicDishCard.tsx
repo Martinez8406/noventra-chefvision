@@ -119,13 +119,13 @@ export const PublicDishCard: React.FC<Props> = ({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="mt-4 block rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+            className="mt-4 block rounded-2xl overflow-hidden transition-transform duration-200 ease-out hover:-translate-y-0.5 active:-translate-y-0.5"
             aria-label="Social Link"
           >
             <img
               src="/Gemini_Generated_Image_HD.png"
               alt="Social Link"
-              className="w-full h-auto object-cover"
+              className="w-full h-24 object-cover object-[center_65%]"
               loading="lazy"
             />
           </a>
