@@ -7,7 +7,7 @@ import {
   getPublicIngredientsDisplay,
   getPublicIngredientsMoreLabel,
 } from '../utils/menuTranslations';
-import { Youtube, Instagram, Link2, Music2, Info, UtensilsCrossed } from 'lucide-react';
+import { Info, UtensilsCrossed } from 'lucide-react';
 import { WatermarkWrapper } from './WatermarkWrapper';
 
 interface Props {
@@ -19,20 +19,6 @@ interface Props {
   onPathChange?: () => void;
   showWatermark?: boolean;
 }
-
-const renderSocialIcon = (url: string) => {
-  const lower = url.toLowerCase();
-  if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
-    return <Youtube size={16} className="text-red-500" />;
-  }
-  if (lower.includes('tiktok.com')) {
-    return <Music2 size={16} className="text-slate-50" />;
-  }
-  if (lower.includes('instagram.com')) {
-    return <Instagram size={16} className="text-pink-500" />;
-  }
-  return <Link2 size={16} className="text-slate-200" />;
-};
 
 export const PublicDishCard: React.FC<Props> = ({
   dish,
@@ -104,20 +90,8 @@ export const PublicDishCard: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Social Link + Więcej info */}
-        <div className="grid grid-cols-2 gap-3">
-          {dish.videoUrl && (
-            <a
-              href={dish.videoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="flex items-center justify-center gap-2 bg-slate-900 text-white py-3 rounded-2xl text-xs font-bold hover:bg-slate-800 transition-colors"
-            >
-              {renderSocialIcon(dish.videoUrl)}
-              Social Link
-            </a>
-          )}
+        {/* Więcej info */}
+        <div className="grid grid-cols-1 gap-3">
           <button 
             onClick={(e) => { e.stopPropagation(); openDetail(); }}
             className="flex items-center justify-center gap-2 bg-amber-50 text-amber-700 py-3 rounded-2xl text-xs font-bold hover:bg-amber-100 transition-colors border border-amber-100"
@@ -137,6 +111,25 @@ export const PublicDishCard: React.FC<Props> = ({
             </p>
           </div>
         </div>
+
+        {/* Social Link (przeniesiony niżej, pod alergeny) */}
+        {dish.videoUrl && (
+          <a
+            href={dish.videoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="mt-4 block rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+            aria-label="Social Link"
+          >
+            <img
+              src="/Gemini_Generated_Image_HD.png"
+              alt="Social Link"
+              className="w-full h-auto object-cover"
+              loading="lazy"
+            />
+          </a>
+        )}
       </div>
     </div>
   );
