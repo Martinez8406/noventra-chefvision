@@ -561,9 +561,9 @@ export const PublicMenu: React.FC<Props> = ({
             )}
           </div>
 
-          <div className="-mt-14 sm:-mt-16 px-2 sm:px-6 relative z-10">
-            <div className="flex items-end gap-4 sm:gap-5">
-              <div className="h-24 w-24 sm:h-28 sm:w-28 rounded-full bg-white border-4 border-white shadow-xl overflow-hidden shrink-0">
+          <div className="px-2 sm:px-6 relative z-10">
+            <div className="flex items-end gap-4 sm:gap-5 mt-4 sm:mt-5">
+              <div className="h-24 w-24 sm:h-28 sm:w-28 rounded-3xl bg-white border-4 border-white shadow-xl overflow-hidden shrink-0 -mt-14 sm:-mt-16">
                 {logoUrl ? (
                   <img
                     src={logoUrl}
@@ -578,7 +578,7 @@ export const PublicMenu: React.FC<Props> = ({
               </div>
 
               <div className="min-w-0 pb-2">
-                <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-tight drop-shadow-sm">
+                <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-tight">
                   {restaurantTitle}
                 </h1>
               </div>
