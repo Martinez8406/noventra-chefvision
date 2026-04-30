@@ -357,7 +357,7 @@ export const MenuManager: React.FC<Props> = ({
               ? 'Zatwierdzanie zakładek...'
               : categoriesSaved
                 ? 'Zakładki zapisane i przetłumaczone ✓'
-                : 'Zatwierdź nazwy zakładek'}
+                : 'Zatwierdź nazwy kategorii'}
           </button>
           {categoriesError && (
             <p className="text-xs font-semibold text-red-600">{categoriesError}</p>
