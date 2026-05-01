@@ -47,6 +47,29 @@ export const PublicDishCard: React.FC<Props> = ({
       onClick={openDetail}
       className="bg-white rounded-3xl overflow-hidden shadow-xl border border-slate-100 max-w-sm mx-auto transition-all hover:scale-[1.02] cursor-pointer group"
     >
+      <style>
+        {`
+          @keyframes socialLinkFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+          }
+          @keyframes socialLinkGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.0); }
+            50% { box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.16); }
+          }
+          .social-link-cta {
+            animation: socialLinkFloat 3.2s ease-in-out infinite, socialLinkGlow 3.2s ease-in-out infinite;
+          }
+          .social-link-cta:hover {
+            animation-play-state: paused;
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .social-link-cta {
+              animation: none;
+            }
+          }
+        `}
+      </style>
       {/* Hero Image */}
       <WatermarkWrapper show={!!showWatermark} className="h-64 overflow-hidden">
         <img
@@ -119,7 +142,7 @@ export const PublicDishCard: React.FC<Props> = ({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="mt-4 block rounded-2xl overflow-hidden transition-transform duration-200 ease-out hover:-translate-y-0.5 active:-translate-y-0.5"
+            className="social-link-cta mt-4 block rounded-2xl overflow-hidden transition-transform duration-200 ease-out hover:-translate-y-0.5 active:-translate-y-0.5"
             aria-label="Social Link"
           >
             <img

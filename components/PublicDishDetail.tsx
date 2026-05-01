@@ -31,6 +31,29 @@ export const PublicDishDetail: React.FC<Props> = ({
   const ingredients = getPublicIngredientsDisplay(dish, menuLocale);
   return (
     <div className="min-h-screen bg-white animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ fontFamily: fontFamily || 'Inter' }}>
+      <style>
+        {`
+          @keyframes socialLinkFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+          }
+          @keyframes socialLinkGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.0); }
+            50% { box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.16); }
+          }
+          .social-link-cta {
+            animation: socialLinkFloat 3.2s ease-in-out infinite, socialLinkGlow 3.2s ease-in-out infinite;
+          }
+          .social-link-cta:hover {
+            animation-play-state: paused;
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .social-link-cta {
+              animation: none;
+            }
+          }
+        `}
+      </style>
       {/* Hero Image Section – wysokość tak, by całe danie + znak wodny były widoczne */}
       <WatermarkWrapper show={!!showWatermark} className="h-[75vh] md:h-[85vh] min-h-[400px] overflow-hidden bg-slate-950">
         <>
@@ -107,7 +130,7 @@ export const PublicDishDetail: React.FC<Props> = ({
               href={dish.videoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="block rounded-2xl overflow-hidden transition-transform duration-200 ease-out hover:-translate-y-0.5 active:-translate-y-0.5"
+              className="social-link-cta block rounded-2xl overflow-hidden transition-transform duration-200 ease-out hover:-translate-y-0.5 active:-translate-y-0.5"
               aria-label="Social Link"
             >
               <img
