@@ -28,7 +28,7 @@ function validateInput(text) {
   return trimmed;
 }
 
-const TARGET_LOCALES = ['en', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'zh'];
+const TARGET_LOCALES = ['en', 'en-us', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'cs', 'nl', 'zh'];
 
 function validateTranslations(obj) {
   if (!obj || typeof obj !== 'object') return null;
@@ -126,18 +126,21 @@ function dictionaryTranslate(text, map) {
 function fallbackTranslations(text) {
   return {
     en: dictionaryTranslate(text, TOKEN_MAP_EN),
+    'en-us': dictionaryTranslate(text, TOKEN_MAP_EN),
     uk: dictionaryTranslate(text, TOKEN_MAP_UK),
     de: dictionaryTranslate(text, TOKEN_MAP_DE),
     es: text,
     it: text,
     ko: text,
     fr: text,
+    cs: text,
+    nl: text,
     zh: text,
   };
 }
 
 /**
- * Publiczny endpoint: tłumaczy krótką nazwę kategorii PL -> EN/UK/DE/ES/IT/KO/FR/ZH.
+ * Publiczny endpoint: tłumaczy krótką nazwę kategorii PL -> EN(UK)/EN(US)/UK/DE/ES/IT/KO/FR/CS/NL/ZH.
  * Nie zapisuje do bazy (cache po stronie klienta w localStorage).
  */
 export async function handleTranslateCategory({ req, body = {} }) {
@@ -157,12 +160,12 @@ export async function handleTranslateCategory({ req, body = {} }) {
   }
 
   const openai = new OpenAI({ apiKey });
-  const prompt = `Przetłumacz nazwę kategorii menu z języka polskiego na en, uk, de, es, it, ko, fr i zh (chiński uproszczony).
+  const prompt = `Przetłumacz nazwę kategorii menu z języka polskiego na en (British English), en-us (American English), uk, de, es, it, ko, fr, cs, nl i zh (chiński uproszczony).
 Zasady:
 - tłumacz naturalnie jak w menu restauracji
 - zachowaj format krótkiej etykiety (bez kropek, bez cudzysłowów, bez dodatkowych słów)
 - jeśli w tekście są ukośniki (np. "X / Y"), zachowaj je
-- zwróć WYŁĄCZNIE JSON z kluczami en, uk, de, es, it, ko, fr, zh
+- zwróć WYŁĄCZNIE JSON z kluczami en, en-us, uk, de, es, it, ko, fr, cs, nl, zh
 
 Tekst (PL): ${text}`;
 
@@ -172,7 +175,7 @@ Tekst (PL): ${text}`;
       messages: [
         {
           role: 'system',
-          content: 'Zwracasz wyłącznie poprawny JSON: {"en":"...","uk":"...","de":"...","es":"...","it":"...","ko":"...","fr":"...","zh":"..."} bez markdown.',
+          content: 'Zwracasz wyłącznie poprawny JSON: {"en":"...","en-us":"...","uk":"...","de":"...","es":"...","it":"...","ko":"...","fr":"...","cs":"...","nl":"...","zh":"..."} bez markdown.',
         },
         { role: 'user', content: prompt },
       ],

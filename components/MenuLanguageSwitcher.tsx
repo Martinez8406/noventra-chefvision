@@ -3,13 +3,16 @@ import type { PublicMenuLocale } from '../types';
 
 const OPTIONS: { locale: PublicMenuLocale; label: string }[] = [
   { locale: 'pl', label: 'Polski' },
-  { locale: 'en', label: 'English' },
+  { locale: 'en', label: 'English (UK)' },
+  { locale: 'en-us', label: 'English (US)' },
   { locale: 'uk', label: 'Українська' },
   { locale: 'de', label: 'Deutsch' },
   { locale: 'es', label: 'Español' },
   { locale: 'it', label: 'Italiano' },
   { locale: 'ko', label: '한국어' },
   { locale: 'fr', label: 'Français' },
+  { locale: 'cs', label: 'Čeština' },
+  { locale: 'nl', label: 'Nederlands' },
   { locale: 'zh', label: '中文 (简体)' },
 ];
 
@@ -54,6 +57,20 @@ function FlagSvg({ locale }: { locale: PublicMenuLocale }) {
           <path fill="none" stroke="#c8102e" strokeWidth="6" d="M30 0 V30 M0 15 H60" />
         </svg>
       );
+    case 'en-us':
+      return (
+        <svg className={cls} viewBox="0 0 19 10" aria-hidden>
+          <rect width="19" height="10" fill="#ffffff" />
+          <rect y="0" width="19" height="0.77" fill="#b22234" />
+          <rect y="1.54" width="19" height="0.77" fill="#b22234" />
+          <rect y="3.08" width="19" height="0.77" fill="#b22234" />
+          <rect y="4.62" width="19" height="0.77" fill="#b22234" />
+          <rect y="6.16" width="19" height="0.77" fill="#b22234" />
+          <rect y="7.7" width="19" height="0.77" fill="#b22234" />
+          <rect y="9.24" width="19" height="0.76" fill="#b22234" />
+          <rect width="7.6" height="5.39" fill="#3c3b6e" />
+        </svg>
+      );
     case 'es':
       return (
         <svg className={cls} viewBox="0 0 16 10" aria-hidden>
@@ -84,6 +101,22 @@ function FlagSvg({ locale }: { locale: PublicMenuLocale }) {
           <rect width="5.333" height="10" fill="#0055a4" />
           <rect x="5.333" width="5.334" height="10" fill="#ffffff" />
           <rect x="10.667" width="5.333" height="10" fill="#ef4135" />
+        </svg>
+      );
+    case 'cs':
+      return (
+        <svg className={cls} viewBox="0 0 16 10" aria-hidden>
+          <rect width="16" height="5" fill="#ffffff" />
+          <rect y="5" width="16" height="5" fill="#d7141a" />
+          <polygon points="0,0 7,5 0,10" fill="#11457e" />
+        </svg>
+      );
+    case 'nl':
+      return (
+        <svg className={cls} viewBox="0 0 16 10" aria-hidden>
+          <rect width="16" height="3.333" fill="#ae1c28" />
+          <rect y="3.333" width="16" height="3.333" fill="#ffffff" />
+          <rect y="6.666" width="16" height="3.334" fill="#21468b" />
         </svg>
       );
     case 'zh':

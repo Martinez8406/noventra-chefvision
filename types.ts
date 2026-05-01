@@ -21,7 +21,19 @@ export enum BlurLevel {
 export type Allergen = 'Gluten' | 'Laktoza' | 'Orzechy' | 'Skorupiaki' | 'Jaja' | 'Ryby' | 'Soja' | 'Gorczyca';
 
 /** Języki w publicznym menu (UI); `pl` = oryginał z panelu (polski). */
-export type PublicMenuLocale = 'pl' | 'en' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'fr' | 'zh';
+export type PublicMenuLocale =
+  | 'pl'
+  | 'en'
+  | 'en-us'
+  | 'uk'
+  | 'de'
+  | 'es'
+  | 'it'
+  | 'ko'
+  | 'fr'
+  | 'cs'
+  | 'nl'
+  | 'zh';
 
 /** Nazwa dania jest zawsze z `Dish.name` (PL) — nie tłumaczymy w API. */
 export interface MenuTranslationEntry {
@@ -45,8 +57,8 @@ export interface Dish {
   menuPrice?: string | null;
   /** Kategoria w karcie menu */
   category?: string | null;
-  /** Tłumaczenia opisu i alergenów (JSONB). Klucze: en, uk, de, es, it, ko, fr, zh. Nazwa zawsze z pola `name`. */
-  translations?: Partial<Record<'en' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'fr' | 'zh', MenuTranslationEntry>> | null;
+  /** Tłumaczenia opisu i alergenów (JSONB). Klucze: en, en-us, uk, de, es, it, ko, fr, cs, nl, zh. Nazwa zawsze z pola `name`. */
+  translations?: Partial<Record<'en' | 'en-us' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'fr' | 'cs' | 'nl' | 'zh', MenuTranslationEntry>> | null;
   isStandard: boolean;
   isOnline: boolean;
   status: DishStatus;

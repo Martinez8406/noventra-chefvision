@@ -24,12 +24,15 @@ const MENU_LOCALE_KEY = (uid: string) => `chefvision_public_menu_locale:${uid}`;
 const isPublicLocale = (v: string): v is PublicMenuLocale =>
   v === 'pl' ||
   v === 'en' ||
+  v === 'en-us' ||
   v === 'uk' ||
   v === 'de' ||
   v === 'es' ||
   v === 'it' ||
   v === 'ko' ||
   v === 'fr' ||
+  v === 'cs' ||
+  v === 'nl' ||
   v === 'zh';
 
 /**
@@ -206,12 +209,15 @@ export const PublicMenu: React.FC<Props> = ({
         const cached = customCategoryTranslations[key];
         const hasAll =
           !!cached?.en?.trim() &&
+          !!cached?.['en-us']?.trim() &&
           !!cached?.uk?.trim() &&
           !!cached?.de?.trim() &&
           !!cached?.es?.trim() &&
           !!cached?.it?.trim() &&
           !!cached?.ko?.trim() &&
           !!cached?.fr?.trim() &&
+          !!cached?.cs?.trim() &&
+          !!cached?.nl?.trim() &&
           !!cached?.zh?.trim();
         if (hasAll) return false;
         const inflight = inFlightKeys[key];
@@ -243,12 +249,15 @@ export const PublicMenu: React.FC<Props> = ({
             next[key] = {
               ...existing,
               en: tr.en,
+              'en-us': tr['en-us'],
               uk: tr.uk,
               de: tr.de,
               es: tr.es,
               it: tr.it,
               ko: tr.ko,
               fr: tr.fr,
+              cs: tr.cs,
+              nl: tr.nl,
               zh: tr.zh,
             };
             try {

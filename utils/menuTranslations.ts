@@ -11,48 +11,60 @@ const toStringArray = (value: unknown): string[] => {
 const ALLERGENS_SECTION_TITLE: Record<PublicMenuLocale, string> = {
   pl: 'Alergeny',
   en: 'Allergens',
+  'en-us': 'Allergens',
   uk: 'Алергени',
   de: 'Allergene',
   es: 'Alérgenos',
   it: 'Allergeni',
   ko: '알레르기 유발 성분',
   fr: 'Allergènes',
+  cs: 'Alergeny',
+  nl: 'Allergenen',
   zh: '过敏原',
 };
 
 const NO_ALLERGENS_LABEL: Record<PublicMenuLocale, string> = {
   pl: 'Brak głównych alergenów',
   en: 'No major allergens',
+  'en-us': 'No major allergens',
   uk: 'Немає основних алергенів',
   de: 'Keine Hauptallergene',
   es: 'Sin alérgenos principales',
   it: 'Nessun allergene principale',
   ko: '주요 알레르기 성분 없음',
   fr: 'Aucun allergène majeur',
+  cs: 'Bez hlavních alergenů',
+  nl: 'Geen belangrijke allergenen',
   zh: '无主要过敏原',
 };
 
 const INGREDIENTS_SECTION_TITLE: Record<PublicMenuLocale, string> = {
   pl: 'Składniki',
   en: 'Ingredients',
+  'en-us': 'Ingredients',
   uk: 'Інгредієнти',
   de: 'Zutaten',
   es: 'Ingredientes',
   it: 'Ingredienti',
   ko: '재료',
   fr: 'Ingrédients',
+  cs: 'Suroviny',
+  nl: 'Ingrediënten',
   zh: '配料',
 };
 
 const INGREDIENTS_MORE_LABEL: Record<PublicMenuLocale, string> = {
   pl: 'więcej',
   en: 'more',
+  'en-us': 'more',
   uk: 'більше',
   de: 'mehr',
   es: 'más',
   it: 'altro',
   ko: '더보기',
   fr: 'plus',
+  cs: 'více',
+  nl: 'meer',
   zh: '更多',
 };
 
@@ -62,7 +74,7 @@ export const DEFAULT_DISH_DESCRIPTION_PLACEHOLDER = 'Krótki opis, który zobacz
 export function shouldRequestMenuTranslation(dish: Dish): boolean {
   const ingredientsPL = toStringArray(dish.ingredients);
   if (ingredientsPL.length > 0) {
-    const locales: PublicMenuLocale[] = ['en', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'zh'];
+    const locales: PublicMenuLocale[] = ['en', 'en-us', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'cs', 'nl', 'zh'];
     const hasIngredientsTranslationsForAllLocales = locales.every((locale) => {
       const tr = dish.translations?.[locale]?.ingredients;
       return (
@@ -197,6 +209,23 @@ const MENU_CATEGORY_TITLE: Record<PublicMenuLocale, Record<string, string>> = {
     'Oferta sezonowa': 'Seasonal Specials',
     'Makarony': 'Pasta',
   },
+  'en-us': {
+    'Śniadania': 'Breakfasts',
+    'Przystawki': 'Starters',
+    'Zupy': 'Soups',
+    'Sałatki': 'Salads',
+    'Dania główne': 'Main Courses',
+    'Burgery / Sandwicze': 'Burgers / Sandwiches',
+    'Menu dla dzieci': "Kids' Menu",
+    'Dania wegetariańskie / wegańskie': 'Vegetarian / Vegan',
+    'Desery': 'Desserts',
+    'Dodatki (frytki, sosy, pieczywo)': 'Sides (fries, sauces, bread)',
+    'Napoje zimne': 'Cold Drinks',
+    'Napoje gorące': 'Hot Drinks',
+    'Alkohole': 'Alcohol',
+    'Oferta sezonowa': 'Seasonal Specials',
+    'Makarony': 'Pasta',
+  },
   uk: {
     'Śniadania': 'Сніданки',
     'Przystawki': 'Закуски',
@@ -298,6 +327,40 @@ const MENU_CATEGORY_TITLE: Record<PublicMenuLocale, Record<string, string>> = {
     'Alkohole': 'Boissons alcoolisées',
     'Oferta sezonowa': 'Spécialités de saison',
     'Makarony': 'Pâtes',
+  },
+  cs: {
+    'Śniadania': 'Snídaně',
+    'Przystawki': 'Předkrmy',
+    'Zupy': 'Polévky',
+    'Sałatki': 'Saláty',
+    'Dania główne': 'Hlavní jídla',
+    'Burgery / Sandwicze': 'Burgery / Sendviče',
+    'Menu dla dzieci': 'Dětské menu',
+    'Dania wegetariańskie / wegańskie': 'Vegetariánské / Veganské',
+    'Desery': 'Dezerty',
+    'Dodatki (frytki, sosy, pieczywo)': 'Přílohy (hranolky, omáčky, pečivo)',
+    'Napoje zimne': 'Studené nápoje',
+    'Napoje gorące': 'Horké nápoje',
+    'Alkohole': 'Alkohol',
+    'Oferta sezonowa': 'Sezónní speciality',
+    'Makarony': 'Těstoviny',
+  },
+  nl: {
+    'Śniadania': 'Ontbijt',
+    'Przystawki': 'Voorgerechten',
+    'Zupy': 'Soepen',
+    'Sałatki': 'Salades',
+    'Dania główne': 'Hoofdgerechten',
+    'Burgery / Sandwicze': 'Burgers / Broodjes',
+    'Menu dla dzieci': 'Kindermenu',
+    'Dania wegetariańskie / wegańskie': 'Vegetarisch / Vegan',
+    'Desery': 'Desserts',
+    'Dodatki (frytki, sosy, pieczywo)': 'Bijgerechten (friet, sauzen, brood)',
+    'Napoje zimne': 'Koude dranken',
+    'Napoje gorące': 'Warme dranken',
+    'Alkohole': 'Alcohol',
+    'Oferta sezonowa': 'Seizoensspecials',
+    'Makarony': 'Pasta',
   },
   zh: {
     'Śniadania': '早餐',
