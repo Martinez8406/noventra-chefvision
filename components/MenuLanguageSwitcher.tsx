@@ -88,11 +88,36 @@ function FlagSvg({ locale }: { locale: PublicMenuLocale }) {
         </svg>
       );
     case 'ko':
+      /* Flaga Korei Południowej (Taegukgi): taegeuk + uproszczone trigramy — nie mylić z hinomaru (JP). */
       return (
         <svg className={cls} viewBox="0 0 16 10" aria-hidden>
           <rect width="16" height="10" fill="#ffffff" />
-          <circle cx="8" cy="5" r="2.1" fill="#cd2e3a" />
-          <path d="M8 2.9a2.1 2.1 0 0 0 0 4.2a2.1 2.1 0 0 1 0-4.2z" fill="#0047a0" />
+          <g transform="translate(8 5)">
+            <path
+              fill="#cd2e3a"
+              d="M0,-2.1 A2.1,2.1 0 1,1 0,2.1 A1.05,1.05 0 1,1 0,0 A1.05,1.05 0 1,0 0,-2.1z"
+            />
+            <path
+              fill="#0047a0"
+              d="M0,2.1 A2.1,2.1 0 1,1 0,-2.1 A1.05,1.05 0 1,0 0,0 A1.05,1.05 0 1,1 0,2.1z"
+            />
+            <circle cx="0" cy="-1.05" r="1.05" fill="#0047a0" />
+            <circle cx="0" cy="1.05" r="1.05" fill="#cd2e3a" />
+          </g>
+          <g fill="#000000" opacity={0.88}>
+            <rect x="1.35" y="1.55" width="0.32" height="0.95" rx="0.04" />
+            <rect x="1.85" y="1.55" width="0.32" height="0.95" rx="0.04" />
+            <rect x="2.35" y="1.55" width="0.32" height="0.95" rx="0.04" />
+            <rect x="13.33" y="1.55" width="0.32" height="0.95" rx="0.04" />
+            <rect x="13.83" y="1.55" width="0.32" height="0.95" rx="0.04" />
+            <rect x="14.33" y="1.55" width="0.32" height="0.95" rx="0.04" />
+            <rect x="1.35" y="7.5" width="0.32" height="0.95" rx="0.04" />
+            <rect x="1.85" y="7.5" width="0.32" height="0.95" rx="0.04" />
+            <rect x="2.35" y="7.5" width="0.32" height="0.95" rx="0.04" />
+            <rect x="13.33" y="7.5" width="0.32" height="0.95" rx="0.04" />
+            <rect x="13.83" y="7.5" width="0.32" height="0.95" rx="0.04" />
+            <rect x="14.33" y="7.5" width="0.32" height="0.95" rx="0.04" />
+          </g>
         </svg>
       );
     case 'fr':
