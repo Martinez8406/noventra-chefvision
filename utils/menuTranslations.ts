@@ -11,7 +11,8 @@ const toStringArray = (value: unknown): string[] => {
 const ALLERGENS_SECTION_TITLE: Record<PublicMenuLocale, string> = {
   pl: 'Alergeny',
   en: 'Allergens',
-  'en-us': 'Allergens',
+  he: 'אלרגנים',
+  ar: 'مسببات الحساسية',
   uk: 'Алергени',
   de: 'Allergene',
   es: 'Alérgenos',
@@ -26,7 +27,8 @@ const ALLERGENS_SECTION_TITLE: Record<PublicMenuLocale, string> = {
 const NO_ALLERGENS_LABEL: Record<PublicMenuLocale, string> = {
   pl: 'Brak głównych alergenów',
   en: 'No major allergens',
-  'en-us': 'No major allergens',
+  he: 'ללא אלרגנים עיקריים',
+  ar: 'لا توجد مسببات حساسية رئيسية',
   uk: 'Немає основних алергенів',
   de: 'Keine Hauptallergene',
   es: 'Sin alérgenos principales',
@@ -41,7 +43,8 @@ const NO_ALLERGENS_LABEL: Record<PublicMenuLocale, string> = {
 const INGREDIENTS_SECTION_TITLE: Record<PublicMenuLocale, string> = {
   pl: 'Składniki',
   en: 'Ingredients',
-  'en-us': 'Ingredients',
+  he: 'מרכיבים',
+  ar: 'المكونات',
   uk: 'Інгредієнти',
   de: 'Zutaten',
   es: 'Ingredientes',
@@ -56,7 +59,8 @@ const INGREDIENTS_SECTION_TITLE: Record<PublicMenuLocale, string> = {
 const INGREDIENTS_MORE_LABEL: Record<PublicMenuLocale, string> = {
   pl: 'więcej',
   en: 'more',
-  'en-us': 'more',
+  he: 'עוד',
+  ar: 'المزيد',
   uk: 'більше',
   de: 'mehr',
   es: 'más',
@@ -68,15 +72,44 @@ const INGREDIENTS_MORE_LABEL: Record<PublicMenuLocale, string> = {
   zh: '更多',
 };
 
+/** Menu cyfrowe: języki z zapisem od prawej do lewej (RTL). */
+export function isRtlMenuLocale(locale: PublicMenuLocale): boolean {
+  return locale === 'he' || locale === 'ar';
+}
+
+/**
+ * Wpis tłumaczenia dla danego języka.
+ * Legacy: w bazie mogą zostać rekordy z kluczem `en-us` (stary slot) — traktujemy je jako brakujące `he` przy wyświetlaniu,
+ * dopóki zapis nie zostanie nadpisany pełnym obiektem z API (klucz `he`).
+ */
+export function resolveMenuTranslationEntry(
+  dish: Dish,
+  locale: PublicMenuLocale
+): MenuTranslationEntry | undefined {
+  const tr = dish.translations;
+  if (!tr) return undefined;
+  const direct = tr[locale];
+  if (direct !== undefined && direct !== null) return direct;
+  if (locale === 'he') {
+    const legacy = (tr as Record<string, MenuTranslationEntry | undefined>)['en-us'];
+    if (legacy !== undefined && legacy !== null) return legacy;
+  }
+  return undefined;
+}
+
 /** Domyślny opis przy zapisie z ChefsStudio – uznajemy za brak własnego opisu (bez tłumaczenia AI). */
 export const DEFAULT_DISH_DESCRIPTION_PLACEHOLDER = 'Krótki opis, który zobaczy gość...';
 
 export function shouldRequestMenuTranslation(dish: Dish): boolean {
   const ingredientsPL = toStringArray(dish.ingredients);
   if (ingredientsPL.length > 0) {
-    const locales: PublicMenuLocale[] = ['en', 'en-us', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'cs', 'nl', 'zh'];
+    const locales: PublicMenuLocale[] = ['en', 'he', 'ar', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'cs', 'nl', 'zh'];
     const hasIngredientsTranslationsForAllLocales = locales.every((locale) => {
-      const tr = dish.translations?.[locale]?.ingredients;
+      /* Dla `he` tylko klucz `he` — nie legacy `en-us`, żeby po zmianie locale wymusić nowe tłumaczenie AI. */
+      const tr =
+        locale === 'he'
+          ? dish.translations?.he?.ingredients
+          : dish.translations?.[locale]?.ingredients;
       return (
         Array.isArray(tr) &&
         tr.length === ingredientsPL.length &&
@@ -89,7 +122,10 @@ export function shouldRequestMenuTranslation(dish: Dish): boolean {
     // to mimo że tablica istnieje, warto ponowić tłumaczenie.
     const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
     const isProbablyFallbackPLForLocale = locales.some((locale) => {
-      const tr = dish.translations?.[locale]?.ingredients;
+      const tr =
+        locale === 'he'
+          ? dish.translations?.he?.ingredients
+          : dish.translations?.[locale]?.ingredients;
       if (!Array.isArray(tr) || tr.length !== ingredientsPL.length) return false;
       const sameCount = tr.reduce((acc, v, i) => {
         if (normalize(String(v)) === normalize(String(ingredientsPL[i] ?? ''))) return acc + 1;
@@ -116,7 +152,7 @@ export function getPublicDishCopy(
   if (locale === 'pl') {
     return { name: dish.name, description: baseDescription };
   }
-  const t = dish.translations?.[locale];
+  const t = resolveMenuTranslationEntry(dish, locale);
   return {
     name: dish.name,
     description: (t?.description?.trim() || baseDescription) as string,
@@ -136,7 +172,7 @@ export function getPublicAllergenDisplay(
       noAllergensMessage: NO_ALLERGENS_LABEL.pl,
     };
   }
-  const t = dish.translations?.[locale];
+  const t = resolveMenuTranslationEntry(dish, locale);
   const tr = t?.allergens;
   const ok =
     Array.isArray(tr) &&
@@ -157,7 +193,7 @@ export function getPublicAllergenDisplay(
 export function getPublicIngredientsDisplay(dish: Dish, locale: PublicMenuLocale): string[] {
   const pl = toStringArray(dish.ingredients);
   if (locale === 'pl') return pl;
-  const t = dish.translations?.[locale];
+  const t = resolveMenuTranslationEntry(dish, locale);
   const tr = t?.ingredients;
   const ok =
     Array.isArray(tr) &&
@@ -209,22 +245,39 @@ const MENU_CATEGORY_TITLE: Record<PublicMenuLocale, Record<string, string>> = {
     'Oferta sezonowa': 'Seasonal Specials',
     'Makarony': 'Pasta',
   },
-  'en-us': {
-    'Śniadania': 'Breakfasts',
-    'Przystawki': 'Starters',
-    'Zupy': 'Soups',
-    'Sałatki': 'Salads',
-    'Dania główne': 'Main Courses',
-    'Burgery / Sandwicze': 'Burgers / Sandwiches',
-    'Menu dla dzieci': "Kids' Menu",
-    'Dania wegetariańskie / wegańskie': 'Vegetarian / Vegan',
-    'Desery': 'Desserts',
-    'Dodatki (frytki, sosy, pieczywo)': 'Sides (fries, sauces, bread)',
-    'Napoje zimne': 'Cold Drinks',
-    'Napoje gorące': 'Hot Drinks',
-    'Alkohole': 'Alcohol',
-    'Oferta sezonowa': 'Seasonal Specials',
-    'Makarony': 'Pasta',
+  he: {
+    'Śniadania': 'ארוחות בוקר',
+    'Przystawki': 'מנות ראשונות',
+    'Zupy': 'מרקים',
+    'Sałatki': 'סלטים',
+    'Dania główne': 'מנות עיקריות',
+    'Burgery / Sandwicze': 'המבורגרים / כריכים',
+    'Menu dla dzieci': 'תפריט ילדים',
+    'Dania wegetariańskie / wegańskie': 'צמחוני / טבעוני',
+    'Desery': 'קינוחים',
+    'Dodatki (frytki, sosy, pieczywo)': 'תוספות (צ׳יפס, רטבים, לחם)',
+    'Napoje zimne': 'משקאות קרים',
+    'Napoje gorące': 'משקאות חמים',
+    'Alkohole': 'אלכוהול',
+    'Oferta sezonowa': 'מבצעי עונה',
+    'Makarony': 'פסטה',
+  },
+  ar: {
+    'Śniadania': 'وجبات الإفطار',
+    'Przystawki': 'المقبلات',
+    'Zupy': 'الشوربات',
+    'Sałatki': 'السلطات',
+    'Dania główne': 'الأطباق الرئيسية',
+    'Burgery / Sandwicze': 'برغر / سندويشات',
+    'Menu dla dzieci': 'قائمة الأطفال',
+    'Dania wegetariańskie / wegańskie': 'نباتي / نباتي صرف',
+    'Desery': 'الحلويات',
+    'Dodatki (frytki, sosy, pieczywo)': 'الإضافات (بطاطس، صلصات، خبز)',
+    'Napoje zimne': 'المشروبات الباردة',
+    'Napoje gorące': 'المشروبات الساخنة',
+    'Alkohole': 'المشروبات الكحولية',
+    'Oferta sezonowa': 'العروض الموسمية',
+    'Makarony': 'باستا',
   },
   uk: {
     'Śniadania': 'Сніданки',

@@ -24,7 +24,8 @@ export type Allergen = 'Gluten' | 'Laktoza' | 'Orzechy' | 'Skorupiaki' | 'Jaja' 
 export type PublicMenuLocale =
   | 'pl'
   | 'en'
-  | 'en-us'
+  | 'he'
+  | 'ar'
   | 'uk'
   | 'de'
   | 'es'
@@ -57,8 +58,8 @@ export interface Dish {
   menuPrice?: string | null;
   /** Kategoria w karcie menu */
   category?: string | null;
-  /** Tłumaczenia opisu i alergenów (JSONB). Klucze: en, en-us, uk, de, es, it, ko, fr, cs, nl, zh. Nazwa zawsze z pola `name`. */
-  translations?: Partial<Record<'en' | 'en-us' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'fr' | 'cs' | 'nl' | 'zh', MenuTranslationEntry>> | null;
+  /** Tłumaczenia opisu i alergenów (JSONB). Klucze: en, he, ar, uk, de, es, it, ko, fr, cs, nl, zh. Nazwa zawsze z pola `name`. */
+  translations?: Partial<Record<'en' | 'he' | 'ar' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'fr' | 'cs' | 'nl' | 'zh', MenuTranslationEntry>> | null;
   isStandard: boolean;
   isOnline: boolean;
   status: DishStatus;

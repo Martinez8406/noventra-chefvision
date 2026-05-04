@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseServerCredentials } from './supabaseServerEnv.js';
 
-const TARGET_LOCALES = ['en', 'en-us', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'cs', 'nl', 'zh'];
+const TARGET_LOCALES = ['en', 'he', 'ar', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'cs', 'nl', 'zh'];
 
 async function verifyToken(authHeader) {
   const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
@@ -45,7 +45,7 @@ function validateTranslationMap(raw, categories) {
 function fallbackTranslations(categories) {
   const out = {};
   for (const c of categories) {
-    out[c] = { en: c, 'en-us': c, uk: c, de: c, es: c, it: c, ko: c, fr: c, cs: c, nl: c, zh: c };
+    out[c] = { en: c, he: c, ar: c, uk: c, de: c, es: c, it: c, ko: c, fr: c, cs: c, nl: c, zh: c };
   }
   return out;
 }
@@ -73,7 +73,7 @@ export async function handleSaveMenuCategories({ authorization, body = {} }) {
   if (apiKey) {
     try {
       const openai = new OpenAI({ apiKey });
-      const prompt = `Przetłumacz poniższe nazwy kategorii menu z języka polskiego na en (British English), en-us (American English), uk, de, es, it, ko, fr, cs, nl i zh (chiński uproszczony).
+      const prompt = `Przetłumacz poniższe nazwy kategorii menu z języka polskiego na en (British English), he (hebrajski), ar (arabski), uk, de, es, it, ko, fr, cs, nl i zh (chiński uproszczony).
 Zasady:
 - zachowaj styl etykiet menu (krótkie, naturalne)
 - nie dodawaj nowych kategorii
@@ -84,7 +84,7 @@ ${JSON.stringify(categories)}
 
 Zwróć WYŁĄCZNIE JSON w formacie:
 {
-  "Nazwa kategorii PL": { "en": "...", "en-us": "...", "uk": "...", "de": "...", "es": "...", "it": "...", "ko": "...", "fr": "...", "cs": "...", "nl": "...", "zh": "..." }
+  "Nazwa kategorii PL": { "en": "...", "he": "...", "ar": "...", "uk": "...", "de": "...", "es": "...", "it": "...", "ko": "...", "fr": "...", "cs": "...", "nl": "...", "zh": "..." }
 }`;
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',

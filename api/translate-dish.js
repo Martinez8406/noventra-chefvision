@@ -28,17 +28,41 @@ function normalizeAllergens(row) {
   return [];
 }
 
+/** Model czasem zwraca stary klucz en-us zamiast he — ujednolicamy przed walidacją. */
+function normalizeParsedKeys(parsed) {
+  if (!parsed || typeof parsed !== 'object') return parsed;
+  if (!parsed.he && parsed['en-us']) {
+    parsed.he = parsed['en-us'];
+  }
+  // Czasem arabski jest pod inną nazwą klucza — scalać do "ar"
+  if (!parsed.ar) {
+    const arCandidate =
+      parsed.Arabic ??
+      parsed.arabic ??
+      parsed.arabski ??
+      parsed.Arabski ??
+      parsed.ARA ??
+      parsed['ar-SA'] ??
+      parsed.ar_SA;
+    if (arCandidate && typeof arCandidate === 'object') {
+      parsed.ar = arCandidate;
+    }
+  }
+  return parsed;
+}
+
 function validateTranslations(data, sourceAllergens, sourceIngredients) {
   if (!data || typeof data !== 'object') return null;
   const n = sourceAllergens.length;
   const m = sourceIngredients.length;
   const out = {};
-  const targetLocales = ['en', 'en-us', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'cs', 'nl', 'zh'];
+  const targetLocales = ['en', 'he', 'ar', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'cs', 'nl', 'zh'];
 
   const pickLocaleEntry = (raw, code) => {
     if (!raw || typeof raw !== 'object') return null;
     const aliases = {
-      'en-us': ['en-us', 'en_us', 'enus', 'enUS', 'english_us', 'us', 'american_english'],
+      he: ['he', 'he-il', 'he_il', 'iw', 'hebrew', 'en-us', 'en_us', 'enus'],
+      ar: ['ar', 'ar-sa', 'ar_ae', 'ar-SA', 'arabic', 'Arabic', 'AR', 'ar-eg'],
       en: ['en', 'en-gb', 'en_gb', 'english_uk', 'uk_english', 'british_english'],
       uk: ['uk', 'ua', 'ukrainian'],
       de: ['de', 'de-de', 'german'],
@@ -72,10 +96,24 @@ function validateTranslations(data, sourceAllergens, sourceIngredients) {
     return [];
   };
 
+  /** Gdy brak pola `en.description`, bierz pierwszy niepusty opis z dowolnej lokali (żeby walidacja nie padała na pierwszym `en`). */
+  const pickAnyFallbackDescription = () => {
+    const order = ['en', 'he', 'ar', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'cs', 'nl', 'zh'];
+    for (const loc of order) {
+      const e = pickLocaleEntry(data, loc);
+      const d = e?.description;
+      if (typeof d === 'string' && d.trim()) return d.trim();
+    }
+    return '';
+  };
+
   for (const code of targetLocales) {
     const entry = pickLocaleEntry(data, code);
     const description = entry?.description;
-    const fallbackDescription = typeof data?.en?.description === 'string' ? data.en.description.trim() : '';
+    const fallbackDescription =
+      typeof data?.en?.description === 'string' && data.en.description.trim()
+        ? data.en.description.trim()
+        : pickAnyFallbackDescription();
     const finalDescription =
       typeof description === 'string' && description.trim()
         ? description.trim()
@@ -85,7 +123,7 @@ function validateTranslations(data, sourceAllergens, sourceIngredients) {
     if (n === 0) {
       if (entry?.allergens === undefined) {
         base.allergens = [];
-      } else if (Array.isArray(entry.allergens) && entry.allergens.length === 0) {
+      } else if (Array.isArray(entry?.allergens) && (entry?.allergens?.length ?? 0) === 0) {
         base.allergens = [];
       } else {
         base.allergens = [];
@@ -106,9 +144,9 @@ function validateTranslations(data, sourceAllergens, sourceIngredients) {
     // Tolerancyjnie: normalizujemy do długości `m`, a brakujące pozycje uzupełniamy PL,
     // żeby UI prawie zawsze pokazywało tłumaczenie (nawet jeśli AI format się trochę rozjechał).
     if (m === 0) {
-      if (entry.ingredients === undefined) {
+      if (entry?.ingredients === undefined) {
         base.ingredients = [];
-      } else if (Array.isArray(entry.ingredients) && entry.ingredients.length === 0) {
+      } else if (Array.isArray(entry?.ingredients) && (entry?.ingredients?.length ?? 0) === 0) {
         base.ingredients = [];
       } else {
         base.ingredients = [];
@@ -131,7 +169,7 @@ function validateTranslations(data, sourceAllergens, sourceIngredients) {
 }
 
 /**
- * Tłumaczy opis i alergeny (PL → EN(UK), EN(US), UK, DE, ES, IT, KO, FR, CS, NL, ZH) do kolumny `translations`. Nazwa dania nie jest tłumaczona.
+ * Tłumaczy opis i alergeny (PL → EN(UK), HE, AR, UK, DE, ES, IT, KO, FR, CS, NL, ZH) do kolumny `translations`. Nazwa dania nie jest tłumaczona.
  * Wymaga JWT + roli właściciela rekordu (`userId`).
  */
 export async function handleTranslateDish({ authorization, body = {} }) {
@@ -199,22 +237,22 @@ export async function handleTranslateDish({ authorization, body = {} }) {
     allergensPL.length > 0
       ? `
 Lista alergenów (język źródłowy PL – dokładnie w tej kolejności, ${allergensPL.length} pozycji): ${allergensJson}
-Dla każdego języka (en, en-us, uk, de, es, it, ko, fr, cs, nl, zh) dodaj pole "allergens": tablica stringów — ta sama liczba elementów i ta sama kolejność co powyżej. Przetłumacz każdą etykietę na naturalny, zwięzły odpowiednik w danym języku.`
+Dla każdego języka (en, he, ar, uk, de, es, it, ko, fr, cs, nl, zh) dodaj pole "allergens": tablica stringów — ta sama liczba elementów i ta sama kolejność co powyżej. Przetłumacz każdą etykietę na naturalny, zwięzły odpowiednik w danym języku.`
       : `
 Brak zaznaczonych alergenów po stronie PL – dla każdego języka ustaw "allergens": [] (pusta tablica).`;
 
   const schemaExample =
     allergensPL.length > 0
-      ? `{"en":{"description":"...","allergens":["..."],"ingredients":["..."]},"en-us":{"description":"...","allergens":["..."],"ingredients":["..."]},"uk":{"description":"...","allergens":["..."],"ingredients":["..."]},"de":{"description":"...","allergens":["..."],"ingredients":["..."]},"es":{"description":"...","allergens":["..."],"ingredients":["..."]},"it":{"description":"...","allergens":["..."],"ingredients":["..."]},"ko":{"description":"...","allergens":["..."],"ingredients":["..."]},"fr":{"description":"...","allergens":["..."],"ingredients":["..."]},"cs":{"description":"...","allergens":["..."],"ingredients":["..."]},"nl":{"description":"...","allergens":["..."],"ingredients":["..."]},"zh":{"description":"...","allergens":["..."],"ingredients":["..."]}}`
-      : `{"en":{"description":"...","allergens":[],"ingredients":["..."]},"en-us":{"description":"...","allergens":[],"ingredients":["..."]},"uk":{"description":"...","allergens":[],"ingredients":["..."]},"de":{"description":"...","allergens":[],"ingredients":["..."]},"es":{"description":"...","allergens":[],"ingredients":["..."]},"it":{"description":"...","allergens":[],"ingredients":["..."]},"ko":{"description":"...","allergens":[],"ingredients":["..."]},"fr":{"description":"...","allergens":[],"ingredients":["..."]},"cs":{"description":"...","allergens":[],"ingredients":["..."]},"nl":{"description":"...","allergens":[],"ingredients":["..."]},"zh":{"description":"...","allergens":[],"ingredients":["..."]}}`;
+      ? `{"en":{"description":"...","allergens":["..."],"ingredients":["..."]},"he":{"description":"...","allergens":["..."],"ingredients":["..."]},"ar":{"description":"...","allergens":["..."],"ingredients":["..."]},"uk":{"description":"...","allergens":["..."],"ingredients":["..."]},"de":{"description":"...","allergens":["..."],"ingredients":["..."]},"es":{"description":"...","allergens":["..."],"ingredients":["..."]},"it":{"description":"...","allergens":["..."],"ingredients":["..."]},"ko":{"description":"...","allergens":["..."],"ingredients":["..."]},"fr":{"description":"...","allergens":["..."],"ingredients":["..."]},"cs":{"description":"...","allergens":["..."],"ingredients":["..."]},"nl":{"description":"...","allergens":["..."],"ingredients":["..."]},"zh":{"description":"...","allergens":["..."],"ingredients":["..."]}}`
+      : `{"en":{"description":"...","allergens":[],"ingredients":["..."]},"he":{"description":"...","allergens":[],"ingredients":["..."]},"ar":{"description":"...","allergens":[],"ingredients":["..."]},"uk":{"description":"...","allergens":[],"ingredients":["..."]},"de":{"description":"...","allergens":[],"ingredients":["..."]},"es":{"description":"...","allergens":[],"ingredients":["..."]},"it":{"description":"...","allergens":[],"ingredients":["..."]},"ko":{"description":"...","allergens":[],"ingredients":["..."]},"fr":{"description":"...","allergens":[],"ingredients":["..."]},"cs":{"description":"...","allergens":[],"ingredients":["..."]},"nl":{"description":"...","allergens":[],"ingredients":["..."]},"zh":{"description":"...","allergens":[],"ingredients":["..."]}}`;
 
-  const prompt = `Jesteś profesjonalnym tłumaczem kulinarnym. NIE tłumacz nazwy dania — nazwa własna pozostaje w oryginale; w menu jest już zapisana osobno. Przetłumacz WYŁĄCZNIE poniższy opis marketingowy oraz listę składników i zwróć też etykiety alergenów na języki: angielski brytyjski, angielski amerykański, ukraiński, niemiecki, hiszpański, włoski, koreański, francuski, czeski, niderlandzki i chiński uproszczony. Zachowaj sens i ton restauracji w naturalny sposób.
+  const prompt = `Jesteś profesjonalnym tłumaczem kulinarnym. NIE tłumacz nazwy dania — nazwa własna pozostaje w oryginale; w menu jest już zapisana osobno. Przetłumacz WYŁĄCZNIE poniższy opis marketingowy oraz listę składników i zwróć też etykiety alergenów na języki: angielski brytyjski, hebrajski (nowy hebrajski), arabski (współczesny standardowy), ukraiński, niemiecki, hiszpański, włoski, koreański, francuski, czeski, niderlandzki i chiński uproszczony. Zachowaj sens i ton restauracji w naturalny sposób.
 ${allergenBlock}
 
 Lista składników (język źródłowy PL – dokładnie w tej kolejności, ${ingredientsPL.length} pozycji): ${ingredientsJson}
-Dla każdego języka (en, en-us, uk, de, es, it, ko, fr, cs, nl, zh) dodaj pole "ingredients": tablica stringów — ta sama liczba elementów i ta sama kolejność co powyżej. Przetłumacz każdą nazwę składnika na naturalny, zwięzły odpowiednik w danym języku.
+Dla każdego języka (en, he, ar, uk, de, es, it, ko, fr, cs, nl, zh) dodaj pole "ingredients": tablica stringów — ta sama liczba elementów i ta sama kolejność co powyżej. Przetłumacz każdą nazwę składnika na naturalny, zwięzły odpowiednik w danym języku.
 
-Zwróć WYŁĄCZNIE jeden obiekt JSON (bez markdown, bez komentarzy) — każdy z kluczy en, en-us, uk, de, es, it, ko, fr, cs, nl, zh zawiera TYLKO pola "description", "allergens" i "ingredients" (bez pola "name"):
+Zwróć WYŁĄCZNIE jeden obiekt JSON (bez markdown, bez komentarzy) — każdy z kluczy en, he, ar, uk, de, es, it, ko, fr, cs, nl, zh zawiera TYLKO pola "description", "allergens" i "ingredients" (bez pola "name"). Język hebrajski MUSI być pod kluczem dokładnie "he" (nie używaj "en-us"). Język arabski MUSI być pod kluczem dokładnie "ar" (małe litery, łacina) — przetłumacz opis, składniki i alergeny na **arabski**, nie zostawiaj angielskiego w bloku "ar".
 ${schemaExample}
 
 Nazwa dania (nie tłumacz, tylko kontekst): ${name}
@@ -248,6 +286,8 @@ Opis dania do przetłumaczenia (PL): ${description}`;
     } catch {
       return { status: 502, body: { error: 'Nieprawidłowy JSON z modelu.' } };
     }
+
+    normalizeParsedKeys(parsed);
 
     const translations = validateTranslations(parsed, allergensPL, ingredientsPL);
     if (!translations) {

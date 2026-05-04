@@ -4,7 +4,8 @@ import type { PublicMenuLocale } from '../types';
 const OPTIONS: { locale: PublicMenuLocale; label: string }[] = [
   { locale: 'pl', label: 'Polski' },
   { locale: 'en', label: 'English (UK)' },
-  { locale: 'en-us', label: 'English (US)' },
+  { locale: 'he', label: 'עברית' },
+  { locale: 'ar', label: 'العربية' },
   { locale: 'uk', label: 'Українська' },
   { locale: 'de', label: 'Deutsch' },
   { locale: 'es', label: 'Español' },
@@ -57,18 +58,28 @@ function FlagSvg({ locale }: { locale: PublicMenuLocale }) {
           <path fill="none" stroke="#c8102e" strokeWidth="6" d="M30 0 V30 M0 15 H60" />
         </svg>
       );
-    case 'en-us':
+    case 'he':
+      /* Flaga Izraela — białe pole, niebieskie pasy, Gwiazda Dawida */
       return (
-        <svg className={cls} viewBox="0 0 19 10" aria-hidden>
-          <rect width="19" height="10" fill="#ffffff" />
-          <rect y="0" width="19" height="0.77" fill="#b22234" />
-          <rect y="1.54" width="19" height="0.77" fill="#b22234" />
-          <rect y="3.08" width="19" height="0.77" fill="#b22234" />
-          <rect y="4.62" width="19" height="0.77" fill="#b22234" />
-          <rect y="6.16" width="19" height="0.77" fill="#b22234" />
-          <rect y="7.7" width="19" height="0.77" fill="#b22234" />
-          <rect y="9.24" width="19" height="0.76" fill="#b22234" />
-          <rect width="7.6" height="5.39" fill="#3c3b6e" />
+        <svg className={cls} viewBox="0 0 22 16" aria-hidden>
+          <rect width="22" height="16" fill="#ffffff" />
+          <rect width="22" height="2.2" fill="#0038b8" />
+          <rect y="13.8" width="22" height="2.2" fill="#0038b8" />
+          <g fill="#0038b8" transform="translate(11 8)">
+            <path d="M0,-3.5 L3.03,1.75 L-3.03,1.75 Z" />
+            <path d="M0,3.5 L-3.03,-1.75 L3.03,-1.75 Z" />
+          </g>
+        </svg>
+      );
+    case 'ar':
+      /* Flaga Ligi Państw Arabskich (stylizowana): zielone pole + biały emblemat */
+      return (
+        <svg className={cls} viewBox="0 0 22 16" aria-hidden>
+          <rect width="22" height="16" fill="#007a3d" />
+          <circle cx="11" cy="8" r="3.1" fill="none" stroke="#ffffff" strokeWidth="0.8" />
+          <path d="M9.8 8a1.45 1.45 0 1 0 0-2.9 1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 1 0 0 2.5" fill="#ffffff" />
+          <path d="M12.45 7.95l0.85-0.45-0.16 0.95 0.68 0.7-0.94 0.13-0.43 0.85-0.43-0.85-0.94-0.13 0.68-0.7-0.16-0.95z" fill="#ffffff" />
+          <path d="M7 8a4.15 4.15 0 0 1 1.45-3.15M15 8a4.15 4.15 0 0 0-1.45-3.15M7 8a4.15 4.15 0 0 0 1.45 3.15M15 8a4.15 4.15 0 0 1-1.45 3.15" stroke="#ffffff" strokeWidth="0.45" fill="none" strokeLinecap="round" />
         </svg>
       );
     case 'es':
@@ -201,7 +212,7 @@ export const MenuLanguageSwitcher: React.FC<Props> = ({ value, onChange }) => {
   return (
     <div
       ref={rootRef}
-      className="fixed top-4 right-4 z-[110]"
+      className={`fixed top-4 z-[110] ${value === 'he' || value === 'ar' ? 'left-4 right-auto' : 'right-4 left-auto'}`}
       role="group"
       aria-label="Język menu"
     >
@@ -222,7 +233,7 @@ export const MenuLanguageSwitcher: React.FC<Props> = ({ value, onChange }) => {
         <ul
           id="menu-lang-list"
           role="listbox"
-          className="absolute right-0 top-full mt-2 flex flex-col gap-1.5 rounded-2xl border border-slate-200 bg-white/98 p-2 shadow-xl ring-1 ring-black/10"
+          className="absolute end-0 top-full mt-2 flex flex-col gap-1.5 rounded-2xl border border-slate-200 bg-white/98 p-2 shadow-xl ring-1 ring-black/10"
         >
           {others.map(({ locale, label }) => (
             <li key={locale} role="option" aria-selected={value === locale}>

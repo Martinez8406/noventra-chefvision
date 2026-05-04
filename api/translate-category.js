@@ -28,7 +28,17 @@ function validateInput(text) {
   return trimmed;
 }
 
-const TARGET_LOCALES = ['en', 'en-us', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'cs', 'nl', 'zh'];
+const TARGET_LOCALES = ['en', 'he', 'ar', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'cs', 'nl', 'zh'];
+
+/** Model czasem zwraca etykietę arabską pod innym kluczem niż "ar". */
+function normalizeCategoryParsed(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (!obj.ar) {
+    const v = obj.Arabic ?? obj.arabic ?? obj.arabski ?? obj.Arabski ?? obj.ARA;
+    if (typeof v === 'string' && v.trim()) obj.ar = v;
+  }
+  return obj;
+}
 
 function validateTranslations(obj) {
   if (!obj || typeof obj !== 'object') return null;
@@ -99,6 +109,44 @@ const TOKEN_MAP_DE = {
   kuchnia: 'küche',
 };
 
+const TOKEN_MAP_HE = {
+  dania: 'מנות',
+  danie: 'מנה',
+  azjatyckie: 'אסייתי',
+  włoskie: 'איטלקי',
+  polskie: 'פולני',
+  wegańskie: 'טבעוני',
+  wegetariańskie: 'צמחוני',
+  makarony: 'פסטה',
+  ryby: 'דגים',
+  mięsa: 'בשר',
+  mięso: 'בשר',
+  owoce: 'פירות',
+  morza: 'פירות ים',
+  owoce_morza: 'פירות ים',
+  streetfood: 'מזון רחוב',
+  kuchnia: 'מטבח',
+};
+
+const TOKEN_MAP_AR = {
+  dania: 'أطباق',
+  danie: 'طبق',
+  azjatyckie: 'آسيوي',
+  włoskie: 'إيطالي',
+  polskie: 'بولندي',
+  wegańskie: 'نباتي صرف',
+  wegetariańskie: 'نباتي',
+  makarony: 'باستا',
+  ryby: 'أسماك',
+  mięsa: 'لحوم',
+  mięso: 'لحم',
+  owoce: 'فواكه',
+  morza: 'بحر',
+  owoce_morza: 'مأكولات بحرية',
+  streetfood: 'طعام الشارع',
+  kuchnia: 'مطبخ',
+};
+
 function normalizeToken(token) {
   return token
     .toLowerCase()
@@ -126,7 +174,8 @@ function dictionaryTranslate(text, map) {
 function fallbackTranslations(text) {
   return {
     en: dictionaryTranslate(text, TOKEN_MAP_EN),
-    'en-us': dictionaryTranslate(text, TOKEN_MAP_EN),
+    he: dictionaryTranslate(text, TOKEN_MAP_HE),
+    ar: dictionaryTranslate(text, TOKEN_MAP_AR),
     uk: dictionaryTranslate(text, TOKEN_MAP_UK),
     de: dictionaryTranslate(text, TOKEN_MAP_DE),
     es: text,
@@ -140,7 +189,7 @@ function fallbackTranslations(text) {
 }
 
 /**
- * Publiczny endpoint: tłumaczy krótką nazwę kategorii PL -> EN(UK)/EN(US)/UK/DE/ES/IT/KO/FR/CS/NL/ZH.
+ * Publiczny endpoint: tłumaczy krótką nazwę kategorii PL -> EN(UK)/HE/AR/UK/DE/ES/IT/KO/FR/CS/NL/ZH.
  * Nie zapisuje do bazy (cache po stronie klienta w localStorage).
  */
 export async function handleTranslateCategory({ req, body = {} }) {
@@ -160,12 +209,12 @@ export async function handleTranslateCategory({ req, body = {} }) {
   }
 
   const openai = new OpenAI({ apiKey });
-  const prompt = `Przetłumacz nazwę kategorii menu z języka polskiego na en (British English), en-us (American English), uk, de, es, it, ko, fr, cs, nl i zh (chiński uproszczony).
+  const prompt = `Przetłumacz nazwę kategorii menu z języka polskiego na en (British English), he (hebrajski), ar (arabski), uk, de, es, it, ko, fr, cs, nl i zh (chiński uproszczony).
 Zasady:
 - tłumacz naturalnie jak w menu restauracji
 - zachowaj format krótkiej etykiety (bez kropek, bez cudzysłowów, bez dodatkowych słów)
 - jeśli w tekście są ukośniki (np. "X / Y"), zachowaj je
-- zwróć WYŁĄCZNIE JSON z kluczami en, en-us, uk, de, es, it, ko, fr, cs, nl, zh
+- zwróć WYŁĄCZNIE JSON z kluczami en, he, ar, uk, de, es, it, ko, fr, cs, nl, zh
 
 Tekst (PL): ${text}`;
 
@@ -175,7 +224,7 @@ Tekst (PL): ${text}`;
       messages: [
         {
           role: 'system',
-          content: 'Zwracasz wyłącznie poprawny JSON: {"en":"...","en-us":"...","uk":"...","de":"...","es":"...","it":"...","ko":"...","fr":"...","cs":"...","nl":"...","zh":"..."} bez markdown.',
+          content: 'Zwracasz wyłącznie poprawny JSON: {"en":"...","he":"...","ar":"...","uk":"...","de":"...","es":"...","it":"...","ko":"...","fr":"...","cs":"...","nl":"...","zh":"..."} bez markdown.',
         },
         { role: 'user', content: prompt },
       ],
@@ -192,6 +241,8 @@ Tekst (PL): ${text}`;
     } catch {
       return { status: 502, body: { error: 'Nieprawidłowy JSON z modelu.' } };
     }
+
+    normalizeCategoryParsed(parsed);
 
     const translations = validateTranslations(parsed);
     if (!translations) {

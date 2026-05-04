@@ -6,6 +6,7 @@ import {
   getPublicDishCopy,
   getPublicIngredientsDisplay,
   getPublicIngredientsSectionTitle,
+  isRtlMenuLocale,
 } from '../utils/menuTranslations';
 import { ChevronLeft, Info, Utensils, UtensilsCrossed } from 'lucide-react';
 import { BRAND_LOGO_SRC } from '../constants';
@@ -29,8 +30,17 @@ export const PublicDishDetail: React.FC<Props> = ({
   const copy = getPublicDishCopy(dish, menuLocale);
   const allergensUi = getPublicAllergenDisplay(dish, menuLocale);
   const ingredients = getPublicIngredientsDisplay(dish, menuLocale);
+  const isRtl = isRtlMenuLocale(menuLocale);
+  const bodyFont = isRtl
+    ? `'Noto Sans Hebrew', 'Noto Naskh Arabic', 'Segoe UI', system-ui, ${fontFamily || 'Inter'}, sans-serif`
+    : fontFamily || 'Inter';
   return (
-    <div className="min-h-screen bg-white animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ fontFamily: fontFamily || 'Inter' }}>
+    <div
+      className="min-h-screen bg-white animate-in fade-in slide-in-from-bottom-4 duration-500"
+      dir={isRtl ? 'rtl' : 'ltr'}
+      lang={menuLocale === 'pl' ? 'pl' : menuLocale}
+      style={{ fontFamily: bodyFont }}
+    >
       <style>
         {`
           @keyframes socialLinkFloat {
@@ -62,12 +72,13 @@ export const PublicDishDetail: React.FC<Props> = ({
           
           <button 
             onClick={onBack}
-            className="absolute top-6 left-6 p-3 bg-white/90 backdrop-blur-xl rounded-2xl text-slate-900 shadow-xl hover:scale-105 transition-transform"
+            type="button"
+            className="absolute top-6 start-6 p-3 bg-white/90 backdrop-blur-xl rounded-2xl text-slate-900 shadow-xl hover:scale-105 transition-transform"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={24} className={isRtl ? 'scale-x-[-1]' : undefined} aria-hidden />
           </button>
 
-          <div className="absolute bottom-8 left-8 right-8 text-white">
+          <div className="absolute bottom-8 start-8 end-8 text-white">
             <h1 className="text-4xl md:text-6xl font-serif italic mb-2 tracking-tight">{copy.name}</h1>
           </div>
         </>

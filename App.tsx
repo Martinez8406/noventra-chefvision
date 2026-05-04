@@ -5,6 +5,7 @@ import { ChefsStudio } from './components/ChefsStudio';
 import { SeasonalThemes } from './components/SeasonalThemes';
 import { BackdropLab } from './components/BackdropLab';
 import { PublicMenu } from './components/PublicMenu';
+import { MenuStatsPanel } from './components/MenuStatsPanel';
 import { QRGenerator } from './components/QRGenerator';
 import { UploadLogo } from './components/UploadLogo';
 import { GoogleReviewsSettings } from './components/GoogleReviewsSettings';
@@ -32,7 +33,8 @@ import {
   Loader2,
   AlertTriangle,
   Gift,
-  CheckCircle
+  CheckCircle,
+  BarChart3
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -48,7 +50,7 @@ const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
-  const [activeTab, setActiveTab] = useState<'kuchnia' | 'studio' | 'themes' | 'backdrops' | 'menu' | 'qr'>('kuchnia');
+  const [activeTab, setActiveTab] = useState<'kuchnia' | 'studio' | 'themes' | 'backdrops' | 'menu' | 'stats' | 'qr'>('kuchnia');
   const [selectedDishId, setSelectedDishId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -411,6 +413,7 @@ const App: React.FC = () => {
     { id: 'themes', label: 'Motywy sezonowe', icon: Sparkles, protected: false },
     { id: 'backdrops', label: 'Studio Tła', icon: Layers, protected: false },
     { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen, protected: false },
+    { id: 'stats', label: 'Statystyki', icon: BarChart3, protected: false },
     { id: 'qr', label: 'Kod QR / Logo / Opinie Google', icon: MenuIcon, protected: false },
   ];
 
@@ -556,6 +559,9 @@ const App: React.FC = () => {
               onUpdateCategory={handleUpdateDishCategory}
               menuUserId={currentUser?.id ?? null}
             />
+          )}
+          {activeTab === 'stats' && (
+            <MenuStatsPanel userId={currentUser?.id ?? null} />
           )}
           {activeTab === 'qr' && (
             <div className="space-y-10">

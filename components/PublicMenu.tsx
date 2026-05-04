@@ -5,7 +5,7 @@ import { PublicDishDetail } from './PublicDishDetail';
 import { MenuLanguageSwitcher } from './MenuLanguageSwitcher';
 import { supabase } from '../services/supabaseService';
 import { MENU_CATEGORIES } from '../constants';
-import { getPublicMenuCategoryDisplay } from '../utils/menuTranslations';
+import { getPublicMenuCategoryDisplay, isRtlMenuLocale } from '../utils/menuTranslations';
 
 interface Props {
   dishes: Dish[];
@@ -24,7 +24,8 @@ const MENU_LOCALE_KEY = (uid: string) => `chefvision_public_menu_locale:${uid}`;
 const isPublicLocale = (v: string): v is PublicMenuLocale =>
   v === 'pl' ||
   v === 'en' ||
-  v === 'en-us' ||
+  v === 'he' ||
+  v === 'ar' ||
   v === 'uk' ||
   v === 'de' ||
   v === 'es' ||
@@ -74,7 +75,14 @@ export const PublicMenu: React.FC<Props> = ({
   useEffect(() => {
     try {
       const raw = localStorage.getItem(MENU_LOCALE_KEY(userId));
-      if (raw && isPublicLocale(raw)) setMenuLocale(raw);
+      if (raw === 'en-us') {
+        setMenuLocale('he');
+        try {
+          localStorage.setItem(MENU_LOCALE_KEY(userId), 'he');
+        } catch {
+          /* ignore */
+        }
+      } else if (raw && isPublicLocale(raw)) setMenuLocale(raw);
       else setMenuLocale('pl');
     } catch {
       setMenuLocale('pl');
@@ -154,12 +162,36 @@ export const PublicMenu: React.FC<Props> = ({
     };
   }, [googlePlaceId]);
 
+  // Publiczne wejścia do menu (1x na sesję przeglądarki dla danego menu i dnia).
+  useEffect(() => {
+    if (!userId) return;
+    const day = new Date().toISOString().slice(0, 10);
+    const key = `chefvision_menu_open_tracked:${userId}:${day}`;
+    try {
+      if (sessionStorage.getItem(key) === '1') return;
+      sessionStorage.setItem(key, '1');
+    } catch {
+      // jeśli sessionStorage niedostępny, i tak spróbujemy trackować
+    }
+
+    fetch('/api/track-menu-open', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    }).catch(() => {
+      // brak blokowania UI przy błędzie trackingu
+    });
+  }, [userId]);
+
   const userDishes = dishes.filter((d) => d.isOnline);
   const hasGoogleReviews = !!googlePlaceId;
   const reviewUrl = hasGoogleReviews
     ? `https://search.google.com/local/writereview?placeid=${encodeURIComponent(googlePlaceId!)}`
     : '';
   const restaurantTitle = restaurantName?.trim() || 'Nasza restauracja';
+  const isRtl = isRtlMenuLocale(menuLocale);
+  const menuLangAttr: string = menuLocale === 'pl' ? 'pl' : menuLocale;
+  const rtlFontStack = `'Noto Sans Hebrew', 'Noto Naskh Arabic', 'Segoe UI', system-ui, sans-serif`;
 
   const goBack = () => {
     if (usePathRouting) {
@@ -209,7 +241,8 @@ export const PublicMenu: React.FC<Props> = ({
         const cached = customCategoryTranslations[key];
         const hasAll =
           !!cached?.en?.trim() &&
-          !!cached?.['en-us']?.trim() &&
+          !!cached?.he?.trim() &&
+          !!cached?.ar?.trim() &&
           !!cached?.uk?.trim() &&
           !!cached?.de?.trim() &&
           !!cached?.es?.trim() &&
@@ -249,7 +282,8 @@ export const PublicMenu: React.FC<Props> = ({
             next[key] = {
               ...existing,
               en: tr.en,
-              'en-us': tr['en-us'],
+              he: tr.he,
+              ar: tr.ar,
               uk: tr.uk,
               de: tr.de,
               es: tr.es,
@@ -294,7 +328,12 @@ export const PublicMenu: React.FC<Props> = ({
     });
     if (dish) {
       return (
-        <>
+        <div
+          className="min-h-screen"
+          dir={isRtl ? 'rtl' : 'ltr'}
+          lang={menuLangAttr}
+          style={{ fontFamily: isRtl ? `${rtlFontStack}, ${fontFamily}` : fontFamily }}
+        >
           <style>
             {`
             @keyframes googleReviewFloat {
@@ -427,7 +466,7 @@ export const PublicMenu: React.FC<Props> = ({
               </a>
             </div>
           )}
-        </>
+        </div>
       );
     }
 
@@ -448,7 +487,15 @@ export const PublicMenu: React.FC<Props> = ({
   }
 
   return (
-    <div className="min-h-screen pb-20 px-4 sm:px-6" style={{ backgroundColor: secondaryColor, fontFamily }}>
+    <div
+      className="min-h-screen pb-20 px-4 sm:px-6"
+      dir={isRtl ? 'rtl' : 'ltr'}
+      lang={menuLangAttr}
+      style={{
+        backgroundColor: secondaryColor,
+        fontFamily: isRtl ? `${rtlFontStack}, ${fontFamily}` : fontFamily,
+      }}
+    >
       <style>
         {`
           @keyframes googleReviewFloat {

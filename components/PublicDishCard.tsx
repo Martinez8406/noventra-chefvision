@@ -6,6 +6,7 @@ import {
   getPublicDishCopy,
   getPublicIngredientsDisplay,
   getPublicIngredientsMoreLabel,
+  isRtlMenuLocale,
 } from '../utils/menuTranslations';
 import { Info, UtensilsCrossed } from 'lucide-react';
 import { WatermarkWrapper } from './WatermarkWrapper';
@@ -32,6 +33,7 @@ export const PublicDishCard: React.FC<Props> = ({
   const copy = getPublicDishCopy(dish, menuLocale);
   const allergensUi = getPublicAllergenDisplay(dish, menuLocale);
   const ingredientsUi = getPublicIngredientsDisplay(dish, menuLocale);
+  const isRtl = isRtlMenuLocale(menuLocale);
   const openDetail = () => {
     const encodedDishId = encodeURIComponent(dish.id);
     if (usePathRouting) {
@@ -45,7 +47,14 @@ export const PublicDishCard: React.FC<Props> = ({
   return (
     <div 
       onClick={openDetail}
+      dir={isRtl ? 'rtl' : 'ltr'}
+      lang={menuLocale === 'pl' ? 'pl' : menuLocale}
       className="bg-white rounded-3xl overflow-hidden shadow-xl border border-slate-100 max-w-sm mx-auto transition-all hover:scale-[1.02] cursor-pointer group"
+      style={
+        isRtl
+          ? { fontFamily: `'Noto Sans Hebrew', 'Noto Naskh Arabic', 'Segoe UI', system-ui, sans-serif` }
+          : undefined
+      }
     >
       <style>
         {`
@@ -81,29 +90,32 @@ export const PublicDishCard: React.FC<Props> = ({
 
       <div className="p-6">
         {dish.menuPrice ? (
-          <div className="mb-2 flex items-baseline gap-2">
-            <h3 className="font-serif text-2xl text-slate-900 leading-tight">
+          <div className={`mb-2 flex items-baseline gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+            <h3 className={`font-serif text-2xl text-slate-900 leading-tight ${isRtl ? 'text-end' : ''}`}>
               {copy.name}
             </h3>
-            <div className="flex-1 border-b border-dotted border-slate-200" />
+            <div className="flex-1 border-b border-dotted border-slate-200 min-w-[1rem]" />
             <span className="text-lg font-semibold text-slate-900 whitespace-nowrap tabular-nums">
               {dish.menuPrice} zł
             </span>
           </div>
         ) : (
-          <h3 className="font-serif text-2xl text-slate-900 mb-2 leading-tight">
+          <h3 className={`font-serif text-2xl text-slate-900 mb-2 leading-tight ${isRtl ? 'text-end' : ''}`}>
             {copy.name}
           </h3>
         )}
-        <p className="text-slate-600 text-sm mb-4 line-clamp-3 leading-relaxed">
+        <p className={`text-slate-600 text-sm mb-4 line-clamp-3 leading-relaxed ${isRtl ? 'text-end' : ''}`}>
           {copy.description}
         </p>
 
         {/* Ingredients & Allergens */}
         <div className="space-y-4 mb-6">
-          <div className="flex flex-wrap gap-2">
+          <div className={`flex flex-wrap gap-2 ${isRtl ? 'justify-end' : ''}`}>
             {ingredientsUi.slice(0, 4).map((ing, i) => (
-              <span key={i} className="text-[11px] font-medium bg-slate-100 text-slate-600 px-2 py-1 rounded-md capitalize">
+              <span
+                key={i}
+                className={`text-[11px] font-medium bg-slate-100 text-slate-600 px-2 py-1 rounded-md ${isRtl ? '' : 'capitalize'}`}
+              >
                 {ing}
               </span>
             ))}

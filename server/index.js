@@ -7,6 +7,8 @@ import { handleGenerateImage } from '../api/generate-image.js';
 import { handleTranslateDish } from '../api/translate-dish.js';
 import { handleTranslateCategory } from '../api/translate-category.js';
 import { handleSaveMenuCategories } from '../api/save-menu-categories.js';
+import { handleTrackMenuOpen } from '../api/track-menu-open.js';
+import { handleGetMenuOpenStats } from '../api/get-menu-open-stats.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(__dirname, '..', '.env.local') });
@@ -96,6 +98,21 @@ app.post('/api/save-menu-categories', async (req, res) => {
   const result = await handleSaveMenuCategories({
     authorization: req.headers.authorization,
     body: req.body || {},
+  });
+  return res.status(result.status).json(result.body);
+});
+
+app.post('/api/track-menu-open', async (req, res) => {
+  const result = await handleTrackMenuOpen({
+    body: req.body || {},
+  });
+  return res.status(result.status).json(result.body);
+});
+
+app.get('/api/get-menu-open-stats', async (req, res) => {
+  const result = await handleGetMenuOpenStats({
+    authorization: req.headers.authorization,
+    query: req.query || {},
   });
   return res.status(result.status).json(result.body);
 });
