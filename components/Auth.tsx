@@ -161,7 +161,7 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
               <button
                 type="submit"
                 disabled={!!loading}
-                className="w-full bg-chef-gold hover:bg-chef-gold2 text-white font-black py-5 rounded-2xl shadow-xl shadow-chef-gold/10 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed text-lg group active:scale-[0.98]"
+                className="w-full bg-white hover:bg-slate-100 text-black font-black py-5 rounded-2xl border border-slate-200 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed text-lg group active:scale-[0.98]"
               >
                 {loading === 'magic' ? (
                   <Loader2 className="animate-spin" />
