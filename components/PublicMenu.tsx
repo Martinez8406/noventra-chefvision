@@ -192,6 +192,24 @@ export const PublicMenu: React.FC<Props> = ({
   const isRtl = isRtlMenuLocale(menuLocale);
   const menuLangAttr: string = menuLocale === 'pl' ? 'pl' : menuLocale;
   const rtlFontStack = `'Noto Sans Hebrew', 'Noto Naskh Arabic', 'Segoe UI', system-ui, sans-serif`;
+  const isPolishLocale = menuLocale === 'pl';
+  const reviewFabLabels = isPolishLocale
+    ? {
+        tooltip: 'Pomóż nam się rozwijać! 20 sek',
+        ariaLabel: 'Oceń nas w Google',
+        desktopTitle: 'Oceń nas w Google',
+        desktopSubtitle: 'Zostaw opinię w Google',
+        mobileTitle: 'Oceń nas',
+        mobileSubtitle: 'Zostaw opinię',
+      }
+    : {
+        tooltip: 'Help us grow! 20 sec',
+        ariaLabel: 'Leave a review on Google',
+        desktopTitle: 'Leave a review on Google',
+        desktopSubtitle: 'Your feedback helps us improve',
+        mobileTitle: 'Leave a review',
+        mobileSubtitle: 'Share your feedback',
+      };
 
   const goBack = () => {
     if (usePathRouting) {
@@ -441,14 +459,14 @@ export const PublicMenu: React.FC<Props> = ({
           {hasGoogleReviews && (
             <div className="google-review-fab-wrap">
               {showReviewTooltip && (
-                <div className="google-review-fab-tooltip">Pomóż nam się rozwijać! 20 sek</div>
+                <div className="google-review-fab-tooltip">{reviewFabLabels.tooltip}</div>
               )}
               <a
                 href={reviewUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="google-review-fab"
-                aria-label="Oceń nas w Google / Leave a review on Google"
+                aria-label={reviewFabLabels.ariaLabel}
               >
                 <img
                   className="google-review-fab__icon"
@@ -458,12 +476,12 @@ export const PublicMenu: React.FC<Props> = ({
                   height={20}
                 />
                 <span className="google-review-fab__text google-review-fab__text--desktop leading-tight">
-                  <span className="block">Oceń nas w Google</span>
-                  <span className="block text-[11px] opacity-80">Leave a review on Google</span>
+                  <span className="block">{reviewFabLabels.desktopTitle}</span>
+                  <span className="block text-[11px] opacity-80">{reviewFabLabels.desktopSubtitle}</span>
                 </span>
                 <span className="google-review-fab__text google-review-fab__text--mobile leading-tight">
-                  <span className="block">Oceń nas</span>
-                  <span className="block text-[10px] opacity-80">Leave a review</span>
+                  <span className="block">{reviewFabLabels.mobileTitle}</span>
+                  <span className="block text-[10px] opacity-80">{reviewFabLabels.mobileSubtitle}</span>
                 </span>
               </a>
             </div>
@@ -714,13 +732,13 @@ export const PublicMenu: React.FC<Props> = ({
 
       {hasGoogleReviews && (
         <div className="google-review-fab-wrap">
-          {showReviewTooltip && <div className="google-review-fab-tooltip">Pomóż nam się rozwijać! 20 sek</div>}
+          {showReviewTooltip && <div className="google-review-fab-tooltip">{reviewFabLabels.tooltip}</div>}
           <a
             href={reviewUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="google-review-fab"
-                aria-label="Oceń nas w Google / Leave a review on Google"
+            aria-label={reviewFabLabels.ariaLabel}
           >
             <img
               className="google-review-fab__icon"
@@ -730,12 +748,12 @@ export const PublicMenu: React.FC<Props> = ({
               height={20}
             />
             <span className="google-review-fab__text google-review-fab__text--desktop leading-tight">
-              <span className="block">Oceń nas w Google</span>
-              <span className="block text-[11px] opacity-80">Leave a review on Google</span>
+              <span className="block">{reviewFabLabels.desktopTitle}</span>
+              <span className="block text-[11px] opacity-80">{reviewFabLabels.desktopSubtitle}</span>
             </span>
             <span className="google-review-fab__text google-review-fab__text--mobile leading-tight">
-              <span className="block">Oceń nas</span>
-              <span className="block text-[10px] opacity-80">Leave a review</span>
+              <span className="block">{reviewFabLabels.mobileTitle}</span>
+              <span className="block text-[10px] opacity-80">{reviewFabLabels.mobileSubtitle}</span>
             </span>
           </a>
         </div>
