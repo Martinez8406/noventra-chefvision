@@ -81,7 +81,10 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
           height={64}
           className="h-16 w-16 rounded-2xl shadow-lg shadow-chef-gold/20 object-cover shrink-0"
         />
-        <h1 className="text-4xl font-black italic text-[#0F172A] tracking-tighter">Chefvision</h1>
+        <div className="leading-none">
+          <h1 className="text-4xl font-black italic text-[#0F172A] tracking-tighter">Chefvision</h1>
+          <span className="mt-1 block text-right text-[11px] font-black uppercase tracking-[0.28em] text-black">BETA</span>
+        </div>
       </div>
 
       <div className="w-full max-w-[480px] bg-white border border-slate-100 p-10 md:p-14 rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.03)] space-y-8">

@@ -159,7 +159,10 @@ export const PublicDishDetail: React.FC<Props> = ({
       <footer className="py-20 text-center space-y-4">
         <div className="flex items-center justify-center gap-2 opacity-20 grayscale">
           <img src={BRAND_LOGO_SRC} alt="" width={28} height={28} className="h-7 w-7 rounded-md object-cover" />
-          <h2 className="text-xl font-black italic tracking-tighter">Chefvision</h2>
+          <div className="leading-none">
+            <h2 className="text-xl font-black italic tracking-tighter">Chefvision</h2>
+            <span className="mt-1 block text-right text-[9px] font-black uppercase tracking-[0.2em] text-black">BETA</span>
+          </div>
         </div>
         <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.4em]">Professional Digital Menu</p>
       </footer>

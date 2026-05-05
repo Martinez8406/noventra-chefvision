@@ -435,7 +435,10 @@ const App: React.FC = () => {
               height={56}
               className="h-14 w-14 rounded-2xl object-cover shrink-0"
             />
-            <h1 className="text-2xl font-black tracking-tighter italic text-white">Chefvision</h1>
+            <div className="leading-none">
+              <h1 className="text-2xl font-black tracking-tighter italic text-white">Chefvision</h1>
+              <span className="mt-1 block text-right text-[10px] font-black uppercase tracking-[0.25em] text-white">BETA</span>
+            </div>
           </div>
 
           <nav className="space-y-2">
@@ -492,7 +495,10 @@ const App: React.FC = () => {
           <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-600"><MenuIcon size={24} /></button>
           <div className="flex items-center gap-2">
             <img src={BRAND_LOGO_SRC} alt="" width={32} height={32} className="h-8 w-8 rounded-lg object-cover shrink-0" />
-            <span className="font-black italic text-slate-900">Chefvision</span>
+            <div className="leading-none">
+              <span className="block font-black italic text-slate-900">Chefvision</span>
+              <span className="mt-0.5 block text-right text-[9px] font-black uppercase tracking-[0.2em] text-black">BETA</span>
+            </div>
           </div>
           <div className="w-10" />
         </header>
