@@ -1,5 +1,6 @@
-/** Logo w `public/logo.png` */
-export const BRAND_LOGO_SRC = '/logo.png';
+/** Logo w `public/Zrzut_ekranu_2026-05-02_115035-removebg-preview.png` */
+export const BRAND_LOGO_SRC =
+  '/Zrzut_ekranu_2026-05-02_115035-removebg-preview.png';
 
 /** Początkowa liczba kredytów AI dla kont trial / darmowych (nie-Premium). */
 export const TRIAL_AI_CREDITS = 20;
