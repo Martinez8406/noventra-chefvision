@@ -448,7 +448,7 @@ export const PublicMenu: React.FC<Props> = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="google-review-fab"
-                aria-label="Oceń nas w Google"
+                aria-label="Oceń nas w Google / Leave a review on Google"
               >
                 <img
                   className="google-review-fab__icon"
@@ -457,8 +457,9 @@ export const PublicMenu: React.FC<Props> = ({
                   width={20}
                   height={20}
                 />
-                <span className="google-review-fab__text google-review-fab__text--desktop">
-                  Oceń nas w Google
+                <span className="google-review-fab__text google-review-fab__text--desktop leading-tight">
+                  <span className="block">Oceń nas w Google</span>
+                  <span className="block text-[11px] opacity-80">Leave a review on Google</span>
                 </span>
                 <span className="google-review-fab__text google-review-fab__text--mobile">
                   Oceń nas
@@ -718,7 +719,7 @@ export const PublicMenu: React.FC<Props> = ({
             target="_blank"
             rel="noopener noreferrer"
             className="google-review-fab"
-            aria-label="Oceń nas w Google"
+                aria-label="Oceń nas w Google / Leave a review on Google"
           >
             <img
               className="google-review-fab__icon"
@@ -727,8 +728,9 @@ export const PublicMenu: React.FC<Props> = ({
               width={20}
               height={20}
             />
-            <span className="google-review-fab__text google-review-fab__text--desktop">
-              Oceń nas w Google
+            <span className="google-review-fab__text google-review-fab__text--desktop leading-tight">
+              <span className="block">Oceń nas w Google</span>
+              <span className="block text-[11px] opacity-80">Leave a review on Google</span>
             </span>
             <span className="google-review-fab__text google-review-fab__text--mobile">
               Oceń nas
