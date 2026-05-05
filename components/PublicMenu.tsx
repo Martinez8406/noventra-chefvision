@@ -461,8 +461,9 @@ export const PublicMenu: React.FC<Props> = ({
                   <span className="block">Oceń nas w Google</span>
                   <span className="block text-[11px] opacity-80">Leave a review on Google</span>
                 </span>
-                <span className="google-review-fab__text google-review-fab__text--mobile">
-                  Oceń nas
+                <span className="google-review-fab__text google-review-fab__text--mobile leading-tight">
+                  <span className="block">Oceń nas</span>
+                  <span className="block text-[10px] opacity-80">Leave a review</span>
                 </span>
               </a>
             </div>
@@ -732,8 +733,9 @@ export const PublicMenu: React.FC<Props> = ({
               <span className="block">Oceń nas w Google</span>
               <span className="block text-[11px] opacity-80">Leave a review on Google</span>
             </span>
-            <span className="google-review-fab__text google-review-fab__text--mobile">
-              Oceń nas
+            <span className="google-review-fab__text google-review-fab__text--mobile leading-tight">
+              <span className="block">Oceń nas</span>
+              <span className="block text-[10px] opacity-80">Leave a review</span>
             </span>
           </a>
         </div>
