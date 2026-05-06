@@ -28,7 +28,7 @@ function validateInput(text) {
   return trimmed;
 }
 
-const TARGET_LOCALES = ['en', 'he', 'ar', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'cs', 'nl', 'zh'];
+const TARGET_LOCALES = ['en', 'he', 'ar', 'uk', 'de', 'es', 'it', 'ko', 'ja', 'fr', 'cs', 'nl', 'zh'];
 
 /** Model czasem zwraca etykietę arabską pod innym kluczem niż "ar". */
 function normalizeCategoryParsed(obj) {
@@ -181,6 +181,7 @@ function fallbackTranslations(text) {
     es: text,
     it: text,
     ko: text,
+    ja: text,
     fr: text,
     cs: text,
     nl: text,
@@ -189,7 +190,7 @@ function fallbackTranslations(text) {
 }
 
 /**
- * Publiczny endpoint: tłumaczy krótką nazwę kategorii PL -> EN(UK)/HE/AR/UK/DE/ES/IT/KO/FR/CS/NL/ZH.
+ * Publiczny endpoint: tłumaczy krótką nazwę kategorii PL -> EN(UK)/HE/AR/UK/DE/ES/IT/KO/JA/FR/CS/NL/ZH.
  * Nie zapisuje do bazy (cache po stronie klienta w localStorage).
  */
 export async function handleTranslateCategory({ req, body = {} }) {
@@ -209,12 +210,12 @@ export async function handleTranslateCategory({ req, body = {} }) {
   }
 
   const openai = new OpenAI({ apiKey });
-  const prompt = `Przetłumacz nazwę kategorii menu z języka polskiego na en (British English), he (hebrajski), ar (arabski), uk, de, es, it, ko, fr, cs, nl i zh (chiński uproszczony).
+  const prompt = `Przetłumacz nazwę kategorii menu z języka polskiego na en (British English), he (hebrajski), ar (arabski), uk, de, es, it, ko, ja (japoński), fr, cs, nl i zh (chiński uproszczony).
 Zasady:
 - tłumacz naturalnie jak w menu restauracji
 - zachowaj format krótkiej etykiety (bez kropek, bez cudzysłowów, bez dodatkowych słów)
 - jeśli w tekście są ukośniki (np. "X / Y"), zachowaj je
-- zwróć WYŁĄCZNIE JSON z kluczami en, he, ar, uk, de, es, it, ko, fr, cs, nl, zh
+- zwróć WYŁĄCZNIE JSON z kluczami en, he, ar, uk, de, es, it, ko, ja, fr, cs, nl, zh
 
 Tekst (PL): ${text}`;
 
@@ -224,7 +225,7 @@ Tekst (PL): ${text}`;
       messages: [
         {
           role: 'system',
-          content: 'Zwracasz wyłącznie poprawny JSON: {"en":"...","he":"...","ar":"...","uk":"...","de":"...","es":"...","it":"...","ko":"...","fr":"...","cs":"...","nl":"...","zh":"..."} bez markdown.',
+          content: 'Zwracasz wyłącznie poprawny JSON: {"en":"...","he":"...","ar":"...","uk":"...","de":"...","es":"...","it":"...","ko":"...","ja":"...","fr":"...","cs":"...","nl":"...","zh":"..."} bez markdown.',
         },
         { role: 'user', content: prompt },
       ],

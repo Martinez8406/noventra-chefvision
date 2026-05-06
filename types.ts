@@ -31,6 +31,7 @@ export type PublicMenuLocale =
   | 'es'
   | 'it'
   | 'ko'
+  | 'ja'
   | 'fr'
   | 'cs'
   | 'nl'
@@ -58,8 +59,8 @@ export interface Dish {
   menuPrice?: string | null;
   /** Kategoria w karcie menu */
   category?: string | null;
-  /** Tłumaczenia opisu i alergenów (JSONB). Klucze: en, he, ar, uk, de, es, it, ko, fr, cs, nl, zh. Nazwa zawsze z pola `name`. */
-  translations?: Partial<Record<'en' | 'he' | 'ar' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'fr' | 'cs' | 'nl' | 'zh', MenuTranslationEntry>> | null;
+  /** Tłumaczenia opisu i alergenów (JSONB). Klucze: en, he, ar, uk, de, es, it, ko, ja, fr, cs, nl, zh. Nazwa zawsze z pola `name`. */
+  translations?: Partial<Record<'en' | 'he' | 'ar' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'ja' | 'fr' | 'cs' | 'nl' | 'zh', MenuTranslationEntry>> | null;
   isStandard: boolean;
   isOnline: boolean;
   status: DishStatus;

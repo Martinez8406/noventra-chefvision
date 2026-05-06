@@ -31,6 +31,7 @@ const isPublicLocale = (v: string): v is PublicMenuLocale =>
   v === 'es' ||
   v === 'it' ||
   v === 'ko' ||
+  v === 'ja' ||
   v === 'fr' ||
   v === 'cs' ||
   v === 'nl' ||
@@ -266,6 +267,7 @@ export const PublicMenu: React.FC<Props> = ({
           !!cached?.es?.trim() &&
           !!cached?.it?.trim() &&
           !!cached?.ko?.trim() &&
+          !!cached?.ja?.trim() &&
           !!cached?.fr?.trim() &&
           !!cached?.cs?.trim() &&
           !!cached?.nl?.trim() &&
@@ -307,6 +309,7 @@ export const PublicMenu: React.FC<Props> = ({
               es: tr.es,
               it: tr.it,
               ko: tr.ko,
+              ja: tr.ja,
               fr: tr.fr,
               cs: tr.cs,
               nl: tr.nl,

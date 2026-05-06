@@ -79,10 +79,19 @@ app.post('/api/generate-image', async (req, res) => {
 });
 
 app.post('/api/translate-dish', async (req, res) => {
+  const dishId =
+    typeof req?.body?.dishId === 'string' ? req.body.dishId.trim() : '';
+  const hasAuth = typeof req.headers.authorization === 'string' && req.headers.authorization.trim().length > 0;
+  console.log(`[translate-dish] request dishId=${dishId || '(missing)'} auth=${hasAuth ? 'yes' : 'no'}`);
   const result = await handleTranslateDish({
     authorization: req.headers.authorization,
     body: req.body || {},
   });
+  if (result.status !== 200) {
+    console.warn('[translate-dish] response', result.status, result.body?.error || result.body);
+  } else {
+    console.log('[translate-dish] ok');
+  }
   return res.status(result.status).json(result.body);
 });
 

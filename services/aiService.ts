@@ -162,7 +162,7 @@ export async function enhanceDishImage(
  */
 export async function requestMenuTranslations(
   dishId: string
-): Promise<{ translations: Record<'en' | 'he' | 'ar' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'fr' | 'cs' | 'nl' | 'zh', MenuTranslationEntry> } | null> {
+): Promise<{ translations: Record<'en' | 'he' | 'ar' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'ja' | 'fr' | 'cs' | 'nl' | 'zh', MenuTranslationEntry> } | null> {
   const response = await fetch('/api/translate-dish', {
     method: 'POST',
     headers: await getAuthHeaders(),
@@ -170,7 +170,7 @@ export async function requestMenuTranslations(
   });
 
   const raw = await response.text();
-  let data: { translations?: Record<'en' | 'he' | 'ar' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'fr' | 'cs' | 'nl' | 'zh', MenuTranslationEntry>; error?: string } | null = null;
+  let data: { translations?: Record<'en' | 'he' | 'ar' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'ja' | 'fr' | 'cs' | 'nl' | 'zh', MenuTranslationEntry>; error?: string } | null = null;
   try {
     data = raw ? JSON.parse(raw) : null;
   } catch {

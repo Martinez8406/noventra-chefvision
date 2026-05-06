@@ -11,6 +11,7 @@ const OPTIONS: { locale: PublicMenuLocale; label: string }[] = [
   { locale: 'es', label: 'Español' },
   { locale: 'it', label: 'Italiano' },
   { locale: 'ko', label: '한국어' },
+  { locale: 'ja', label: '日本語' },
   { locale: 'fr', label: 'Français' },
   { locale: 'cs', label: 'Čeština' },
   { locale: 'nl', label: 'Nederlands' },
@@ -129,6 +130,14 @@ function FlagSvg({ locale }: { locale: PublicMenuLocale }) {
             <rect x="13.83" y="7.5" width="0.32" height="0.95" rx="0.04" />
             <rect x="14.33" y="7.5" width="0.32" height="0.95" rx="0.04" />
           </g>
+        </svg>
+      );
+    case 'ja':
+      /* Hinomaru */
+      return (
+        <svg className={cls} viewBox="0 0 16 10" aria-hidden>
+          <rect width="16" height="10" fill="#ffffff" />
+          <circle cx="8" cy="5" r="2.55" fill="#bc002d" />
         </svg>
       );
     case 'fr':

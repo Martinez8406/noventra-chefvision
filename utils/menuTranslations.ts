@@ -1,11 +1,29 @@
 import type { Dish, PublicMenuLocale } from '../types';
 
 const toStringArray = (value: unknown): string[] => {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => (typeof item === 'string' ? item : String(item ?? '')))
-    .map((item) => item.trim())
-    .filter(Boolean);
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === 'string' ? item : String(item ?? '')))
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  if (typeof value === 'string') {
+    const s = value.trim();
+    if (!s) return [];
+    try {
+      const j = JSON.parse(s);
+      if (Array.isArray(j)) {
+        return j
+          .map((item) => (typeof item === 'string' ? item : String(item ?? '')))
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+    } catch {
+      /* nie JSON */
+    }
+    return s.split(/[,;]/).map((x) => x.trim()).filter(Boolean);
+  }
+  return [];
 };
 
 const ALLERGENS_SECTION_TITLE: Record<PublicMenuLocale, string> = {
@@ -18,6 +36,7 @@ const ALLERGENS_SECTION_TITLE: Record<PublicMenuLocale, string> = {
   es: 'Alérgenos',
   it: 'Allergeni',
   ko: '알레르기 유발 성분',
+  ja: 'アレルゲン',
   fr: 'Allergènes',
   cs: 'Alergeny',
   nl: 'Allergenen',
@@ -34,6 +53,7 @@ const NO_ALLERGENS_LABEL: Record<PublicMenuLocale, string> = {
   es: 'Sin alérgenos principales',
   it: 'Nessun allergene principale',
   ko: '주요 알레르기 성분 없음',
+  ja: '主要アレルゲンは含まれません',
   fr: 'Aucun allergène majeur',
   cs: 'Bez hlavních alergenů',
   nl: 'Geen belangrijke allergenen',
@@ -50,6 +70,7 @@ const INGREDIENTS_SECTION_TITLE: Record<PublicMenuLocale, string> = {
   es: 'Ingredientes',
   it: 'Ingredienti',
   ko: '재료',
+  ja: '材料',
   fr: 'Ingrédients',
   cs: 'Suroviny',
   nl: 'Ingrediënten',
@@ -66,6 +87,7 @@ const INGREDIENTS_MORE_LABEL: Record<PublicMenuLocale, string> = {
   es: 'más',
   it: 'altro',
   ko: '더보기',
+  ja: '件',
   fr: 'plus',
   cs: 'více',
   nl: 'meer',
@@ -103,7 +125,7 @@ export const DEFAULT_DISH_DESCRIPTION_PLACEHOLDER = 'Krótki opis, który zobacz
 export function shouldRequestMenuTranslation(dish: Dish): boolean {
   const ingredientsPL = toStringArray(dish.ingredients);
   if (ingredientsPL.length > 0) {
-    const locales: PublicMenuLocale[] = ['en', 'he', 'ar', 'uk', 'de', 'es', 'it', 'ko', 'fr', 'cs', 'nl', 'zh'];
+    const locales: PublicMenuLocale[] = ['en', 'he', 'ar', 'uk', 'de', 'es', 'it', 'ko', 'ja', 'fr', 'cs', 'nl', 'zh'];
     const hasIngredientsTranslationsForAllLocales = locales.every((locale) => {
       /* Dla `he` tylko klucz `he` — nie legacy `en-us`, żeby po zmianie locale wymusić nowe tłumaczenie AI. */
       const tr =
@@ -363,6 +385,23 @@ const MENU_CATEGORY_TITLE: Record<PublicMenuLocale, Record<string, string>> = {
     'Alkohole': '주류',
     'Oferta sezonowa': '시즌 스페셜',
     'Makarony': '파스타',
+  },
+  ja: {
+    'Śniadania': '朝食',
+    'Przystawki': '前菜',
+    'Zupy': 'スープ',
+    'Sałatki': 'サラダ',
+    'Dania główne': 'メイン料理',
+    'Burgery / Sandwicze': 'バーガー / サンドイッチ',
+    'Menu dla dzieci': 'お子様メニュー',
+    'Dania wegetariańskie / wegańskie': 'ベジタリアン / ヴィーガン',
+    'Desery': 'デザート',
+    'Dodatki (frytki, sosy, pieczywo)': 'サイド（フライ、ソース、パン）',
+    'Napoje zimne': '冷たいドリンク',
+    'Napoje gorące': '温かいドリンク',
+    'Alkohole': 'アルコール',
+    'Oferta sezonowa': '季節のおすすめ',
+    'Makarony': 'パスタ',
   },
   fr: {
     'Śniadania': 'Petits-déjeuners',

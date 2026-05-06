@@ -156,8 +156,42 @@ async function fetchBackdropsFromSupabase(userId: string): Promise<Backdrop[]> {
   }));
 }
 
+/** Jednolite tablice tekstowe z Supabase (czasem JSON w text / json jako string). */
+function coerceStringArray(value: unknown): string[] {
+  if (value === undefined || value === null) return [];
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === 'string' ? item : String(item ?? '')))
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  if (typeof value === 'string') {
+    const s = value.trim();
+    if (!s) return [];
+    try {
+      const j = JSON.parse(s);
+      if (Array.isArray(j)) {
+        return j
+          .map((item) => (typeof item === 'string' ? item : String(item ?? '')))
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+    } catch {
+      /* nie JSON — lista rozdzielona przecinkiem */
+    }
+    return s.split(/[,;]/).map((x) => x.trim()).filter(Boolean);
+  }
+  return [];
+}
+
 const mapRow = (row: any): Dish => ({
   ...row,
+  name: row.name ?? '',
+  imageUrl: row.imageUrl ?? row.image_url ?? '',
+  description: row.description ?? '',
+  technique: row.technique ?? '',
+  ingredients: coerceStringArray(row.ingredients),
+  allergens: coerceStringArray(row.allergens) as Dish['allergens'],
   videoUrl: row.social_link ?? row.video_url ?? row.videoUrl ?? undefined,
   menuPrice: row.menu_price ?? row.menuPrice ?? null,
   category: row.category ?? null,
