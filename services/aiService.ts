@@ -163,11 +163,17 @@ export async function enhanceDishImage(
 export async function requestMenuTranslations(
   dishId: string
 ): Promise<{ translations: Record<'en' | 'he' | 'ar' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'ja' | 'fr' | 'cs' | 'nl' | 'zh', MenuTranslationEntry> } | null> {
-  const response = await fetch('/api/translate-dish', {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify({ dishId }),
-  });
+  let response: Response;
+  try {
+    response = await fetch('/api/translate-dish', {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ dishId }),
+    });
+  } catch (error) {
+    console.warn('[translate-dish] Nie udało się połączyć z API tłumaczeń.', error);
+    return null;
+  }
 
   const raw = await response.text();
   let data: { translations?: Record<'en' | 'he' | 'ar' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'ja' | 'fr' | 'cs' | 'nl' | 'zh', MenuTranslationEntry>; error?: string } | null = null;

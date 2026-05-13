@@ -272,11 +272,6 @@ const App: React.FC = () => {
                   d.id === saved.id ? { ...d, translations: patch.translations } : d
                 )
               );
-            } else {
-              setStatusToast(
-                'Tłumaczenia menu: błąd (sprawdź konsolę, OPENAI_API_KEY, migrację kolumny translations).'
-              );
-              setTimeout(() => setStatusToast(null), 8000);
             }
           });
         }
