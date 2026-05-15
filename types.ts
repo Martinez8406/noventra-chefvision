@@ -46,6 +46,33 @@ export interface MenuTranslationEntry {
   ingredients?: string[];
 }
 
+/** Typ rekomendacji sprzedażowej na karcie dania (max. jeden na danie). */
+export type DishRecommendationType = 'polecane' | 'popularne' | 'zestaw';
+
+export interface DishRecommendationItem {
+  id: string;
+  title: string;
+  subtitle?: string;
+  /** Cena bez sufiksu „zł” */
+  price?: string;
+  imageUrl?: string;
+  emoji?: string;
+}
+
+export interface DishRecommendation {
+  id: string;
+  dishId: string;
+  type: DishRecommendationType;
+  isActive: boolean;
+  /** Opcjonalny własny nagłówek sekcji (zamiast domyślnego) */
+  customHeaderText?: string;
+  items: DishRecommendationItem[];
+  /** Tylko dla typu „zestaw” — suma cen pozycji poza zestawem */
+  bundlePriceOutside?: string;
+  /** Tylko dla typu „zestaw” — cena zestawu */
+  bundlePrice?: string;
+}
+
 export interface Dish {
   id: string;
   name: string;

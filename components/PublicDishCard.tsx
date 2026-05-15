@@ -10,9 +10,12 @@ import {
 } from '../utils/menuTranslations';
 import { Info, UtensilsCrossed } from 'lucide-react';
 import { WatermarkWrapper } from './WatermarkWrapper';
+import { DishRecommendationBadge, DishRecommendationBox } from './DishRecommendationBox';
+import type { DishRecommendation } from '../types';
 
 interface Props {
   dish: Dish;
+  recommendation?: DishRecommendation | null;
   menuLocale?: PublicMenuLocale;
   basePath?: string;
   baseHash?: string;
@@ -23,6 +26,7 @@ interface Props {
 
 export const PublicDishCard: React.FC<Props> = ({
   dish,
+  recommendation = null,
   menuLocale = 'pl',
   basePath = '/menu/demo',
   baseHash = '#/menu/demo',
@@ -80,7 +84,8 @@ export const PublicDishCard: React.FC<Props> = ({
         `}
       </style>
       {/* Hero Image */}
-      <WatermarkWrapper show={!!showWatermark} className="h-64 overflow-hidden">
+      <WatermarkWrapper show={!!showWatermark} className="h-64 overflow-hidden relative">
+        {recommendation?.isActive && <DishRecommendationBadge type={recommendation.type} />}
         <img
           src={dish.imageUrl}
           alt={copy.name}
@@ -108,8 +113,8 @@ export const PublicDishCard: React.FC<Props> = ({
           {copy.description}
         </p>
 
-        {/* Ingredients & Allergens */}
-        <div className="space-y-4 mb-6">
+        {/* Ingredients */}
+        <div className="mb-4">
           <div className={`flex flex-wrap gap-2 ${isRtl ? 'justify-end' : ''}`}>
             {ingredientsUi.slice(0, 4).map((ing, i) => (
               <span
@@ -124,6 +129,14 @@ export const PublicDishCard: React.FC<Props> = ({
             )}
           </div>
         </div>
+
+        {recommendation?.isActive && (
+          <DishRecommendationBox
+            recommendation={recommendation}
+            dishName={copy.name}
+            className="mb-4"
+          />
+        )}
 
         {/* Więcej info */}
         <div className="grid grid-cols-1 gap-3">

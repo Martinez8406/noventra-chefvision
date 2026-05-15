@@ -11,6 +11,7 @@ import { UploadLogo } from './components/UploadLogo';
 import { GoogleReviewsSettings } from './components/GoogleReviewsSettings';
 import { KitchenWall } from './components/KitchenWall';
 import { MenuManager } from './components/MenuManager';
+import { PromotionsManager } from './components/PromotionsManager';
 import { DishDetailPanel } from './components/DishDetailPanel';
 import { Auth } from './components/Auth';
 import { SuccessPage } from './components/SuccessPage';
@@ -34,7 +35,8 @@ import {
   AlertTriangle,
   Gift,
   CheckCircle,
-  BarChart3
+  BarChart3,
+  Megaphone
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -50,7 +52,7 @@ const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
-  const [activeTab, setActiveTab] = useState<'kuchnia' | 'studio' | 'themes' | 'backdrops' | 'menu' | 'stats' | 'qr'>('kuchnia');
+  const [activeTab, setActiveTab] = useState<'kuchnia' | 'studio' | 'themes' | 'backdrops' | 'menu' | 'stats' | 'qr' | 'promotions'>('kuchnia');
   const [selectedDishId, setSelectedDishId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -409,6 +411,7 @@ const App: React.FC = () => {
     { id: 'backdrops', label: 'Studio Tła', icon: Layers, protected: false },
     { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen, protected: false },
     { id: 'stats', label: 'Statystyki', icon: BarChart3, protected: false },
+    { id: 'promotions', label: 'Rekomendacje i promocje', icon: Megaphone, protected: false },
     { id: 'qr', label: 'Kod QR / Logo / Opinie Google', icon: MenuIcon, protected: false },
   ];
 
@@ -567,6 +570,15 @@ const App: React.FC = () => {
           )}
           {activeTab === 'stats' && (
             <MenuStatsPanel userId={currentUser?.id ?? null} />
+          )}
+          {activeTab === 'promotions' && (
+            <div className="space-y-6">
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">Rekomendacje i promocje</h2>
+              <PromotionsManager
+                dishes={dishes}
+                userId={session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id ?? null}
+              />
+            </div>
           )}
           {activeTab === 'qr' && (
             <div className="space-y-10">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Dish, PublicMenuLocale } from '../types';
+import { Dish, DishRecommendation, PublicMenuLocale } from '../types';
+import { recommendationsByDishId, resolveRecommendations } from '../utils/dishRecommendations';
 import { PublicDishCard } from './PublicDishCard';
 import { PublicDishDetail } from './PublicDishDetail';
 import { MenuLanguageSwitcher } from './MenuLanguageSwitcher';
@@ -66,6 +67,7 @@ export const PublicMenu: React.FC<Props> = ({
   const [googlePlaceId, setGooglePlaceId] = useState<string | null>(null);
   const [showReviewTooltip, setShowReviewTooltip] = useState(false);
   const [menuLocale, setMenuLocale] = useState<PublicMenuLocale>('pl');
+  const [recommendations, setRecommendations] = useState<DishRecommendation[]>([]);
   const [customCategoryTranslations, setCustomCategoryTranslations] = useState<Record<string, Partial<Record<PublicMenuLocale, string>>>>({});
   const [profileMenuCategories, setProfileMenuCategories] = useState<string[]>([]);
   const [profileCategoryTranslations, setProfileCategoryTranslations] = useState<Record<string, Partial<Record<PublicMenuLocale, string>>>>({});
@@ -89,6 +91,13 @@ export const PublicMenu: React.FC<Props> = ({
       setMenuLocale('pl');
     }
   }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    setRecommendations(resolveRecommendations(userId, dishes));
+  }, [userId, dishes]);
+
+  const recByDish = recommendationsByDishId(recommendations);
 
   useEffect(() => {
     try {
@@ -707,6 +716,7 @@ export const PublicMenu: React.FC<Props> = ({
                 <PublicDishCard
                   key={dish.id}
                   dish={dish}
+                  recommendation={recByDish[dish.id] ?? null}
                   menuLocale={menuLocale}
                   basePath={menuBasePath}
                   baseHash={menuBaseHash}
