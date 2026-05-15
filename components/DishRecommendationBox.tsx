@@ -44,16 +44,38 @@ function ItemThumb({ item }: { item: DishRecommendation['items'][0] }) {
   );
 }
 
+const BADGE_SWAY_STYLES = `
+  @keyframes chefvisionRecBadgeSway {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(3px); }
+    75% { transform: translateX(-3px); }
+  }
+  .chefvision-rec-badge-sway {
+    animation: chefvisionRecBadgeSway 3.2s ease-in-out infinite;
+  }
+  .group:hover .chefvision-rec-badge-sway {
+    animation-play-state: paused;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .chefvision-rec-badge-sway {
+      animation: none;
+    }
+  }
+`;
+
 export const DishRecommendationBadge: React.FC<{ type: DishRecommendation['type'] }> = ({ type }) => {
   const badgeClass =
     type === 'popularne' ? 'bg-violet-600/90 text-white' : 'bg-emerald-600/90 text-white';
 
   return (
-    <span
-      className={`absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-sm ${badgeClass}`}
-    >
-      {RECOMMENDATION_BADGE[type]}
-    </span>
+    <>
+      <style>{BADGE_SWAY_STYLES}</style>
+      <span
+        className={`chefvision-rec-badge-sway absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-sm ${badgeClass}`}
+      >
+        {RECOMMENDATION_BADGE[type]}
+      </span>
+    </>
   );
 };
 
