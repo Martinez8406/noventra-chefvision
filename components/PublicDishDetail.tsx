@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Dish, PublicMenuLocale } from '../types';
+import { Dish, DishRecommendation, PublicMenuLocale } from '../types';
+import { DishRecommendationBadge, DishRecommendationBox } from './DishRecommendationBox';
 import {
   getPublicAllergenDisplay,
   getPublicDishCopy,
@@ -14,6 +15,7 @@ import { WatermarkWrapper } from './WatermarkWrapper';
 
 interface Props {
   dish: Dish;
+  recommendation?: DishRecommendation | null;
   menuLocale?: PublicMenuLocale;
   onBack: () => void;
   showWatermark?: boolean;
@@ -22,6 +24,7 @@ interface Props {
 
 export const PublicDishDetail: React.FC<Props> = ({
   dish,
+  recommendation = null,
   menuLocale = 'pl',
   onBack,
   showWatermark,
@@ -65,8 +68,9 @@ export const PublicDishDetail: React.FC<Props> = ({
         `}
       </style>
       {/* Hero Image Section – wysokość tak, by całe danie + znak wodny były widoczne */}
-      <WatermarkWrapper show={!!showWatermark} className="h-[75vh] md:h-[85vh] min-h-[400px] overflow-hidden bg-slate-950">
+      <WatermarkWrapper show={!!showWatermark} className="relative h-[75vh] md:h-[85vh] min-h-[400px] overflow-hidden bg-slate-950">
         <>
+          {recommendation?.isActive && <DishRecommendationBadge type={recommendation.type} />}
           <img src={dish.imageUrl} alt={copy.name} className="w-full h-full object-cover object-center scale-150" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
@@ -133,6 +137,13 @@ export const PublicDishDetail: React.FC<Props> = ({
             </p>
           </div>
         </div>
+
+        {recommendation?.isActive && (
+          <DishRecommendationBox
+            recommendation={recommendation}
+            dishName={copy.name}
+          />
+        )}
 
         {/* Social Link Section */}
         {dish.videoUrl && (

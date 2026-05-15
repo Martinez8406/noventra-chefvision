@@ -469,6 +469,7 @@ export const PublicMenu: React.FC<Props> = ({
           <MenuLanguageSwitcher value={menuLocale} onChange={persistMenuLocale} />
           <PublicDishDetail
             dish={dish}
+            recommendation={recByDish[dish.id] ?? null}
             menuLocale={menuLocale}
             onBack={goBack}
             showWatermark={showWatermark}
