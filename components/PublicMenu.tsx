@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Dish, DishRecommendation, PublicMenuLocale } from '../types';
-import { recommendationsByDishId, resolveRecommendations } from '../utils/dishRecommendations';
+import { fetchRecommendationsForPublicMenu, recommendationsByDishId } from '../utils/dishRecommendations';
 import { PublicDishCard } from './PublicDishCard';
 import { PublicDishDetail } from './PublicDishDetail';
 import { MenuLanguageSwitcher } from './MenuLanguageSwitcher';
@@ -94,7 +94,13 @@ export const PublicMenu: React.FC<Props> = ({
 
   useEffect(() => {
     if (!userId) return;
-    setRecommendations(resolveRecommendations(userId, dishes));
+    let cancelled = false;
+    fetchRecommendationsForPublicMenu(userId, dishes).then((list) => {
+      if (!cancelled) setRecommendations(list);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [userId, dishes]);
 
   const recByDish = recommendationsByDishId(recommendations);

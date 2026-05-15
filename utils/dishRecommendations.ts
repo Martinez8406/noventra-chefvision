@@ -1,4 +1,5 @@
 import type { Dish, DishRecommendation, DishRecommendationItem, DishRecommendationType } from '../types';
+import { db, supabase } from '../services/supabaseService';
 
 export const RECOMMENDATIONS_STORAGE_KEY = (userId: string) =>
   `chefvision_dish_recommendations:${userId}`;
@@ -175,9 +176,70 @@ export function buildMockRecommendations(dishes: Dish[]): DishRecommendation[] {
   return mocks;
 }
 
-/** Zwraca zapisane rekomendacje lub mocki, gdy brak zapisanych danych. */
+/** Zwraca zapisane rekomendacje lub mocki, gdy brak zapisanych danych (tryb demo / offline). */
 export function resolveRecommendations(userId: string, dishes: Dish[]): DishRecommendation[] {
   const stored = loadStoredRecommendations(userId);
   if (stored.length > 0) return stored;
   return buildMockRecommendations(dishes);
+}
+
+function useLocalRecommendationsOnly(userId: string): boolean {
+  return !supabase || userId === 'local-chef';
+}
+
+/** Panel managera — Supabase z jednorazową migracją z localStorage. */
+export async function fetchRecommendationsForOwner(userId: string): Promise<DishRecommendation[]> {
+  if (useLocalRecommendationsOnly(userId)) {
+    return loadStoredRecommendations(userId);
+  }
+  try {
+    const fromDb = await db.getDishRecommendations(userId);
+    if (fromDb.length > 0) return fromDb;
+
+    const local = loadStoredRecommendations(userId);
+    if (local.length > 0) {
+      const migrated = await db.syncDishRecommendations(userId, local);
+      saveStoredRecommendations(userId, []);
+      return migrated;
+    }
+    return [];
+  } catch (e) {
+    console.warn('[fetchRecommendationsForOwner]', e);
+    return loadStoredRecommendations(userId);
+  }
+}
+
+/** Menu publiczne — tylko aktywne rekomendacje z bazy. */
+export async function fetchRecommendationsForPublicMenu(
+  userId: string,
+  dishes: Dish[],
+): Promise<DishRecommendation[]> {
+  if (useLocalRecommendationsOnly(userId)) {
+    return resolveRecommendations(userId, dishes);
+  }
+  try {
+    return await db.getDishRecommendationsForPublicMenu(userId);
+  } catch (e) {
+    console.warn('[fetchRecommendationsForPublicMenu]', e);
+    return [];
+  }
+}
+
+/** Zapis listy rekomendacji (Supabase lub localStorage). */
+export async function persistRecommendations(
+  userId: string,
+  recommendations: DishRecommendation[],
+): Promise<DishRecommendation[]> {
+  if (useLocalRecommendationsOnly(userId)) {
+    saveStoredRecommendations(userId, recommendations);
+    return recommendations;
+  }
+  try {
+    const saved = await db.syncDishRecommendations(userId, recommendations);
+    saveStoredRecommendations(userId, saved);
+    return saved;
+  } catch (e) {
+    console.error('[persistRecommendations]', e);
+    throw e;
+  }
 }

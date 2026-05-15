@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Dish, DishRecommendation, DishRecommendationItem, DishRecommendationType } from '../types';
 import {
   calcSavingsPercent,
-  loadStoredRecommendations,
+  fetchRecommendationsForOwner,
+  persistRecommendations,
   RECOMMENDATION_BADGE,
   RECOMMENDATION_DEFAULT_HEADER,
-  saveStoredRecommendations,
 } from '../utils/dishRecommendations';
 import { ChevronDown, Plus, Trash2, Megaphone, ToggleLeft, ToggleRight } from 'lucide-react';
 
@@ -43,18 +43,48 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
   const [recommendations, setRecommendations] = useState<DishRecommendation[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!userId) return;
-    const stored = loadStoredRecommendations(userId);
-    setRecommendations(stored);
-    onRecommendationsChange?.(stored);
+    if (!userId) {
+      setRecommendations([]);
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    fetchRecommendationsForOwner(userId)
+      .then((list) => {
+        if (!cancelled) {
+          setRecommendations(list);
+          onRecommendationsChange?.(list);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
-  const persist = (next: DishRecommendation[]) => {
+  const updateLocal = (next: DishRecommendation[]) => {
     setRecommendations(next);
-    if (userId) saveStoredRecommendations(userId, next);
-    onRecommendationsChange?.(next);
+  };
+
+  const persistToServer = async (next: DishRecommendation[]) => {
+    if (!userId) return;
+    setSaving(true);
+    try {
+      const saved = await persistRecommendations(userId, next);
+      setRecommendations(saved);
+      onRecommendationsChange?.(saved);
+    } catch {
+      alert('Nie udało się zapisać rekomendacji. Sprawdź połączenie i uruchom migrację SQL w Supabase.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const editing = recommendations.find((r) => r.id === editingId) ?? null;
@@ -67,7 +97,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
     const rec = newRecommendation(dish.id, 'polecane');
     setEditingId(rec.id);
     setFormOpen(true);
-    persist([...recommendations, rec]);
+    updateLocal([...recommendations, rec]);
   };
 
   const startEdit = (id: string) => {
@@ -75,21 +105,22 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
     setFormOpen(true);
   };
 
-  const cancelEdit = () => {
-    if (editing && !recommendations.some((r) => r.id === editing.id && r.items.some((i) => i.title.trim()))) {
-      persist(recommendations.filter((r) => r.id !== editing.id));
-    }
+  const cancelEdit = async () => {
     setEditingId(null);
     setFormOpen(false);
+    if (!userId) return;
+    const fresh = await fetchRecommendationsForOwner(userId);
+    setRecommendations(fresh);
+    onRecommendationsChange?.(fresh);
   };
 
   const updateEditing = (patch: Partial<DishRecommendation>) => {
     if (!editing) return;
     const next = recommendations.map((r) => (r.id === editing.id ? { ...r, ...patch } : r));
-    persist(next);
+    updateLocal(next);
   };
 
-  const saveEditing = () => {
+  const saveEditing = async () => {
     if (!editing) return;
     const cleaned: DishRecommendation = {
       ...editing,
@@ -101,13 +132,14 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
       return;
     }
     const next = recommendations.map((r) => (r.id === editing.id ? cleaned : r));
-    persist(next);
+    await persistToServer(next);
     setEditingId(null);
     setFormOpen(false);
   };
 
-  const removeRecommendation = (id: string) => {
-    persist(recommendations.filter((r) => r.id !== id));
+  const removeRecommendation = async (id: string) => {
+    if (!confirm('Usunąć tę rekomendację?')) return;
+    await persistToServer(recommendations.filter((r) => r.id !== id));
     if (editingId === id) {
       setEditingId(null);
       setFormOpen(false);
@@ -367,9 +399,10 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
             <button
               type="button"
               onClick={saveEditing}
-              className="flex-1 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold"
+              disabled={saving}
+              className="flex-1 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold disabled:opacity-50"
             >
-              Zapisz rekomendację
+              {saving ? 'Zapisywanie…' : 'Zapisz rekomendację'}
             </button>
             <button
               type="button"
@@ -396,8 +429,12 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
 
       {recommendations.length === 0 && !formOpen && (
         <p className="text-xs text-slate-400 text-center">
-          Brak zapisanych rekomendacji — na menu publicznym widać przykładowe mocki do czasu pierwszego zapisu.
+          Brak rekomendacji — dodaj pierwszą powyżej. Zapis trafia do bazy Supabase.
         </p>
+      )}
+
+      {saving && (
+        <p className="text-xs text-slate-500 text-center">Zapisywanie…</p>
       )}
     </div>
   );

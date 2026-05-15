@@ -2,7 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import { TRIAL_AI_CREDITS, MAX_USER_BACKDROPS } from '../constants';
-import { Dish, UserProfile, DishStatus, SubscriptionStatus, Backdrop } from '../types';
+import { Dish, DishRecommendation, UserProfile, DishStatus, SubscriptionStatus, Backdrop } from '../types';
 
 // Vite exposes env vars via import.meta.env (only keys prefixed with VITE_).
 // We still keep process.env fallback for server-like environments.
@@ -182,6 +182,44 @@ function coerceStringArray(value: unknown): string[] {
     return s.split(/[,;]/).map((x) => x.trim()).filter(Boolean);
   }
   return [];
+}
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string): boolean {
+  return UUID_RE.test(value);
+}
+
+const mapRecommendationRow = (row: Record<string, unknown>): DishRecommendation => ({
+  id: String(row.id),
+  dishId: String(row.dish_id ?? row.dishId),
+  type: row.type as DishRecommendation['type'],
+  isActive: row.is_active !== false && row.isActive !== false,
+  customHeaderText:
+    (row.custom_header_text as string | null) ?? (row.customHeaderText as string | undefined) ?? undefined,
+  items: Array.isArray(row.items) ? (row.items as DishRecommendation['items']) : [],
+  bundlePriceOutside:
+    (row.bundle_price_outside as string | null) ??
+    (row.bundlePriceOutside as string | undefined) ??
+    undefined,
+  bundlePrice:
+    (row.bundle_price as string | null) ?? (row.bundlePrice as string | undefined) ?? undefined,
+});
+
+function recommendationToPayload(userId: string, rec: DishRecommendation): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    user_id: userId,
+    dish_id: rec.dishId,
+    type: rec.type,
+    is_active: rec.isActive,
+    custom_header_text: rec.customHeaderText?.trim() || null,
+    bundle_price_outside: rec.bundlePriceOutside?.trim() || null,
+    bundle_price: rec.bundlePrice?.trim() || null,
+    items: rec.items,
+  };
+  if (isUuid(rec.id)) payload.id = rec.id;
+  return payload;
 }
 
 const mapRow = (row: any): Dish => ({
@@ -477,6 +515,84 @@ export const db = {
     if (insErr) throw new Error(insErr.message || 'Nie udało się zapisać tła.');
 
     return fetchBackdropsFromSupabase(userId);
+  },
+
+  /** Rekomendacje sprzedażowe — panel managera (wszystkie wpisy użytkownika). */
+  async getDishRecommendations(userId: string): Promise<DishRecommendation[]> {
+    if (!supabase || userId === 'local-chef') return [];
+    const { data, error } = await supabase
+      .from('dish_recommendations')
+      .select('*')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false });
+    if (error) {
+      console.warn('[getDishRecommendations]', error.message);
+      return [];
+    }
+    return (data || []).map((row) => mapRecommendationRow(row as Record<string, unknown>));
+  },
+
+  /** Aktywne rekomendacje dla menu publicznego (RLS filtruje is_active + isOnline). */
+  async getDishRecommendationsForPublicMenu(userId: string): Promise<DishRecommendation[]> {
+    if (!supabase || userId === 'local-chef') return [];
+    const { data, error } = await supabase
+      .from('dish_recommendations')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_active', true);
+    if (error) {
+      console.warn('[getDishRecommendationsForPublicMenu]', error.message);
+      return [];
+    }
+    return (data || []).map((row) => mapRecommendationRow(row as Record<string, unknown>));
+  },
+
+  /**
+   * Zapisuje pełną listę rekomendacji użytkownika (upsert + usuwa brakujące).
+   * Zwraca listę z id z bazy (ważne po pierwszym zapisie z tymczasowym id).
+   */
+  async syncDishRecommendations(
+    userId: string,
+    recommendations: DishRecommendation[],
+  ): Promise<DishRecommendation[]> {
+    if (!supabase || userId === 'local-chef') return recommendations;
+
+    const { data: existing, error: selErr } = await supabase
+      .from('dish_recommendations')
+      .select('id')
+      .eq('user_id', userId);
+    if (selErr) throw new Error(selErr.message || 'Nie udało się odczytać rekomendacji.');
+
+    const keepIds = new Set<string>();
+    const saved: DishRecommendation[] = [];
+
+    for (const rec of recommendations) {
+      const { data, error } = await supabase
+        .from('dish_recommendations')
+        .upsert(recommendationToPayload(userId, rec), { onConflict: 'dish_id' })
+        .select('*')
+        .single();
+      if (error) throw new Error(error.message || 'Nie udało się zapisać rekomendacji.');
+      if (data) {
+        const mapped = mapRecommendationRow(data as Record<string, unknown>);
+        saved.push(mapped);
+        keepIds.add(mapped.id);
+      }
+    }
+
+    const toDelete = (existing || [])
+      .map((r: { id: string }) => r.id)
+      .filter((id) => !keepIds.has(id));
+
+    if (toDelete.length > 0) {
+      const { error: delErr } = await supabase
+        .from('dish_recommendations')
+        .delete()
+        .in('id', toDelete);
+      if (delErr) console.warn('[syncDishRecommendations] delete:', delErr.message);
+    }
+
+    return saved;
   },
 };
 
