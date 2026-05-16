@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  TRIAL_AI_CREDITS,
   MAX_ENHANCE_PREVIEWS,
   ENHANCE_STYLES,
   DEFAULT_LIGHTING,
@@ -17,7 +16,8 @@ import {
   safeImageFileBase,
   shareImageViaSystem,
 } from '../services/imageClient';
-import { GeneratorParams } from '../types';
+import { GeneratorParams, UserTokens } from '../types';
+import { formatTokenStatus } from '../utils/tokens';
 import { WatermarkWrapper } from './WatermarkWrapper';
 import {
   AlertCircle,
@@ -41,6 +41,7 @@ interface Props {
   isSubscribed: boolean;
   generationsUsed: number;
   credits: number;
+  tokens?: UserTokens;
   onGenerationSuccess?: () => void;
   onCreditsUpdated?: (credits: number) => void;
   onBuyPremium?: () => void;
@@ -149,6 +150,7 @@ export const ChefsStudio: React.FC<Props> = ({
   isSubscribed,
   generationsUsed,
   credits,
+  tokens,
   onGenerationSuccess,
   onCreditsUpdated,
   onBuyPremium,
@@ -178,8 +180,9 @@ export const ChefsStudio: React.FC<Props> = ({
   // ── Share state ────────────────────────────────────────────────────────────
   const [shareTargetImage, setShareTargetImage] = useState<string | null>(null);
 
-  const isFreeTrialOver = !isSubscribed && generationsUsed >= TRIAL_AI_CREDITS;
-  const hasNoCredits = !isSubscribed && credits <= 0;
+  const showWatermark = !isSubscribed;
+  const hasNoCredits = credits <= 0;
+  const tokenLabel = formatTokenStatus(isSubscribed, credits, tokens);
   const canGenerate = !!dishReference && !!style && !isGenerating && !hasNoCredits;
 
   const currentEnhanceSettings: EnhanceSettings = useMemo(
@@ -257,7 +260,7 @@ export const ChefsStudio: React.FC<Props> = ({
         currentEnhanceSettings
       );
       let img = result.image;
-      if (isFreeTrialOver) img = await addFreeWatermark(img);
+      if (showWatermark) img = await addFreeWatermark(img);
       setGeneratedImages((prev) => {
         const next = [img, ...prev];
         return next.slice(0, MAX_ENHANCE_PREVIEWS);
@@ -324,13 +327,9 @@ export const ChefsStudio: React.FC<Props> = ({
             <p className="text-xs text-slate-500 mt-1">Ulepszanie prawdziwych zdjęć dań — krok po kroku.</p>
           </div>
         </div>
-        {!isSubscribed && (
-          <div className="text-[10px] font-black uppercase tracking-widest">
-            <span className={hasNoCredits ? 'text-red-500' : 'text-slate-400'}>
-              Kredyty: {credits}/{TRIAL_AI_CREDITS}
-            </span>
-          </div>
-        )}
+        <div className="text-[10px] font-black uppercase tracking-widest">
+          <span className={hasNoCredits ? 'text-red-500' : 'text-slate-400'}>{tokenLabel}</span>
+        </div>
       </div>
 
       {hasNoCredits && (
@@ -351,7 +350,7 @@ export const ChefsStudio: React.FC<Props> = ({
         </div>
       )}
 
-      {isFreeTrialOver && !hasNoCredits && (
+      {showWatermark && !hasNoCredits && (
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-[30px] flex items-center gap-4 text-white">
           <Crown className="text-amber-500" />
           <div>

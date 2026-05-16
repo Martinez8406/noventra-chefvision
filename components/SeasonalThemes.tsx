@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import {
-  TRIAL_AI_CREDITS,
   MAX_ENHANCE_PREVIEWS,
   SEASONAL_THEMES,
   DEFAULT_LIGHTING,
@@ -17,7 +16,8 @@ import {
   safeImageFileBase,
   shareImageViaSystem,
 } from '../services/imageClient';
-import { GeneratorParams } from '../types';
+import { GeneratorParams, UserTokens } from '../types';
+import { formatTokenStatus } from '../utils/tokens';
 import { WatermarkWrapper } from './WatermarkWrapper';
 import {
   AlertCircle,
@@ -41,6 +41,7 @@ interface Props {
   isSubscribed: boolean;
   generationsUsed: number;
   credits: number;
+  tokens?: UserTokens;
   savedBackdrops?: Backdrop[];
   onGenerationSuccess?: () => void;
   onCreditsUpdated?: (credits: number) => void;
@@ -63,6 +64,7 @@ export const SeasonalThemes: React.FC<Props> = ({
   isSubscribed,
   generationsUsed,
   credits,
+  tokens,
   savedBackdrops = [],
   onGenerationSuccess,
   onCreditsUpdated,
@@ -88,8 +90,9 @@ export const SeasonalThemes: React.FC<Props> = ({
   const [saveDishName, setSaveDishName] = useState('');
   const [shareTargetImage, setShareTargetImage] = useState<string | null>(null);
 
-  const isFreeTrialOver = !isSubscribed && generationsUsed >= TRIAL_AI_CREDITS;
-  const hasNoCredits = !isSubscribed && credits <= 0;
+  const showWatermark = !isSubscribed;
+  const hasNoCredits = credits <= 0;
+  const tokenLabel = formatTokenStatus(isSubscribed, credits, tokens);
   const hasThemeSelected = !!theme || !!customThemeImage;
   const canGenerate = !!dishReference && hasThemeSelected && !isGenerating && !hasNoCredits;
 
@@ -141,7 +144,7 @@ export const SeasonalThemes: React.FC<Props> = ({
         customThemeImage: customThemeImage ?? undefined,
       });
       let img = result.image;
-      if (isFreeTrialOver) img = await addFreeWatermark(img);
+      if (showWatermark) img = await addFreeWatermark(img);
       setGeneratedImages((prev) => [img, ...prev].slice(0, MAX_ENHANCE_PREVIEWS));
       if (result.creditsRemaining !== undefined) onCreditsUpdated?.(result.creditsRemaining);
       onGenerationSuccess?.();
@@ -232,13 +235,9 @@ export const SeasonalThemes: React.FC<Props> = ({
             </p>
           </div>
         </div>
-        {!isSubscribed && (
-          <div className="text-[10px] font-black uppercase tracking-widest">
-            <span className={hasNoCredits ? 'text-red-500' : 'text-slate-400'}>
-              Kredyty: {credits}/{TRIAL_AI_CREDITS}
-            </span>
-          </div>
-        )}
+        <div className="text-[10px] font-black uppercase tracking-widest">
+          <span className={hasNoCredits ? 'text-red-500' : 'text-slate-400'}>{tokenLabel}</span>
+        </div>
       </div>
 
       {hasNoCredits && (

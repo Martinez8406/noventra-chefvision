@@ -33,6 +33,8 @@ export default async function handler(req, res) {
       success_url: successUrl || `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl || baseUrl,
       client_reference_id: userId || undefined,
+      metadata: userId ? { userId } : undefined,
+      subscription_data: userId ? { metadata: { userId } } : undefined,
     });
     return res.status(200).json({ url: session.url });
   } catch (e) {

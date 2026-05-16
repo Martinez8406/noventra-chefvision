@@ -2,8 +2,14 @@
 export const BRAND_LOGO_SRC =
   '/Zrzut_ekranu_2026-05-02_115035-removebg-preview.png';
 
-/** Początkowa liczba kredytów AI dla kont trial / darmowych (nie-Premium). */
-export const TRIAL_AI_CREDITS = 20;
+/** Tokeny trial przy rejestracji (14 dni — patrz Supabase trial_ends_at). */
+export const TRIAL_TOKENS = 50;
+
+/** Tokeny subskrypcji Premium na okres rozliczeniowy (~30 dni). */
+export const SUBSCRIPTION_TOKENS = 50;
+
+/** @deprecated Użyj TRIAL_TOKENS — alias dla starszego kodu. */
+export const TRIAL_AI_CREDITS = TRIAL_TOKENS;
 
 /** Maks. liczba zapisanych teł na użytkownika (Supabase + tryb lokalny). */
 export const MAX_USER_BACKDROPS = 5;

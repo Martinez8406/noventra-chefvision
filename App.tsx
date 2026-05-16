@@ -15,7 +15,8 @@ import { PromotionsManager } from './components/PromotionsManager';
 import { DishDetailPanel } from './components/DishDetailPanel';
 import { Auth } from './components/Auth';
 import { SuccessPage } from './components/SuccessPage';
-import { BRAND_LOGO_SRC, TRIAL_AI_CREDITS } from './constants';
+import { BRAND_LOGO_SRC, TRIAL_TOKENS } from './constants';
+import { formatTokenStatus } from './utils/tokens';
 import { supabase, db, authService, uploadDishImage } from './services/supabaseService';
 import { requestMenuTranslations } from './services/aiService';
 import { shouldRequestMenuTranslation } from './utils/menuTranslations';
@@ -141,7 +142,7 @@ const App: React.FC = () => {
             email: 'demo@chefvision.pl',
             subscriptionStatus: 'trial',
             generationsUsed: parseInt(typeof window !== 'undefined' ? localStorage.getItem('chefvision_user_gens') || '0' : '0'),
-            credits: Math.max(0, TRIAL_AI_CREDITS - parseInt(typeof window !== 'undefined' ? localStorage.getItem('chefvision_user_gens') || '0' : '0')),
+            credits: Math.max(0, TRIAL_TOKENS - parseInt(typeof window !== 'undefined' ? localStorage.getItem('chefvision_user_gens') || '0' : '0')),
           };
           setCurrentUser(demoProfile);
           const data = await db.getDishes('local-chef');
@@ -161,7 +162,7 @@ const App: React.FC = () => {
               email: session.user.email || '',
               subscriptionStatus: 'trial',
               generationsUsed: 0,
-              credits: TRIAL_AI_CREDITS,
+              credits: TRIAL_TOKENS,
             };
           }
           setCurrentUser(profile);
@@ -213,10 +214,15 @@ const App: React.FC = () => {
   const isPublicMenu = !!publicMenuUserId;
   const isSuccessPage = hash.includes('#/success');
 
+  const refreshCurrentProfile = async () => {
+    const profile = await authService.getCurrentProfile();
+    if (profile) setCurrentUser(profile);
+  };
+
   const handleGenerationSuccess = async () => {
     if (!currentUser) return;
-    const { generationsUsed, credits } = await authService.incrementGenerations(currentUser.id);
-    setCurrentUser(prev => prev ? { ...prev, generationsUsed, credits } : null);
+    await authService.incrementGenerations(currentUser.id);
+    await refreshCurrentProfile();
   };
 
   const handleSaveStandard = async (imageUrl: string, params: GeneratorParams) => {
@@ -464,7 +470,11 @@ const App: React.FC = () => {
              <div className="flex items-center gap-2 mb-1">
                 {isPremium ? <Crown size={16} /> : isTrial ? <Gift size={16} /> : <AlertTriangle size={16} />}
                 <span className="text-[10px] font-black uppercase tracking-widest">
-                  {isPremium ? 'Konto Premium' : isTrial ? `Tryb Trial: ${currentUser?.generationsUsed}/${TRIAL_AI_CREDITS}` : 'Limit Darmowy'}
+                  {isPremium
+                    ? `Premium · ${currentUser?.tokens?.total ?? currentUser?.credits ?? 0} tokenów`
+                    : isTrial
+                      ? formatTokenStatus(false, currentUser?.credits ?? 0, currentUser?.tokens)
+                      : `Darmowy · ${currentUser?.tokens?.extra ?? 0} tokenów dodatkowych`}
                 </span>
              </div>
           </div>
@@ -522,8 +532,9 @@ const App: React.FC = () => {
                 isSubscribed={isPremium}
                 generationsUsed={currentUser.generationsUsed}
                 credits={currentUser.credits}
+                tokens={currentUser.tokens}
                 onGenerationSuccess={handleGenerationSuccess}
-                onCreditsUpdated={(credits) => setCurrentUser(prev => prev ? { ...prev, credits } : null)}
+                onCreditsUpdated={() => void refreshCurrentProfile()}
                 onBuyPremium={handleBuyPremium}
               />
             ) : (
@@ -541,9 +552,10 @@ const App: React.FC = () => {
                 isSubscribed={isPremium}
                 generationsUsed={currentUser.generationsUsed}
                 credits={currentUser.credits}
+                tokens={currentUser.tokens}
                 savedBackdrops={savedBackdrops}
                 onGenerationSuccess={handleGenerationSuccess}
-                onCreditsUpdated={(credits) => setCurrentUser(prev => prev ? { ...prev, credits } : null)}
+                onCreditsUpdated={() => void refreshCurrentProfile()}
                 onBuyPremium={handleBuyPremium}
               />
             ) : (
@@ -574,10 +586,28 @@ const App: React.FC = () => {
           {activeTab === 'promotions' && (
             <div className="space-y-6">
               <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">Rekomendacje i promocje</h2>
-              <PromotionsManager
-                dishes={dishes}
-                userId={session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id ?? null}
-              />
+              {isPremium ? (
+                <PromotionsManager
+                  dishes={dishes}
+                  userId={session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id ?? null}
+                />
+              ) : (
+                <div className="bg-slate-900 text-white p-8 rounded-[32px] border border-amber-500/30 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div>
+                    <p className="font-black text-lg">Funkcja Premium</p>
+                    <p className="text-sm opacity-70 mt-1">
+                      Rekomendacje sprzedażowe są dostępne w planie Premium. Twoje menu pozostaje aktywne na planie darmowym.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleBuyPremium}
+                    className="bg-amber-500 text-slate-900 px-6 py-3 rounded-2xl font-black text-sm hover:bg-amber-400 transition-colors shrink-0"
+                  >
+                    Przejdź na Premium
+                  </button>
+                </div>
+              )}
             </div>
           )}
           {activeTab === 'qr' && (

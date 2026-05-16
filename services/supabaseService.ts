@@ -1,8 +1,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
-import { TRIAL_AI_CREDITS, MAX_USER_BACKDROPS } from '../constants';
+import { TRIAL_TOKENS, SUBSCRIPTION_TOKENS, MAX_USER_BACKDROPS } from '../constants';
 import { Dish, DishRecommendation, UserProfile, DishStatus, SubscriptionStatus, Backdrop } from '../types';
+import { mapProfileTokens } from '../utils/tokens.js';
 
 // Vite exposes env vars via import.meta.env (only keys prefixed with VITE_).
 // We still keep process.env fallback for server-like environments.
@@ -608,7 +609,7 @@ export const authService = {
     
     // Jeśli nie ma Supabase (Tryb Demo)
     if (!supabase) {
-      const credits = Math.max(0, TRIAL_AI_CREDITS - localGens);
+      const credits = Math.max(0, TRIAL_TOKENS - localGens);
       const status: SubscriptionStatus = localPremiumFlag
         ? 'premium'
         : credits <= 0 ? 'free_limited' : 'trial';
@@ -617,8 +618,15 @@ export const authService = {
         name: 'Restauracja Testowa',
         email: 'demo@chefvision.pl',
         subscriptionStatus: status,
+        plan: localPremiumFlag ? 'premium' : credits <= 0 ? 'free' : 'trial',
         generationsUsed: localGens,
-        credits: localPremiumFlag ? 999999 : credits
+        credits: localPremiumFlag ? SUBSCRIPTION_TOKENS : credits,
+        tokens: {
+          trial: localPremiumFlag ? 0 : credits,
+          subscription: localPremiumFlag ? SUBSCRIPTION_TOKENS : 0,
+          extra: 0,
+          total: localPremiumFlag ? SUBSCRIPTION_TOKENS : credits,
+        },
       };
     }
 
@@ -628,39 +636,36 @@ export const authService = {
 
       let { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       
-      // Nowy użytkownik: utwórz profil z kredytami trial
+      // Nowy użytkownik: profil trial (tokeny ustawia trigger SQL lub webhook)
       if (!profileData) {
+        const trialEnds = new Date();
+        trialEnds.setDate(trialEnds.getDate() + 14);
         const { data: inserted } = await supabase.from('profiles').upsert({
           id: user.id,
           name: user.email?.split('@')[0] || 'Restauracja',
           email: user.email,
-          ai_credits: TRIAL_AI_CREDITS,
-          subscription_status: 'trial'
+          plan: 'trial',
+          subscription_status: 'trial',
+          trial_tokens: TRIAL_TOKENS,
+          trial_ends_at: trialEnds.toISOString(),
+          ai_credits: TRIAL_TOKENS,
         }).select().single();
         profileData = inserted;
       }
 
       const gensUsed = profileData?.generations_used ?? localGens;
-      const aiCredits = profileData?.ai_credits ?? TRIAL_AI_CREDITS;
-      const isPremiumFromDb = profileData?.subscription_status === 'premium';
-      const isPremium = isPremiumFromDb || localPremiumFlag;
-      
-      let status: SubscriptionStatus = 'trial';
-      if (isPremium) {
-        status = 'premium';
-      } else if (aiCredits <= 0) {
-        status = 'free_limited';
-      } else if (gensUsed >= TRIAL_AI_CREDITS) {
-        status = 'free_limited';
-      }
+      const mapped = mapProfileTokens(profileData, { localPremiumFlag });
 
       return {
         id: user.id,
         name: profileData?.name || user.email?.split('@')[0] || 'Restauracja',
         email: user.email,
-        subscriptionStatus: status,
+        subscriptionStatus: mapped.subscriptionStatus as SubscriptionStatus,
+        plan: mapped.plan as UserProfile['plan'],
         generationsUsed: gensUsed,
-        credits: isPremium ? 999999 : aiCredits
+        credits: mapped.credits,
+        tokens: mapped.tokens,
+        trialEndsAt: mapped.trialEndsAt,
       };
     } catch (e) { return null; }
   },
@@ -674,13 +679,17 @@ export const authService = {
         .eq('id', id)
         .single();
       if (error || !data) return null;
+      const mapped = mapProfileTokens(data);
       return {
         id: data.id,
         name: data.name,
         email: data.email,
-        subscriptionStatus: (data.subscription_status as SubscriptionStatus) ?? 'trial',
+        subscriptionStatus: mapped.subscriptionStatus as SubscriptionStatus,
+        plan: mapped.plan as UserProfile['plan'],
         generationsUsed: data.generations_used ?? 0,
-        credits: data.ai_credits ?? TRIAL_AI_CREDITS
+        credits: mapped.credits,
+        tokens: mapped.tokens,
+        trialEndsAt: mapped.trialEndsAt,
       };
     } catch (e) {
       console.error('Błąd pobierania profilu po ID:', e);
@@ -688,7 +697,9 @@ export const authService = {
     }
   },
 
-  /** Zapisuje użycie generacji i odejmuje 1 kredyt (dla użytkowników nie-Premium). Zwraca nową liczbę kredytów i generationsUsed. */
+  /**
+   * Zwiększa licznik generacji (statystyka). Tokeny odejmuje wyłącznie /api/generate-image.
+   */
   async incrementGenerations(userId: string): Promise<{ generationsUsed: number; credits: number }> {
     const current = parseInt(localStorage.getItem(USER_GENS_KEY) || '0');
     const newGens = current + 1;
@@ -696,22 +707,28 @@ export const authService = {
 
     if (supabase) {
       try {
-        const { data: profile } = await supabase.from('profiles').select('ai_credits, subscription_status').eq('id', userId).single();
-        const isPremium = profile?.subscription_status === 'premium';
-        if (!isPremium && profile && (profile.ai_credits ?? TRIAL_AI_CREDITS) > 0) {
-          await supabase.from('profiles').update({
-            ai_credits: Math.max(0, (profile.ai_credits ?? TRIAL_AI_CREDITS) - 1),
-          }).eq('id', userId);
-        }
+        await supabase
+          .from('profiles')
+          .update({ generations_used: newGens })
+          .eq('id', userId);
       } catch (e) {
         console.error('incrementGenerations', e);
       }
     }
 
     const { data: updated } = supabase
-      ? await supabase.from('profiles').select('ai_credits').eq('id', userId).single()
+      ? await supabase
+          .from('profiles')
+          .select(
+            'plan, subscription_status, trial_tokens, trial_ends_at, subscription_tokens, extra_tokens, ai_credits, generations_used'
+          )
+          .eq('id', userId)
+          .single()
       : { data: null };
-    const credits = updated?.ai_credits ?? Math.max(0, TRIAL_AI_CREDITS - newGens);
+
+    const credits = updated
+      ? mapProfileTokens(updated).credits
+      : Math.max(0, TRIAL_TOKENS - newGens);
     return { generationsUsed: newGens, credits };
   },
 
@@ -724,7 +741,12 @@ export const authService = {
     if (!supabase) return false;
     const { error } = await supabase
       .from('profiles')
-      .update({ subscription_status: 'premium' })
+      .update({
+        plan: 'premium',
+        subscription_status: 'premium',
+        subscription_tokens: SUBSCRIPTION_TOKENS,
+        tokens_reset_at: new Date().toISOString(),
+      })
       .eq('id', userId);
     return !error;
   }

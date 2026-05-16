@@ -9,11 +9,26 @@ import { handleTranslateCategory } from '../api/translate-category.js';
 import { handleSaveMenuCategories } from '../api/save-menu-categories.js';
 import { handleTrackMenuOpen } from '../api/track-menu-open.js';
 import { handleGetMenuOpenStats } from '../api/get-menu-open-stats.js';
+import { handleStripeWebhook } from '../api/stripe/webhook.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(__dirname, '..', '.env.local') });
 
 const app = express();
+
+// Stripe webhook MUST receive the raw body for signature verification (register before express.json).
+app.post(
+  '/api/stripe/webhook',
+  express.raw({ type: 'application/json' }),
+  async (req, res) => {
+    const result = await handleStripeWebhook({
+      rawBody: req.body,
+      signature: req.headers['stripe-signature'],
+    });
+    return res.status(result.status).json(result.body);
+  }
+);
+
 app.use(express.json({ limit: '15mb' }));
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY;
@@ -41,6 +56,10 @@ app.post('/api/create-checkout-session', async (req, res) => {
       success_url: successUrl || `${BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl || BASE_URL,
       client_reference_id: userId || undefined,
+      metadata: userId ? { userId } : undefined,
+      subscription_data: userId
+        ? { metadata: { userId } }
+        : undefined,
     });
     return res.json({ url: session.url });
   } catch (e) {

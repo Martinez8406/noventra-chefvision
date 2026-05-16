@@ -700,53 +700,68 @@ export async function handleGenerateImage({ authorization, body = {} }) {
   const requestType = body.type ?? 'dish';
   const isCreditedRequest = requestType === 'dish' || requestType === 'enhance';
 
-  // ─── Credit reservation + generation (dish / enhance) ──────────────────────
-  let isPremium      = false;
-  let profileCredits = 0;
+  // ─── Token reservation + generation (dish / enhance) ───────────────────────
+  let tokenDebit     = null;
   let creditReserved = false;
   let userClient     = null;
+  let profileRow     = null;
 
   if (isCreditedRequest) {
     const { url: supabaseUrl, key: supabaseKey } = getSupabaseServerCredentials();
 
     if (supabaseUrl && supabaseKey) {
+      const {
+        canSpendToken,
+        pickTokenDebit,
+        buildDebitPatch,
+        getTotalSpendableTokens,
+        inferPlan,
+      } = await import('../utils/tokens.js');
+
       userClient = createClient(supabaseUrl, supabaseKey, {
         global: { headers: { Authorization: authorization } },
       });
 
-      // 1 — Read current profile
       const { data: profile, error: profileError } = await userClient
         .from('profiles')
-        .select('ai_credits, subscription_status')
+        .select(
+          'plan, subscription_status, trial_tokens, trial_ends_at, subscription_tokens, extra_tokens, ai_credits'
+        )
         .eq('id', user.id)
         .single();
 
-      console.log('[generate-image] profile query result:', JSON.stringify(profile), 'error:', profileError?.message);
+      profileRow = profile;
+      console.log('[generate-image] profile:', JSON.stringify(profile), 'error:', profileError?.message);
 
-      isPremium      = profile?.subscription_status === 'premium';
-      profileCredits = profile?.ai_credits ?? 0;
-
-      console.log('[generate-image] isPremium:', isPremium, 'ai_credits:', profileCredits);
-
-      if (!isPremium && profileCredits <= 0) {
-        return { status: 402, body: { error: 'Brak kredytów. Przejdź na plan Premium, aby kontynuować.' } };
+      if (!profile || !canSpendToken(profile)) {
+        const plan = inferPlan(profile || {});
+        const msg =
+          plan === 'free'
+            ? 'Brak tokenów. Wykup Premium lub dokup tokeny, aby kontynuować.'
+            : 'Brak tokenów. Przejdź na plan Premium lub dokup tokeny, aby kontynuować.';
+        return { status: 402, body: { error: msg } };
       }
 
-      // 2 — RESERVE credit (pre-decrement with optimistic lock)
-      if (!isPremium) {
-        const { count } = await userClient
-          .from('profiles')
-          .update({ ai_credits: profileCredits - 1 })
-          .eq('id', user.id)
-          .eq('ai_credits', profileCredits)
-          .select('id', { count: 'exact', head: true });
-
-        if (count === 0) {
-          return { status: 402, body: { error: 'Brak kredytów. Przejdź na plan Premium, aby kontynuować.' } };
-        }
-
-        creditReserved = true;
+      tokenDebit = pickTokenDebit(profile);
+      const patch = buildDebitPatch(tokenDebit);
+      if (!patch) {
+        return { status: 402, body: { error: 'Brak tokenów.' } };
       }
+
+      const column = tokenDebit.column;
+      const { count } = await userClient
+        .from('profiles')
+        .update(patch)
+        .eq('id', user.id)
+        .eq(column, tokenDebit.value)
+        .select('id', { count: 'exact', head: true });
+
+      if (count === 0) {
+        return { status: 402, body: { error: 'Brak tokenów (równoległe żądanie). Spróbuj ponownie.' } };
+      }
+
+      creditReserved = true;
+      console.log('[generate-image] debited', column, 'plan:', inferPlan(profile));
     }
   }
 
@@ -754,8 +769,13 @@ export async function handleGenerateImage({ authorization, body = {} }) {
   try {
     const image = await runGeneration(body);
 
-    // 4 — SUCCESS: credit already decremented (reservation confirmed)
-    const creditsRemaining = isPremium ? 999999 : Math.max(0, profileCredits - 1);
+    // 4 — SUCCESS: token already decremented (reservation confirmed)
+    let creditsRemaining;
+    if (isCreditedRequest && profileRow && tokenDebit) {
+      const { getTotalSpendableTokens } = await import('../utils/tokens.js');
+      const afterRow = { ...profileRow, [tokenDebit.column]: tokenDebit.value - 1 };
+      creditsRemaining = getTotalSpendableTokens(afterRow);
+    }
 
     if (isCreditedRequest) {
       return { status: 200, body: { image, creditsRemaining } };
@@ -765,11 +785,12 @@ export async function handleGenerateImage({ authorization, body = {} }) {
 
   } catch (err) {
 
-    // 5 — FAILURE: restore reserved credit
-    if (creditReserved && userClient) {
+    // 5 — FAILURE: restore reserved token
+    if (creditReserved && userClient && tokenDebit) {
+      const { buildRestorePatch } = await import('../utils/tokens.js');
       await userClient
         .from('profiles')
-        .update({ ai_credits: profileCredits })
+        .update(buildRestorePatch(tokenDebit))
         .eq('id', user.id);
     }
 

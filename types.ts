@@ -1,6 +1,15 @@
 
 export type SubscriptionStatus = 'trial' | 'premium' | 'free_limited';
 
+export type PlanSlug = 'trial' | 'premium' | 'free';
+
+export interface UserTokens {
+  trial: number;
+  subscription: number;
+  extra: number;
+  total: number;
+}
+
 export enum DishStatus {
   APPROVED = 'Approved',
   PENDING = 'Pending Approval'
@@ -110,9 +119,12 @@ export interface UserProfile {
   name: string;
   email?: string;
   subscriptionStatus: SubscriptionStatus;
+  plan?: PlanSlug;
   generationsUsed: number;
-  /** Liczba kredytów na generowanie zdjęć (0 = wymaga Premium) */
+  /** Suma dostępnych tokenów (trial + subscription + extra). */
   credits: number;
+  tokens?: UserTokens;
+  trialEndsAt?: string | null;
 }
 
 export interface Backdrop {
