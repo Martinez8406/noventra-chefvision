@@ -9,7 +9,7 @@ import { handleTranslateCategory } from '../api/translate-category.js';
 import { handleSaveMenuCategories } from '../api/save-menu-categories.js';
 import { handleTrackMenuOpen } from '../api/track-menu-open.js';
 import { handleGetMenuOpenStats } from '../api/get-menu-open-stats.js';
-import { handleStripeWebhook } from '../api/stripe/webhook.js';
+import { handleStripeWebhook, readStripeWebhookBody } from '../api/stripe/webhook.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(__dirname, '..', '.env.local') });
@@ -21,8 +21,9 @@ app.post(
   '/api/stripe/webhook',
   express.raw({ type: 'application/json' }),
   async (req, res) => {
+    const rawBody = await readStripeWebhookBody(req);
     const result = await handleStripeWebhook({
-      rawBody: req.body,
+      rawBody,
       signature: req.headers['stripe-signature'],
     });
     return res.status(result.status).json(result.body);

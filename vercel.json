@@ -1,9 +1,22 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "devCommand": "npm run dev",
-  "framework": null,
+  "devCommand": "npm run dev:full",
+  "framework": "vite",
+  "functions": {
+    "api/stripe-webhook.js": {
+      "maxDuration": 30,
+      "includeFiles": "api/stripe/**"
+    },
+    "api/**/*.js": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
+    {
+      "source": "/api/stripe/webhook",
+      "destination": "/api/stripe-webhook"
+    },
     { "source": "/success", "destination": "/index.html" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
