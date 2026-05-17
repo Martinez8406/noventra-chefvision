@@ -428,10 +428,10 @@ const App: React.FC = () => {
       )}
 
       <aside
-        className={`fixed lg:relative inset-y-0 left-0 w-72 flex-shrink-0 flex flex-col z-[100] transform transition-transform duration-300 ease-in-out border-r border-white/[0.08] bg-[#121212] ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+        className={`fixed lg:relative inset-y-0 left-0 w-72 flex-shrink-0 flex flex-col z-[100] h-full max-h-screen overflow-hidden transform transition-transform duration-300 ease-in-out border-r border-white/[0.08] bg-[#121212] ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
-        <div className="p-10 flex-1">
-          <div className="flex items-center gap-4 mb-14">
+        <div className="p-6 lg:p-8 flex-1 min-h-0 overflow-y-auto">
+          <div className="flex items-center gap-4 mb-8 lg:mb-10">
             <img
               src={BRAND_LOGO_SRC}
               alt=""
@@ -450,7 +450,7 @@ const App: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => { setActiveTab(tab.id as any); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl text-sm font-black transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/25 ${
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-black transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/25 ${
                   activeTab === tab.id ? 'text-white' : 'text-zinc-500 hover:text-white'
                 }`}
               >
@@ -465,8 +465,22 @@ const App: React.FC = () => {
           </nav>
         </div>
 
-        <div className="p-10 border-t border-white/10 space-y-6">
-          <div className={`p-4 rounded-2xl border transition-all ${isPremium ? 'bg-green-500/10 border-green-500/20 text-green-400' : isTrial ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+        <div className="flex-shrink-0 p-6 lg:p-8 border-t border-white/10 space-y-4 bg-[#121212]">
+          <div className="flex items-center gap-3 text-white">
+            <div className="w-11 h-11 bg-[#1a1a1a] rounded-xl flex items-center justify-center text-zinc-400 border border-white/10 shrink-0">
+              <UserIcon size={22} />
+            </div>
+            <div className="overflow-hidden flex-1 min-w-0">
+              <p className="text-sm font-black truncate text-white">
+                {currentUser?.name || 'Twoja Restauracja'}
+              </p>
+              <p className="text-[11px] font-medium truncate text-zinc-400 mt-0.5">
+                {currentUser?.email || '—'}
+              </p>
+            </div>
+          </div>
+
+          <div className={`p-3 rounded-2xl border transition-all ${isPremium ? 'bg-green-500/10 border-green-500/20 text-green-400' : isTrial ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
              <div className="flex items-center gap-2 mb-1">
                 {isPremium ? <Crown size={16} /> : isTrial ? <Gift size={16} /> : <AlertTriangle size={16} />}
                 <span className="text-[10px] font-black uppercase tracking-widest">
@@ -481,20 +495,10 @@ const App: React.FC = () => {
           {/* Duży, widoczny przycisk Wyloguj tuż pod statusem konta */}
           <button
             onClick={() => { authService.signOut(); setSession(null); }}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-[#1a1a1a] text-zinc-400 hover:bg-red-500 hover:text-white transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-white/10 text-white border border-white/10 hover:bg-red-500 hover:border-red-500 hover:text-white transition-colors"
           >
             <LogOut size={16} /> Wyloguj
           </button>
-          <div className="flex items-center gap-4 text-white">
-            <div className="w-10 h-10 bg-[#1a1a1a] rounded-xl flex items-center justify-center text-zinc-500 border border-white/10">
-              <UserIcon size={20} />
-            </div>
-            <div className="overflow-hidden flex-1">
-              <p className="text-[10px] font-black truncate text-slate-500">
-                {currentUser?.email || 'Twoja Restauracja'}
-              </p>
-            </div>
-          </div>
         </div>
       </aside>
 
@@ -508,7 +512,15 @@ const App: React.FC = () => {
               <span className="mt-0.5 block text-right text-[9px] font-black uppercase tracking-[0.2em] text-black">BETA</span>
             </div>
           </div>
-          <div className="w-10" />
+          <button
+            type="button"
+            onClick={() => { authService.signOut(); setSession(null); }}
+            className="p-2 text-slate-500 hover:text-red-600"
+            title="Wyloguj"
+            aria-label="Wyloguj"
+          >
+            <LogOut size={22} />
+          </button>
         </header>
 
         <div className="p-6 md:p-10 max-w-5xl mx-auto min-h-0 w-full">
