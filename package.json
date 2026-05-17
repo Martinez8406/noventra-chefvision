@@ -1,10 +1,10 @@
 {
-  "name": "chefvision---profesjonalna-wizualizacja-dań",
+  "name": "chefvision-profesjonalna-wizualizacja-dan",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -n \"VITE,SERVER\" -c \"cyan,yellow\" \"vite\" \"node --use-system-ca server/index.js\"",
+    "dev": "concurrently -n \"VITE,SERVER\" -c \"cyan,yellow\" \"vite\" \"node --max-old-space-size=4096 --use-system-ca server/index.js\"",
     "dev:vite": "vite",
     "dev:full": "vercel dev",
     "build": "vite build",

@@ -19,10 +19,17 @@ import {
 
 interface Props {
   onSaveBackdrop: (imageUrl: string) => void | Promise<void>;
-  isTrial?: boolean;
+  /** Znak wodny tylko na planie darmowym (nie trial, nie premium). */
+  showFreeWatermark?: boolean;
+  /** Generowanie / obróbka tła AI (trial z tokenami lub Premium). */
+  canUseAi?: boolean;
 }
 
-export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
+export const BackdropLab: React.FC<Props> = ({
+  onSaveBackdrop,
+  showFreeWatermark = false,
+  canUseAi = false,
+}) => {
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -44,6 +51,14 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
 
   const handleProcess = async () => {
     if (!sourceImage) return;
+    if (!canUseAi) {
+      alert(
+        showFreeWatermark
+          ? 'Plan darmowy: zapisz oryginalne tło bez AI lub wykup Premium.'
+          : 'Brak tokenów — Studio Tła AI wymaga trialu z tokenami lub Premium.'
+      );
+      return;
+    }
     setIsProcessing(true);
     setProcessedImage(null);
     setIsSaved(false); // Reset save state on new process
@@ -95,9 +110,9 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
             potrawę i nałoży profesjonalną głębię.
           </p>
         </div>
-        {isTrial && (
+        {showFreeWatermark && (
           <div className="relative z-10 mt-6 max-w-xl text-xs text-slate-300 font-medium">
-            Wersja darmowa: Twoje grafiki zawierają znak wodny. Przejdź na PRO, aby generować czyste zdjęcia.
+            Plan darmowy: brak AI. Zapisz własne tło. W menu cyfrowym: Powered by Chefvision.pl.
           </div>
         )}
       </div>
@@ -154,11 +169,11 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
               </div>
               <button 
                 onClick={handleProcess}
-                disabled={isProcessing}
-                className="w-full bg-slate-900 text-white py-5 rounded-[25px] font-black text-lg flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-xl disabled:bg-slate-200"
+                disabled={isProcessing || !canUseAi}
+                className="w-full bg-slate-900 text-white py-5 rounded-[25px] font-black text-lg flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-xl disabled:bg-slate-200 disabled:cursor-not-allowed"
               >
                 {isProcessing ? <Loader2 className="animate-spin" /> : <Sparkles size={24} />}
-                {isProcessing ? 'PRZETWARZANIE...' : 'PRZYGOTUJ TŁO'}
+                {isProcessing ? 'PRZETWARZANIE...' : canUseAi ? 'PRZYGOTUJ TŁO' : 'AI NIEDOSTĘPNE'}
               </button>
             </div>
           )}
@@ -184,7 +199,7 @@ export const BackdropLab: React.FC<Props> = ({ onSaveBackdrop, isTrial }) => {
               ) : processedImage ? (
                 <>
                   <img src={processedImage} className="w-full h-full object-cover" alt="Processed Backdrop" />
-                  {isTrial && (
+                  {showFreeWatermark && (
                     <div className="absolute bottom-4 right-4 text-[10px] font-semibold text-white/60 drop-shadow-md">
                       Powered by <span className="font-bold">noventralabs.com</span>
                     </div>

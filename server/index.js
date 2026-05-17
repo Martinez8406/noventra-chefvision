@@ -16,6 +16,23 @@ config({ path: path.join(__dirname, '..', '.env.local') });
 
 const app = express();
 
+// CORS tylko gdy klient woła API bezpośrednio (np. inny port) — domyślnie używaj proxy Vite (/api).
+const DEV_ORIGIN_RE =
+  /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\]|192\.168\.\d{1,3}\.\d{1,3})(:\d+)?$/;
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && DEV_ORIGIN_RE.test(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
+  }
+  next();
+});
+
 // Stripe webhook MUST receive the raw body for signature verification (register before express.json).
 app.post(
   '/api/stripe/webhook',
@@ -91,11 +108,28 @@ app.get('/api/confirm-premium', async (req, res) => {
 });
 
 app.post('/api/generate-image', async (req, res) => {
-  const result = await handleGenerateImage({
-    authorization: req.headers.authorization,
-    body: req.body || {},
-  });
-  return res.status(result.status).json(result.body);
+  req.setTimeout(600_000);
+  res.setTimeout(600_000);
+  try {
+    const result = await handleGenerateImage({
+      authorization: req.headers.authorization,
+      body: req.body || {},
+    });
+    try {
+      const payload = JSON.stringify(result.body);
+      console.log(
+        `[api/generate-image] → ${result.status}, ~${Math.round(payload.length / 1024)} KB`
+      );
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      return res.status(result.status).send(payload);
+    } catch (jsonErr) {
+      console.error('[api/generate-image] JSON response failed:', jsonErr?.message);
+      return res.status(500).json({ error: 'Obraz jest zbyt duży do wysłania. Spróbuj mniejszego zdjęcia wejściowego.' });
+    }
+  } catch (err) {
+    console.error('[api/generate-image] unhandled:', err);
+    return res.status(500).json({ error: err?.message || 'Błąd serwera podczas generowania.' });
+  }
 });
 
 app.post('/api/translate-dish', async (req, res) => {
@@ -147,7 +181,33 @@ app.get('/api/get-menu-open-stats', async (req, res) => {
 });
 
 // Domyślnie 3002 — 3001 często zajęty przez inną stronę (np. chefvision.pl) równolegle w dev.
-const PORT = process.env.STRIPE_API_PORT || 3002;
-app.listen(PORT, () => {
-  console.log(`Stripe API: http://localhost:${PORT}`);
+process.on('unhandledRejection', (reason) => {
+  console.error('[SERVER] unhandledRejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[SERVER] uncaughtException:', err);
+});
+
+const PORT = Number(process.env.STRIPE_API_PORT) || 3002;
+const hasServiceRole = !!(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY);
+const httpServer = app.listen(PORT, () => {
+  console.log(`[SERVER] API: http://localhost:${PORT} (CORS dla dev włączony)`);
+  if (!hasServiceRole) {
+    console.warn(
+      '[SERVER] Brak SUPABASE_SERVICE_ROLE_KEY w .env.local — generowanie AI wymaga poprawnego JWT użytkownika przy UPDATE profilu.'
+    );
+  }
+});
+
+httpServer.on('error', (err) => {
+  if (err?.code === 'EADDRINUSE') {
+    console.error(
+      `[SERVER] Port ${PORT} jest zajęty — zamknij stary terminal (Ctrl+C) lub zabij proces:\n` +
+        `  netstat -ano | findstr :${PORT}\n` +
+        `  taskkill /PID <PID> /F`
+    );
+  } else {
+    console.error('[SERVER] Błąd uruchomienia:', err);
+  }
+  process.exit(1);
 });

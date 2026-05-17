@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseServerCredentials } from './supabaseServerEnv.js';
+import { getSupabaseAdmin } from './stripe/supabaseAdmin.js';
 
 // ─── Prompt constants (mirrors aiService.ts) ──────────────────────────────────
 
@@ -507,6 +508,7 @@ export async function runGeneration(body) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw { status: 503, message: 'Gemini API key not configured on server.' };
 
+  console.log('[generate-image] runGeneration start, type:', body?.type ?? 'dish');
   const ai = new GoogleGenAI({ apiKey });
 
   const { type = 'dish', aiSettings, images = {}, ingredientsHint, blurLevel } = body;
@@ -707,78 +709,164 @@ export async function handleGenerateImage({ authorization, body = {} }) {
   let profileRow     = null;
 
   if (isCreditedRequest) {
+    const {
+      canSpendToken,
+      pickTokenDebit,
+      buildDebitPatch,
+      buildRestorePatch,
+      getTotalSpendableTokens,
+      normalizeProfileForTokenOps,
+      inferPlan,
+      resolveEffectivePlan,
+    } = await import('../utils/tokens.js');
+
+    const adminClient = getSupabaseAdmin();
     const { url: supabaseUrl, key: supabaseKey } = getSupabaseServerCredentials();
 
-    if (supabaseUrl && supabaseKey) {
-      const {
-        canSpendToken,
-        pickTokenDebit,
-        buildDebitPatch,
-        getTotalSpendableTokens,
-        inferPlan,
-      } = await import('../utils/tokens.js');
+    const authHeaders = authorization
+      ? { global: { headers: { Authorization: authorization } } }
+      : {};
 
-      userClient = createClient(supabaseUrl, supabaseKey, {
-        global: { headers: { Authorization: authorization } },
-      });
+    const userJwtClient =
+      supabaseUrl && supabaseKey
+        ? createClient(supabaseUrl, supabaseKey, authHeaders)
+        : null;
 
-      const { data: profile, error: profileError } = await userClient
-        .from('profiles')
-        .select(
-          'plan, subscription_status, trial_tokens, trial_ends_at, subscription_tokens, extra_tokens, ai_credits'
-        )
-        .eq('id', user.id)
-        .single();
+    // Odczyt profilu: admin (pewny) lub JWT użytkownika
+    const readClient = adminClient || userJwtClient;
+    // Zapis tokenów: wymaga admin LUB poprawnego JWT (global.headers.Authorization!)
+    const writeClient = adminClient || userJwtClient;
 
-      profileRow = profile;
-      console.log('[generate-image] profile:', JSON.stringify(profile), 'error:', profileError?.message);
-
-      if (!profile || !canSpendToken(profile)) {
-        const plan = inferPlan(profile || {});
-        const msg =
-          plan === 'free'
-            ? 'Brak tokenów. Wykup Premium lub dokup tokeny, aby kontynuować.'
-            : 'Brak tokenów. Przejdź na plan Premium lub dokup tokeny, aby kontynuować.';
-        return { status: 402, body: { error: msg } };
-      }
-
-      tokenDebit = pickTokenDebit(profile);
-      const patch = buildDebitPatch(tokenDebit);
-      if (!patch) {
-        return { status: 402, body: { error: 'Brak tokenów.' } };
-      }
-
-      const column = tokenDebit.column;
-      const { count } = await userClient
-        .from('profiles')
-        .update(patch)
-        .eq('id', user.id)
-        .eq(column, tokenDebit.value)
-        .select('id', { count: 'exact', head: true });
-
-      if (count === 0) {
-        return { status: 402, body: { error: 'Brak tokenów (równoległe żądanie). Spróbuj ponownie.' } };
-      }
-
-      creditReserved = true;
-      console.log('[generate-image] debited', column, 'plan:', inferPlan(profile));
+    if (!readClient || !writeClient) {
+      return {
+        status: 503,
+        body: { error: 'Brak konfiguracji Supabase po stronie serwera.' },
+      };
     }
+
+    if (!adminClient) {
+      console.warn(
+        '[generate-image] Brak SUPABASE_SERVICE_ROLE_KEY — debit przez JWT. Dodaj klucz do .env.local.'
+      );
+    }
+
+    userClient = writeClient;
+
+    const { data: profileRaw, error: profileError } = await readClient
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    const profile = normalizeProfileForTokenOps(profileRaw);
+    profileRow = profile;
+
+    console.log('[generate-image] profile:', JSON.stringify(profile), 'error:', profileError?.message);
+
+    if (profileError || !profile) {
+      return {
+        status: 402,
+        body: {
+          error:
+            'Nie znaleziono profilu. Wyloguj się i zaloguj ponownie lub skontaktuj się z supportem.',
+        },
+      };
+    }
+
+    const effectivePlan = resolveEffectivePlan(profile);
+
+    if (effectivePlan === 'free') {
+      return {
+        status: 403,
+        body: {
+          error:
+            'Plan darmowy nie obejmuje generowania AI. Dodaj własne zdjęcia w Studio zdjęć lub wykup Premium.',
+        },
+      };
+    }
+
+    if (!canSpendToken(profile)) {
+      const msg =
+        effectivePlan === 'trial'
+          ? 'Wykorzystałeś tokeny trial. Do końca okresu próbnego możesz dodawać własne zdjęcia bez AI lub przejść na Premium.'
+          : 'Brak tokenów. Odśwież subskrypcję Premium lub dokup paczkę tokenów.';
+      return { status: 402, body: { error: msg } };
+    }
+
+    tokenDebit = pickTokenDebit(profileRaw);
+    const patch = buildDebitPatch(tokenDebit);
+    if (!patch) {
+      return { status: 402, body: { error: 'Brak tokenów.' } };
+    }
+
+    const column = tokenDebit.column;
+    const { data: debitedRow, error: debitError } = await writeClient
+      .from('profiles')
+      .update(patch)
+      .eq('id', user.id)
+      .gte(column, 1)
+      .select('trial_tokens, ai_credits, subscription_tokens, extra_tokens, plan, trial_ends_at')
+      .maybeSingle();
+
+    if (debitError) {
+      console.error('[generate-image] debit error:', debitError.message);
+      return {
+        status: 402,
+        body: {
+          error:
+            'Nie udało się odjąć tokenu. Uruchom migrację supabase/stripe_subscription.sql w Supabase.',
+        },
+      };
+    }
+
+    if (!debitedRow) {
+      console.warn('[generate-image] debit miss — column:', column, 'wanted:', tokenDebit.value, 'patch:', patch);
+      return {
+        status: 402,
+        body: {
+          error:
+            'Brak tokenów do odjęcia. Odśwież stronę (F5) i sprawdź licznik w menu. Jeśli problem wraca — skontaktuj się z supportem.',
+        },
+      };
+    }
+
+    profileRow = normalizeProfileForTokenOps({ ...profileRow, ...debitedRow });
+    creditReserved = true;
+    console.log(
+      '[generate-image] debited',
+      column,
+      'plan:',
+      inferPlan(profile),
+      'trial_tokens:',
+      debitedRow.trial_tokens,
+      'ai_credits:',
+      debitedRow.ai_credits
+    );
   }
 
-  // 3 — Generate AI
+  // 3 — Generate AI (Gemini — może trwać 1–3 min)
   try {
+    console.log('[generate-image] calling Gemini…');
     const image = await runGeneration(body);
+    console.log('[generate-image] Gemini OK, image length:', image?.length ?? 0);
 
     // 4 — SUCCESS: token already decremented (reservation confirmed)
     let creditsRemaining;
-    if (isCreditedRequest && profileRow && tokenDebit) {
-      const { getTotalSpendableTokens } = await import('../utils/tokens.js');
-      const afterRow = { ...profileRow, [tokenDebit.column]: tokenDebit.value - 1 };
-      creditsRemaining = getTotalSpendableTokens(afterRow);
+    let tokensRemaining;
+    if (isCreditedRequest && profileRow) {
+      const { getTokenBalances } = await import('../utils/tokens.js');
+      const balances = getTokenBalances(profileRow);
+      creditsRemaining = balances.total;
+      tokensRemaining = {
+        trial: balances.trial,
+        subscription: balances.subscription,
+        extra: balances.extra,
+        total: balances.total,
+      };
     }
 
     if (isCreditedRequest) {
-      return { status: 200, body: { image, creditsRemaining } };
+      return { status: 200, body: { image, creditsRemaining, tokens: tokensRemaining } };
     }
 
     return { status: 200, body: { image } };
@@ -788,10 +876,7 @@ export async function handleGenerateImage({ authorization, body = {} }) {
     // 5 — FAILURE: restore reserved token
     if (creditReserved && userClient && tokenDebit) {
       const { buildRestorePatch } = await import('../utils/tokens.js');
-      await userClient
-        .from('profiles')
-        .update(buildRestorePatch(tokenDebit))
-        .eq('id', user.id);
+      await userClient.from('profiles').update(buildRestorePatch(tokenDebit)).eq('id', user.id);
     }
 
     const mapped = toUserFacingGenerateError(err);

@@ -38,13 +38,18 @@ import type { Backdrop } from '../types';
 
 interface Props {
   onSaveStandard: (imageUrl: string, params: GeneratorParams) => void;
-  isSubscribed: boolean;
+  hasProFeatures: boolean;
+  subscriptionStatus?: 'trial' | 'premium' | 'free_limited';
+  trialEndsAt?: string | null;
   generationsUsed: number;
   credits: number;
   tokens?: UserTokens;
   savedBackdrops?: Backdrop[];
   onGenerationSuccess?: () => void;
-  onCreditsUpdated?: (credits: number) => void;
+  onCreditsUpdated?: (
+    credits: number,
+    tokens?: { trial: number; subscription: number; extra: number; total: number }
+  ) => void;
   onBuyPremium?: () => void;
 }
 
@@ -61,7 +66,9 @@ const THEME_GRADIENTS: Record<SeasonalThemeId, string> = {
 
 export const SeasonalThemes: React.FC<Props> = ({
   onSaveStandard,
-  isSubscribed,
+  hasProFeatures,
+  subscriptionStatus = 'trial',
+  trialEndsAt,
   generationsUsed,
   credits,
   tokens,
@@ -90,11 +97,13 @@ export const SeasonalThemes: React.FC<Props> = ({
   const [saveDishName, setSaveDishName] = useState('');
   const [shareTargetImage, setShareTargetImage] = useState<string | null>(null);
 
-  const showWatermark = !isSubscribed;
-  const hasNoCredits = credits <= 0;
-  const tokenLabel = formatTokenStatus(isSubscribed, credits, tokens);
+  const showWatermark = !hasProFeatures;
+  const isFree = subscriptionStatus === 'free_limited';
+  const canUseAi = !isFree && credits > 0;
+  const hasNoCredits = !canUseAi;
+  const tokenLabel = formatTokenStatus(subscriptionStatus, credits, tokens, trialEndsAt);
   const hasThemeSelected = !!theme || !!customThemeImage;
-  const canGenerate = !!dishReference && hasThemeSelected && !isGenerating && !hasNoCredits;
+  const canGenerate = canUseAi && !!dishReference && hasThemeSelected && !isGenerating;
 
   const onReferenceFile = async (file: File) => {
     if (!file.type.startsWith('image/')) return;
@@ -132,8 +141,12 @@ export const SeasonalThemes: React.FC<Props> = ({
       setError('Wybierz motyw sezonowy lub dodaj własny motyw (krok 2).');
       return;
     }
-    if (hasNoCredits) {
-      setError('Brak kredytów. Przejdź na plan Premium, aby kontynuować.');
+    if (isFree) {
+      setError('Motywy sezonowe wymagają trialu lub Premium.');
+      return;
+    }
+    if (!canUseAi) {
+      setError('Brak tokenów trial. Przejdź na Premium.');
       return;
     }
     setError(null);
@@ -146,7 +159,9 @@ export const SeasonalThemes: React.FC<Props> = ({
       let img = result.image;
       if (showWatermark) img = await addFreeWatermark(img);
       setGeneratedImages((prev) => [img, ...prev].slice(0, MAX_ENHANCE_PREVIEWS));
-      if (result.creditsRemaining !== undefined) onCreditsUpdated?.(result.creditsRemaining);
+      if (result.creditsRemaining !== undefined) {
+        onCreditsUpdated?.(result.creditsRemaining, result.tokens);
+      }
       onGenerationSuccess?.();
     } catch (err: any) {
       setError(err?.message || 'Błąd generacji.');
@@ -240,13 +255,22 @@ export const SeasonalThemes: React.FC<Props> = ({
         </div>
       </div>
 
-      {hasNoCredits && (
+      {isFree && (
+        <div className="bg-slate-100 border border-slate-200 p-6 rounded-[30px] text-slate-800">
+          <p className="font-black">Plan darmowy</p>
+          <p className="text-xs text-slate-600 mt-1">
+            Motywy sezonowe (AI) są w trialu i Premium. W planie darmowym dodawaj własne zdjęcia w Studio zdjęć.
+          </p>
+        </div>
+      )}
+
+      {hasNoCredits && !isFree && (
         <div className="bg-slate-900 border border-amber-500/30 p-6 rounded-[30px] flex items-center justify-between text-white">
           <div className="flex items-center gap-4">
             <Crown className="text-amber-500" />
             <div>
-              <p className="font-black">Brak kredytów</p>
-              <p className="text-xs opacity-60">Przejdź na plan Premium, aby korzystać z motywów.</p>
+              <p className="font-black">Brak tokenów</p>
+              <p className="text-xs opacity-60">Trial trwa dalej — Premium przywraca generowanie motywów.</p>
             </div>
           </div>
           <button
@@ -429,7 +453,13 @@ export const SeasonalThemes: React.FC<Props> = ({
             className="w-full py-5 bg-chef-dark text-white rounded-[28px] font-black text-lg flex items-center justify-center gap-3 shadow-xl hover:bg-chef-dark2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isGenerating ? <Loader2 className="animate-spin" size={22} /> : <Wand2 size={22} />}
-            {isGenerating ? 'TWORZĘ SCENĘ...' : hasNoCredits ? 'BRAK KREDYTÓW' : 'WYGENERUJ MOTYW'}
+            {isGenerating
+              ? 'TWORZĘ SCENĘ...'
+              : isFree
+                ? 'AI NIEDOSTĘPNE (PLAN DARMOWY)'
+                : hasNoCredits
+                  ? 'BRAK TOKENÓW'
+                  : 'WYGENERUJ MOTYW'}
           </button>
         </div>
 
@@ -460,7 +490,7 @@ export const SeasonalThemes: React.FC<Props> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {generatedImages.map((src, idx) => (
                   <div key={idx} className="group relative rounded-2xl overflow-hidden border border-slate-100">
-                    <WatermarkWrapper show={!isSubscribed} className="">
+                    <WatermarkWrapper show={showWatermark} className="">
                       <img src={src} alt="Wariant" className="w-full h-auto block" />
                     </WatermarkWrapper>
                     <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-1">

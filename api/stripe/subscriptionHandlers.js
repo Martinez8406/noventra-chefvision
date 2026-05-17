@@ -128,7 +128,7 @@ export async function downgradeToFree(userId) {
       stripe_subscription_status: 'canceled',
       current_period_end: null,
       subscription_tokens: 0,
-      // extra_tokens intentionally preserved — they never expire
+      // extra_tokens preserved for future Premium — nie są używane w planie darmowym
     })
     .eq('id', userId);
 

@@ -27,10 +27,8 @@ export const SuccessPage: React.FC<Props> = ({ onBack, onPremiumActivated }) => 
     confirmPremiumSession(sessionId)
       .then(async ({ ok, userId }) => {
         if (ok && userId) {
-          // Zapisz Premium w bazie (jeśli Supabase działa)
           const updated = await authService.setPremiumStatus(userId);
-          // Zawsze ustaw lokalny znacznik Premium – na wypadek problemów z webhookiem / RLS
-          if (typeof window !== 'undefined') {
+          if (updated && typeof window !== 'undefined') {
             localStorage.setItem('chefvision_premium', '1');
           }
           if (updated) {

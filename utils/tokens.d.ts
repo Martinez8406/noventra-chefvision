@@ -3,6 +3,10 @@ export const SUBSCRIPTION_TOKENS_DEFAULT: number;
 
 export function inferPlan(row: Record<string, unknown> | null | undefined): 'trial' | 'premium' | 'free';
 export function isTrialActive(row: Record<string, unknown> | null | undefined): boolean;
+export function resolveEffectivePlan(row: Record<string, unknown> | null | undefined): 'trial' | 'premium' | 'free';
+export function hasProFeatures(subscriptionStatus: string | undefined): boolean;
+export function canPurchaseTokenPacks(subscriptionStatus: string | undefined): boolean;
+export function canUseAiGeneration(row: Record<string, unknown> | null | undefined): boolean;
 export function getTokenBalances(row: Record<string, unknown> | null | undefined): {
   plan: string;
   trial: number;
@@ -18,9 +22,10 @@ export function pickTokenDebit(
 export function buildDebitPatch(debit: { column: string; value: number } | null): Record<string, number> | null;
 export function buildRestorePatch(debit: { column: string; value: number } | null): Record<string, number> | null;
 export function formatTokenStatus(
-  isSubscribed: boolean,
+  subscriptionStatus: string | undefined,
   credits: number,
-  tokens?: { trial: number; subscription: number; extra: number; total: number }
+  tokens?: { trial: number; subscription: number; extra: number; total: number },
+  trialEndsAt?: string | null
 ): string;
 export function mapProfileTokens(
   row: Record<string, unknown> | null | undefined,

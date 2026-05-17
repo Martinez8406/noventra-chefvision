@@ -1,10 +1,12 @@
 import { GeneratorParams, MenuTranslationEntry } from '../types';
 import type { EnhanceStyleId, SeasonalThemeId } from '../constants';
+import { apiUrl } from '../utils/apiBase';
 import { supabase } from './supabaseService';
 
 export interface GenerationResult {
   image: string;
   creditsRemaining?: number;
+  tokens?: { trial: number; subscription: number; extra: number; total: number };
   generationsUsed?: number;
 }
 
@@ -59,7 +61,7 @@ export async function generateDishImageWithAI(
     ingredientsHint?: string;
   }
 ): Promise<GenerationResult> {
-  const response = await fetch('/api/generate-image', {
+  const response = await fetch(apiUrl('/api/generate-image'), {
     method: 'POST',
     headers: await getAuthHeaders(),
     body: JSON.stringify({
@@ -100,6 +102,7 @@ export async function generateDishImageWithAI(
   return {
     image:            data.image,
     creditsRemaining: data.creditsRemaining,
+    tokens:           data.tokens,
     generationsUsed:  data.generationsUsed,
   };
 }
@@ -115,7 +118,7 @@ export async function enhanceDishImage(
   dishReferenceImage: string,
   settings: EnhanceSettings
 ): Promise<GenerationResult> {
-  const response = await fetch('/api/generate-image', {
+  const response = await fetch(apiUrl('/api/generate-image'), {
     method: 'POST',
     headers: await getAuthHeaders(),
     body: JSON.stringify({
@@ -152,6 +155,7 @@ export async function enhanceDishImage(
   return {
     image:            data.image,
     creditsRemaining: data.creditsRemaining,
+    tokens:           data.tokens,
     generationsUsed:  data.generationsUsed,
   };
 }

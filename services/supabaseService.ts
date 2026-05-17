@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import { TRIAL_TOKENS, SUBSCRIPTION_TOKENS, MAX_USER_BACKDROPS } from '../constants';
 import { Dish, DishRecommendation, UserProfile, DishStatus, SubscriptionStatus, Backdrop } from '../types';
-import { mapProfileTokens } from '../utils/tokens.js';
+import { mapProfileTokens, normalizeProfileForTokenOps } from '../utils/tokens.js';
 
 // Vite exposes env vars via import.meta.env (only keys prefixed with VITE_).
 // We still keep process.env fallback for server-like environments.
@@ -605,12 +605,12 @@ export const authService = {
 
   async getCurrentProfile(): Promise<UserProfile | null> {
     const localGens = parseInt(localStorage.getItem(USER_GENS_KEY) || '0');
-    const localPremiumFlag = typeof window !== 'undefined' ? localStorage.getItem('chefvision_premium') === '1' : false;
     
     // Jeśli nie ma Supabase (Tryb Demo)
     if (!supabase) {
+      const demoPremium = typeof window !== 'undefined' && localStorage.getItem('chefvision_premium') === '1';
       const credits = Math.max(0, TRIAL_TOKENS - localGens);
-      const status: SubscriptionStatus = localPremiumFlag
+      const status: SubscriptionStatus = demoPremium
         ? 'premium'
         : credits <= 0 ? 'free_limited' : 'trial';
       return {
@@ -618,14 +618,14 @@ export const authService = {
         name: 'Restauracja Testowa',
         email: 'demo@chefvision.pl',
         subscriptionStatus: status,
-        plan: localPremiumFlag ? 'premium' : credits <= 0 ? 'free' : 'trial',
+        plan: demoPremium ? 'premium' : credits <= 0 ? 'free' : 'trial',
         generationsUsed: localGens,
-        credits: localPremiumFlag ? SUBSCRIPTION_TOKENS : credits,
+        credits: demoPremium ? SUBSCRIPTION_TOKENS : credits,
         tokens: {
-          trial: localPremiumFlag ? 0 : credits,
-          subscription: localPremiumFlag ? SUBSCRIPTION_TOKENS : 0,
+          trial: demoPremium ? 0 : credits,
+          subscription: demoPremium ? SUBSCRIPTION_TOKENS : 0,
           extra: 0,
-          total: localPremiumFlag ? SUBSCRIPTION_TOKENS : credits,
+          total: demoPremium ? SUBSCRIPTION_TOKENS : credits,
         },
       };
     }
@@ -640,7 +640,7 @@ export const authService = {
       if (!profileData) {
         const trialEnds = new Date();
         trialEnds.setDate(trialEnds.getDate() + 14);
-        const { data: inserted } = await supabase.from('profiles').upsert({
+        const { data: inserted, error: insertError } = await supabase.from('profiles').upsert({
           id: user.id,
           name: user.email?.split('@')[0] || 'Restauracja',
           email: user.email,
@@ -650,11 +650,62 @@ export const authService = {
           trial_ends_at: trialEnds.toISOString(),
           ai_credits: TRIAL_TOKENS,
         }).select().single();
-        profileData = inserted;
+        if (insertError) {
+          console.warn('[getCurrentProfile] upsert trial profile:', insertError.message);
+          // Kolumny tokenów mogą nie istnieć — minimalny profil trial
+          const { data: fallback } = await supabase.from('profiles').upsert({
+            id: user.id,
+            name: user.email?.split('@')[0] || 'Restauracja',
+            email: user.email,
+            subscription_status: 'trial',
+            ai_credits: TRIAL_TOKENS,
+          }).select().single();
+          profileData = fallback;
+        } else {
+          profileData = inserted;
+        }
+      }
+
+      // Premium tylko z aktywną subskrypcją Stripe (nie sam status w bazie)
+      const isPremiumFromDb =
+        profileData?.plan === 'premium' &&
+        !!profileData?.stripe_subscription_id;
+
+      // Błędny stan: premium w bazie bez Stripe i bez tokenów → przywróć trial
+      const isBrokenPremium =
+        !isPremiumFromDb &&
+        (profileData?.subscription_status === 'premium' || profileData?.plan === 'premium') &&
+        !profileData?.stripe_subscription_id;
+
+      if (isBrokenPremium && profileData) {
+        const trialEnds = new Date();
+        trialEnds.setDate(trialEnds.getDate() + 14);
+        const { data: repaired } = await supabase
+          .from('profiles')
+          .update({
+            plan: 'trial',
+            subscription_status: 'trial',
+            trial_tokens: TRIAL_TOKENS,
+            trial_ends_at: trialEnds.toISOString(),
+            subscription_tokens: 0,
+            ai_credits: TRIAL_TOKENS,
+          })
+          .eq('id', user.id)
+          .select()
+          .single();
+        if (repaired) profileData = repaired;
+      }
+
+      if (typeof window !== 'undefined') {
+        if (isPremiumFromDb) {
+          localStorage.setItem('chefvision_premium', '1');
+        } else {
+          localStorage.removeItem('chefvision_premium');
+        }
       }
 
       const gensUsed = profileData?.generations_used ?? localGens;
-      const mapped = mapProfileTokens(profileData, { localPremiumFlag });
+      const mapped = mapProfileTokens(normalizeProfileForTokenOps(profileData));
 
       return {
         id: user.id,
@@ -733,6 +784,9 @@ export const authService = {
   },
 
   async signOut() {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('chefvision_premium');
+    }
     if (supabase) await supabase.auth.signOut();
   },
 

@@ -16,7 +16,7 @@ import { DishDetailPanel } from './components/DishDetailPanel';
 import { Auth } from './components/Auth';
 import { SuccessPage } from './components/SuccessPage';
 import { BRAND_LOGO_SRC, TRIAL_TOKENS } from './constants';
-import { formatTokenStatus } from './utils/tokens';
+import { formatTokenStatus, hasProFeatures } from './utils/tokens';
 import { supabase, db, authService, uploadDishImage } from './services/supabaseService';
 import { requestMenuTranslations } from './services/aiService';
 import { shouldRequestMenuTranslation } from './utils/menuTranslations';
@@ -126,7 +126,7 @@ const App: React.FC = () => {
       if (publicMenuUserId) {
         const ownerProfile = await authService.getProfileById(publicMenuUserId);
         if (ownerProfile) {
-          setPublicHasWatermark(ownerProfile.subscriptionStatus !== 'premium');
+          setPublicHasWatermark(ownerProfile.subscriptionStatus === 'free_limited');
         } else {
           // Domyślnie traktuj jako wersję darmową – lepiej pokazać znak wodny niż go pominąć
           setPublicHasWatermark(true);
@@ -187,6 +187,7 @@ const App: React.FC = () => {
 
   const isPremium = currentUser?.subscriptionStatus === 'premium';
   const isTrial = currentUser?.subscriptionStatus === 'trial';
+  const hasProAccess = hasProFeatures(currentUser?.subscriptionStatus);
 
   const handleSaveBackdrop = async (imageUrl: string) => {
     const uid = session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id;
@@ -217,6 +218,27 @@ const App: React.FC = () => {
   const refreshCurrentProfile = async () => {
     const profile = await authService.getCurrentProfile();
     if (profile) setCurrentUser(profile);
+  };
+
+  const handleCreditsUpdated = (
+    creditsRemaining?: number,
+    tokens?: { trial: number; subscription: number; extra: number; total: number }
+  ) => {
+    if (creditsRemaining === undefined || !currentUser) {
+      void refreshCurrentProfile();
+      return;
+    }
+    setCurrentUser({
+      ...currentUser,
+      credits: creditsRemaining,
+      tokens: tokens ?? {
+        trial: currentUser.subscriptionStatus === 'trial' ? creditsRemaining : 0,
+        subscription: currentUser.tokens?.subscription ?? 0,
+        extra: currentUser.tokens?.extra ?? 0,
+        total: creditsRemaining,
+      },
+    });
+    void refreshCurrentProfile();
   };
 
   const handleGenerationSuccess = async () => {
@@ -486,9 +508,12 @@ const App: React.FC = () => {
                 <span className="text-[10px] font-black uppercase tracking-widest">
                   {isPremium
                     ? `Premium · ${currentUser?.tokens?.total ?? currentUser?.credits ?? 0} tokenów`
-                    : isTrial
-                      ? formatTokenStatus(false, currentUser?.credits ?? 0, currentUser?.tokens)
-                      : `Darmowy · ${currentUser?.tokens?.extra ?? 0} tokenów dodatkowych`}
+                    : formatTokenStatus(
+                        currentUser?.subscriptionStatus,
+                        currentUser?.credits ?? 0,
+                        currentUser?.tokens,
+                        currentUser?.trialEndsAt
+                      )}
                 </span>
              </div>
           </div>
@@ -541,12 +566,14 @@ const App: React.FC = () => {
             currentUser ? (
               <ChefsStudio 
                 onSaveStandard={handleSaveStandard} 
-                isSubscribed={isPremium}
+                hasProFeatures={hasProAccess}
+                subscriptionStatus={currentUser.subscriptionStatus}
+                trialEndsAt={currentUser.trialEndsAt}
                 generationsUsed={currentUser.generationsUsed}
                 credits={currentUser.credits}
                 tokens={currentUser.tokens}
                 onGenerationSuccess={handleGenerationSuccess}
-                onCreditsUpdated={() => void refreshCurrentProfile()}
+                onCreditsUpdated={handleCreditsUpdated}
                 onBuyPremium={handleBuyPremium}
               />
             ) : (
@@ -561,13 +588,15 @@ const App: React.FC = () => {
             currentUser ? (
               <SeasonalThemes
                 onSaveStandard={handleSaveStandard}
-                isSubscribed={isPremium}
+                hasProFeatures={hasProAccess}
+                subscriptionStatus={currentUser.subscriptionStatus}
+                trialEndsAt={currentUser.trialEndsAt}
                 generationsUsed={currentUser.generationsUsed}
                 credits={currentUser.credits}
                 tokens={currentUser.tokens}
                 savedBackdrops={savedBackdrops}
                 onGenerationSuccess={handleGenerationSuccess}
-                onCreditsUpdated={() => void refreshCurrentProfile()}
+                onCreditsUpdated={handleCreditsUpdated}
                 onBuyPremium={handleBuyPremium}
               />
             ) : (
@@ -578,7 +607,13 @@ const App: React.FC = () => {
             )
           )}
           {activeTab === 'backdrops' && (
-            <BackdropLab onSaveBackdrop={handleSaveBackdrop} isTrial={!isPremium} />
+            <BackdropLab
+              onSaveBackdrop={handleSaveBackdrop}
+              showFreeWatermark={currentUser?.subscriptionStatus === 'free_limited'}
+              canUseAi={
+                hasProAccess && (currentUser?.credits ?? 0) > 0
+              }
+            />
           )}
           {activeTab === 'menu' && (
             <MenuManager 
@@ -598,7 +633,7 @@ const App: React.FC = () => {
           {activeTab === 'promotions' && (
             <div className="space-y-6">
               <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">Rekomendacje i promocje</h2>
-              {isPremium ? (
+              {hasProAccess ? (
                 <PromotionsManager
                   dishes={dishes}
                   userId={session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id ?? null}

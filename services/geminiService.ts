@@ -1,4 +1,5 @@
 import { GeneratorParams, BlurLevel } from "../types";
+import { apiUrl } from '../utils/apiBase';
 import { supabase } from './supabaseService';
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
@@ -17,7 +18,7 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
  * Calls the secure server-side API route – no Gemini key in the browser.
  */
 export const generateDishImage = async (params: GeneratorParams, plateImage?: string): Promise<string> => {
-  const response = await fetch('/api/generate-image', {
+  const response = await fetch(apiUrl('/api/generate-image'), {
     method: 'POST',
     headers: await getAuthHeaders(),
     body: JSON.stringify({
@@ -52,7 +53,7 @@ export const generateDishImage = async (params: GeneratorParams, plateImage?: st
  * Calls the secure server-side API route – no Gemini key in the browser.
  */
 export const processBackdropImage = async (base64Image: string, level: BlurLevel): Promise<string> => {
-  const response = await fetch('/api/generate-image', {
+  const response = await fetch(apiUrl('/api/generate-image'), {
     method: 'POST',
     headers: await getAuthHeaders(),
     body: JSON.stringify({

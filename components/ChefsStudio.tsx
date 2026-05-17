@@ -23,6 +23,7 @@ import {
   AlertCircle,
   CheckCircle,
   Crown,
+  Gift,
   Download,
   Image as ImageIcon,
   Loader2,
@@ -38,12 +39,17 @@ import {
 
 interface Props {
   onSaveStandard: (imageUrl: string, params: GeneratorParams) => void;
-  isSubscribed: boolean;
+  hasProFeatures: boolean;
+  subscriptionStatus?: 'trial' | 'premium' | 'free_limited';
+  trialEndsAt?: string | null;
   generationsUsed: number;
   credits: number;
   tokens?: UserTokens;
   onGenerationSuccess?: () => void;
-  onCreditsUpdated?: (credits: number) => void;
+  onCreditsUpdated?: (
+    credits: number,
+    tokens?: { trial: number; subscription: number; extra: number; total: number }
+  ) => void;
   onBuyPremium?: () => void;
 }
 
@@ -147,7 +153,9 @@ function QuickAddOriginalCard({
 
 export const ChefsStudio: React.FC<Props> = ({
   onSaveStandard,
-  isSubscribed,
+  hasProFeatures,
+  subscriptionStatus = 'trial',
+  trialEndsAt,
   generationsUsed,
   credits,
   tokens,
@@ -180,10 +188,13 @@ export const ChefsStudio: React.FC<Props> = ({
   // ── Share state ────────────────────────────────────────────────────────────
   const [shareTargetImage, setShareTargetImage] = useState<string | null>(null);
 
-  const showWatermark = !isSubscribed;
-  const hasNoCredits = credits <= 0;
-  const tokenLabel = formatTokenStatus(isSubscribed, credits, tokens);
-  const canGenerate = !!dishReference && !!style && !isGenerating && !hasNoCredits;
+  const showWatermark = !hasProFeatures;
+  const isFree = subscriptionStatus === 'free_limited';
+  const isTrial = subscriptionStatus === 'trial';
+  const canUseAi = !isFree && credits > 0;
+  const hasNoCredits = !canUseAi;
+  const tokenLabel = formatTokenStatus(subscriptionStatus, credits, tokens, trialEndsAt);
+  const canGenerate = canUseAi && !!dishReference && !!style && !isGenerating;
 
   const currentEnhanceSettings: EnhanceSettings = useMemo(
     () => ({
@@ -240,6 +251,7 @@ export const ChefsStudio: React.FC<Props> = ({
   };
 
   const handleGenerate = async () => {
+    if (isGenerating) return;
     if (!dishReference) {
       setError('Wgraj zdjęcie dania (krok 1).');
       return;
@@ -248,8 +260,12 @@ export const ChefsStudio: React.FC<Props> = ({
       setError('Wybierz styl zdjęcia (krok 2).');
       return;
     }
-    if (hasNoCredits) {
-      setError('Brak kredytów. Przejdź na plan Premium, aby kontynuować.');
+    if (isFree) {
+      setError('Plan darmowy: dodawaj własne zdjęcia bez AI (przycisk „Dodaj zdjęcie bez ulepszania”).');
+      return;
+    }
+    if (!canUseAi) {
+      setError('Brak tokenów trial. Możesz dodawać własne zdjęcia lub przejść na Premium.');
       return;
     }
     setError(null);
@@ -265,7 +281,9 @@ export const ChefsStudio: React.FC<Props> = ({
         const next = [img, ...prev];
         return next.slice(0, MAX_ENHANCE_PREVIEWS);
       });
-      if (result.creditsRemaining !== undefined) onCreditsUpdated?.(result.creditsRemaining);
+      if (result.creditsRemaining !== undefined) {
+        onCreditsUpdated?.(result.creditsRemaining, result.tokens);
+      }
       onGenerationSuccess?.();
     } catch (err: any) {
       setError(err?.message || 'Błąd wizualizacji.');
@@ -324,7 +342,11 @@ export const ChefsStudio: React.FC<Props> = ({
           </div>
           <div>
             <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight italic">Studio zdjęć</h2>
-            <p className="text-xs text-slate-500 mt-1">Ulepszanie prawdziwych zdjęć dań — krok po kroku.</p>
+            <p className="text-xs text-slate-500 mt-1">
+              {isFree
+                ? 'Plan darmowy: wgraj własne zdjęcia do menu (bez AI).'
+                : 'Ulepszanie prawdziwych zdjęć dań — krok po kroku.'}
+            </p>
           </div>
         </div>
         <div className="text-[10px] font-black uppercase tracking-widest">
@@ -332,30 +354,45 @@ export const ChefsStudio: React.FC<Props> = ({
         </div>
       </div>
 
-      {hasNoCredits && (
-        <div className="bg-slate-900 border border-amber-500/30 p-6 rounded-[30px] flex items-center justify-between text-white">
+      {isFree && (
+        <div className="bg-slate-100 border border-slate-200 p-6 rounded-[30px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-slate-800">
           <div className="flex items-center gap-4">
-            <Crown className="text-amber-500" />
+            <AlertCircle className="text-slate-500 shrink-0" />
             <div>
-              <p className="font-black">Brak kredytów</p>
-              <p className="text-xs opacity-60">Aby dalej ulepszać zdjęcia, przejdź na plan Premium.</p>
+              <p className="font-black">Plan darmowy</p>
+              <p className="text-xs text-slate-600 mt-1">
+                Brak AI. Wgraj zdjęcie i „Dodaj bez ulepszania”. W menu cyfrowym: Powered by Chefvision.pl.
+              </p>
             </div>
           </div>
-          <button
-            onClick={onBuyPremium}
-            className="bg-amber-500 text-slate-900 px-6 py-3 rounded-2xl font-black text-sm hover:bg-amber-400 transition-colors"
-          >
-            Plan Premium
+          <button type="button" onClick={onBuyPremium} className="bg-amber-500 text-slate-900 px-6 py-3 rounded-2xl font-black text-sm shrink-0">
+            Premium
           </button>
         </div>
       )}
 
-      {showWatermark && !hasNoCredits && (
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-[30px] flex items-center gap-4 text-white">
-          <Crown className="text-amber-500" />
+      {isTrial && !canUseAi && (
+        <div className="bg-amber-500/10 border border-amber-500/20 p-6 rounded-[30px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-slate-800">
           <div>
-            <p className="font-black">Tryb Free – Znak Wodny</p>
-            <p className="text-xs opacity-60">Wykorzystałeś limit. Zdjęcia będą miały logo Chefvision.</p>
+            <p className="font-black">Tokeny trial wyczerpane</p>
+            <p className="text-xs text-slate-600 mt-1">
+              Trial trwa do końca 14 dni — własne zdjęcia bez AI. Premium przywraca generowanie.
+            </p>
+          </div>
+          <button type="button" onClick={onBuyPremium} className="bg-amber-500 text-slate-900 px-5 py-2.5 rounded-2xl font-black text-sm shrink-0">
+            Premium
+          </button>
+        </div>
+      )}
+
+      {isTrial && canUseAi && (
+        <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-[30px] flex items-center gap-4 text-slate-800">
+          <Gift className="text-blue-600 shrink-0" />
+          <div>
+            <p className="font-black">Tryb trial (14 dni)</p>
+            <p className="text-xs text-slate-600 mt-1">
+              Pełna jakość jak Premium — bez znaku wodnego, 50 tokenów. Po trialie: Premium lub plan darmowy.
+            </p>
           </div>
         </div>
       )}
@@ -391,8 +428,12 @@ export const ChefsStudio: React.FC<Props> = ({
               <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
                 <img src={dishReference} alt="Wgrane danie" className="w-20 h-20 object-cover rounded-xl" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-800">Zdjęcie gotowe do ulepszenia</p>
-                  <p className="text-xs text-slate-500">Przejdź do kroku 2 — wybierz styl.</p>
+                  <p className="text-sm font-bold text-slate-800">Zdjęcie gotowe</p>
+                  <p className="text-xs text-slate-500">
+                    {isFree || !canUseAi
+                      ? 'Użyj „Dodaj bez ulepszania” lub wykup Premium.'
+                      : 'Przejdź do kroku 2 — wybierz styl.'}
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -475,7 +516,13 @@ export const ChefsStudio: React.FC<Props> = ({
             className="w-full py-5 bg-chef-dark text-white rounded-[28px] font-black text-lg flex items-center justify-center gap-3 shadow-xl hover:bg-chef-dark2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isGenerating ? <Loader2 className="animate-spin" size={22} /> : <Wand2 size={22} />}
-            {isGenerating ? 'ULEPSZAM...' : hasNoCredits ? 'BRAK KREDYTÓW' : 'ULEPSZ ZDJĘCIE'}
+            {isGenerating
+              ? 'ULEPSZAM...'
+              : isFree
+                ? 'AI NIEDOSTĘPNE (PLAN DARMOWY)'
+                : !canUseAi
+                  ? 'BRAK TOKENÓW TRIAL'
+                  : 'ULEPSZ ZDJĘCIE'}
           </button>
         </div>
 
@@ -515,7 +562,7 @@ export const ChefsStudio: React.FC<Props> = ({
                     >
                       <Trash2 size={16} />
                     </button>
-                    <WatermarkWrapper show={!isSubscribed} className="">
+                    <WatermarkWrapper show={showWatermark} className="">
                       <img src={src} alt="Wariant" className="w-full h-auto block" />
                     </WatermarkWrapper>
                     <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-1">

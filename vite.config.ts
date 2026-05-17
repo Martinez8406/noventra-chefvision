@@ -7,10 +7,26 @@ export default defineConfig(({ mode }) => {
     const apiPort = env.STRIPE_API_PORT || '3002';
     return {
       server: {
-        port: 3000,
+        port: Number(env.VITE_DEV_PORT) || 3000,
+        strictPort: false,
         host: '0.0.0.0',
-        proxy: { '/api': `http://localhost:${apiPort}` },
-        // SPA fallback: Stripe przekierowuje na http://localhost:3000/success
+        proxy: {
+          '/api': {
+            target: `http://localhost:${apiPort}`,
+            changeOrigin: true,
+            timeout: 600_000,
+            proxyTimeout: 600_000,
+            configure: (proxy) => {
+              proxy.on('proxyReq', (proxyReq) => {
+                proxyReq.setTimeout(600_000);
+              });
+              proxy.on('proxyRes', (proxyRes) => {
+                proxyRes.setTimeout(600_000);
+              });
+            },
+          },
+        },
+        // SPA fallback: Stripe przekierowuje na BASE_URL/success (domyślnie :3001)
       },
       plugins: [
         react(),
