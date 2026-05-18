@@ -15,6 +15,8 @@ import { PromotionsManager } from './components/PromotionsManager';
 import { DishDetailPanel } from './components/DishDetailPanel';
 import { Auth } from './components/Auth';
 import { SuccessPage } from './components/SuccessPage';
+import { FreePlanUpgradeCard } from './components/FreePlanUpgradeCard';
+import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import { BRAND_LOGO_SRC, TRIAL_TOKENS } from './constants';
 import { formatTokenStatus, hasProFeatures } from './utils/tokens';
 import { supabase, db, authService, uploadDishImage } from './services/supabaseService';
@@ -33,11 +35,11 @@ import {
   Layers,
   Sparkles,
   Loader2,
-  AlertTriangle,
   Gift,
   CheckCircle,
   BarChart3,
-  Megaphone
+  Megaphone,
+  Lock
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -54,6 +56,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [activeTab, setActiveTab] = useState<'kuchnia' | 'studio' | 'themes' | 'backdrops' | 'menu' | 'stats' | 'qr' | 'promotions'>('kuchnia');
+  const [premiumUpsellOpen, setPremiumUpsellOpen] = useState(false);
   const [selectedDishId, setSelectedDishId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -187,7 +190,9 @@ const App: React.FC = () => {
 
   const isPremium = currentUser?.subscriptionStatus === 'premium';
   const isTrial = currentUser?.subscriptionStatus === 'trial';
+  const isFree = currentUser?.subscriptionStatus === 'free_limited';
   const hasProAccess = hasProFeatures(currentUser?.subscriptionStatus);
+  const openPremiumUpsell = () => setPremiumUpsellOpen(true);
 
   const handleSaveBackdrop = async (imageUrl: string) => {
     const uid = session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id;
@@ -432,16 +437,31 @@ const App: React.FC = () => {
     return <Auth onDemoLogin={() => setSession({ user: { id: 'demo' } })} />;
   }
 
-  const navItems = [
-    { id: 'kuchnia', label: 'Panel menu', icon: LayoutDashboard, protected: false },
-    { id: 'studio', label: 'Studio zdjęć', icon: Camera, protected: false },
-    { id: 'themes', label: 'Motywy sezonowe', icon: Sparkles, protected: false },
-    { id: 'backdrops', label: 'Studio Tła', icon: Layers, protected: false },
-    { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen, protected: false },
-    { id: 'stats', label: 'Statystyki', icon: BarChart3, protected: false },
-    { id: 'promotions', label: 'Rekomendacje i promocje', icon: Megaphone, protected: false },
-    { id: 'qr', label: 'Kod QR / Logo / Opinie Google', icon: MenuIcon, protected: false },
+  const navItems: {
+    id: typeof activeTab;
+    label: string;
+    icon: typeof LayoutDashboard;
+    premiumLocked?: boolean;
+  }[] = [
+    { id: 'kuchnia', label: 'Panel menu', icon: LayoutDashboard },
+    { id: 'studio', label: 'Studio zdjęć', icon: Camera },
+    { id: 'themes', label: 'Motywy sezonowe', icon: Sparkles, premiumLocked: true },
+    { id: 'backdrops', label: 'Studio Tła', icon: Layers, premiumLocked: true },
+    { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen },
+    { id: 'stats', label: 'Statystyki', icon: BarChart3 },
+    { id: 'promotions', label: 'Rekomendacje i promocje', icon: Megaphone, premiumLocked: true },
+    { id: 'qr', label: 'Kod QR / Logo / Opinie Google', icon: MenuIcon },
   ];
+
+  const handleNavClick = (tabId: typeof activeTab, premiumLocked?: boolean) => {
+    if (isFree && premiumLocked) {
+      openPremiumUpsell();
+      setIsSidebarOpen(false);
+      return;
+    }
+    setActiveTab(tabId);
+    setIsSidebarOpen(false);
+  };
 
   return (
     <div className="flex h-screen bg-chef-cream overflow-hidden">
@@ -468,22 +488,29 @@ const App: React.FC = () => {
           </div>
 
           <nav className="space-y-2">
-            {navItems.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => { setActiveTab(tab.id as any); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-black transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/25 ${
-                  activeTab === tab.id ? 'text-white' : 'text-zinc-500 hover:text-white'
-                }`}
-              >
-                <div className="flex items-center gap-4 text-left">
-                  <span className="w-5 shrink-0 flex justify-center">
-                    <tab.icon size={20} />
-                  </span>
-                  <span className="leading-tight">{tab.label}</span>
-                </div>
-              </button>
-            ))}
+            {navItems.map((tab) => {
+              const locked = isFree && tab.premiumLocked;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => handleNavClick(tab.id, tab.premiumLocked)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-black transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/25 ${
+                    activeTab === tab.id && !locked ? 'text-white bg-white/5' : 'text-zinc-500 hover:text-white'
+                  } ${locked ? 'hover:bg-white/[0.03]' : ''}`}
+                >
+                  <div className="flex items-center gap-4 text-left min-w-0">
+                    <span className="w-5 shrink-0 flex justify-center">
+                      <tab.icon size={20} className={locked ? 'opacity-70' : undefined} />
+                    </span>
+                    <span className="leading-tight">{tab.label}</span>
+                  </div>
+                  {locked && (
+                    <Lock size={14} className="shrink-0 text-zinc-500 group-hover:text-emerald-400/80 transition-colors" aria-hidden />
+                  )}
+                </button>
+              );
+            })}
           </nav>
         </div>
 
@@ -502,9 +529,18 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className={`p-3 rounded-2xl border transition-all ${isPremium ? 'bg-green-500/10 border-green-500/20 text-green-400' : isTrial ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
-             <div className="flex items-center gap-2 mb-1">
-                {isPremium ? <Crown size={16} /> : isTrial ? <Gift size={16} /> : <AlertTriangle size={16} />}
+          {isFree ? (
+            <FreePlanUpgradeCard onUpgrade={openPremiumUpsell} />
+          ) : (
+            <div
+              className={`p-3 rounded-2xl border transition-all ${
+                isPremium
+                  ? 'bg-green-500/10 border-green-500/20 text-green-400'
+                  : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {isPremium ? <Crown size={16} /> : <Gift size={16} />}
                 <span className="text-[10px] font-black uppercase tracking-widest">
                   {isPremium
                     ? `Premium · ${currentUser?.tokens?.total ?? currentUser?.credits ?? 0} tokenów`
@@ -515,8 +551,9 @@ const App: React.FC = () => {
                         currentUser?.trialEndsAt
                       )}
                 </span>
-             </div>
-          </div>
+              </div>
+            </div>
+          )}
           {/* Duży, widoczny przycisk Wyloguj tuż pod statusem konta */}
           <button
             onClick={() => { authService.signOut(); setSession(null); }}
@@ -574,7 +611,7 @@ const App: React.FC = () => {
                 tokens={currentUser.tokens}
                 onGenerationSuccess={handleGenerationSuccess}
                 onCreditsUpdated={handleCreditsUpdated}
-                onBuyPremium={handleBuyPremium}
+                onRequestPremium={openPremiumUpsell}
               />
             ) : (
               <div className="flex flex-col items-center justify-center py-24 text-center text-slate-500 min-h-[50vh]">
@@ -597,7 +634,7 @@ const App: React.FC = () => {
                 savedBackdrops={savedBackdrops}
                 onGenerationSuccess={handleGenerationSuccess}
                 onCreditsUpdated={handleCreditsUpdated}
-                onBuyPremium={handleBuyPremium}
+                onRequestPremium={openPremiumUpsell}
               />
             ) : (
               <div className="flex flex-col items-center justify-center py-24 text-center text-slate-500 min-h-[50vh]">
@@ -609,10 +646,9 @@ const App: React.FC = () => {
           {activeTab === 'backdrops' && (
             <BackdropLab
               onSaveBackdrop={handleSaveBackdrop}
-              showFreeWatermark={currentUser?.subscriptionStatus === 'free_limited'}
-              canUseAi={
-                hasProAccess && (currentUser?.credits ?? 0) > 0
-              }
+              showFreeWatermark={isFree}
+              canUseAi={hasProAccess && (currentUser?.credits ?? 0) > 0}
+              onRequestPremium={openPremiumUpsell}
             />
           )}
           {activeTab === 'menu' && (
@@ -639,19 +675,14 @@ const App: React.FC = () => {
                   userId={session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id ?? null}
                 />
               ) : (
-                <div className="bg-slate-900 text-white p-8 rounded-[32px] border border-amber-500/30 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  <div>
-                    <p className="font-black text-lg">Funkcja Premium</p>
-                    <p className="text-sm opacity-70 mt-1">
-                      Rekomendacje sprzedażowe są dostępne w planie Premium. Twoje menu pozostaje aktywne na planie darmowym.
-                    </p>
-                  </div>
+                <div className="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm text-center space-y-4">
+                  <p className="text-slate-600 text-sm">Rekomendacje sprzedażowe wymagają Premium.</p>
                   <button
                     type="button"
-                    onClick={handleBuyPremium}
-                    className="bg-amber-500 text-slate-900 px-6 py-3 rounded-2xl font-black text-sm hover:bg-amber-400 transition-colors shrink-0"
+                    onClick={openPremiumUpsell}
+                    className="inline-flex px-6 py-3 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:from-emerald-300 hover:to-green-400 transition-all"
                   >
-                    Przejdź na Premium
+                    Odblokuj Premium
                   </button>
                 </div>
               )}
@@ -692,6 +723,12 @@ const App: React.FC = () => {
           {statusToast}
         </div>
       )}
+
+      <PremiumUpsellModal
+        open={premiumUpsellOpen}
+        onClose={() => setPremiumUpsellOpen(false)}
+        onUpgrade={() => void handleBuyPremium()}
+      />
     </div>
   );
 };

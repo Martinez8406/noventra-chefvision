@@ -50,7 +50,7 @@ interface Props {
     credits: number,
     tokens?: { trial: number; subscription: number; extra: number; total: number }
   ) => void;
-  onBuyPremium?: () => void;
+  onRequestPremium?: () => void;
 }
 
 const STEP_LABEL_CLS = 'text-[10px] font-black uppercase tracking-widest text-slate-400';
@@ -161,7 +161,7 @@ export const ChefsStudio: React.FC<Props> = ({
   tokens,
   onGenerationSuccess,
   onCreditsUpdated,
-  onBuyPremium,
+  onRequestPremium,
 }) => {
   // ── Step 1: uploaded dish photo ─────────────────────────────────────────────
   const [dishReference, setDishReference] = useState<string | null>(null);
@@ -203,25 +203,45 @@ export const ChefsStudio: React.FC<Props> = ({
     [style]
   );
 
+  const isStyleSliderDraggingRef = useRef(false);
+
   useEffect(() => {
     const scroller = styleScrollerRef.current;
     if (!scroller) return;
 
     const syncScrollState = () => {
       const maxScrollLeft = Math.max(scroller.scrollWidth - scroller.clientWidth, 0);
-      setHasStyleOverflow(maxScrollLeft > 0);
-      setStyleScrollValue(maxScrollLeft === 0 ? 0 : (scroller.scrollLeft / maxScrollLeft) * 100);
+      const hasOverflow = maxScrollLeft > 1;
+      setHasStyleOverflow(hasOverflow);
+      if (!isStyleSliderDraggingRef.current) {
+        setStyleScrollValue(maxScrollLeft === 0 ? 0 : (scroller.scrollLeft / maxScrollLeft) * 100);
+      }
     };
 
     syncScrollState();
-    scroller.addEventListener('scroll', syncScrollState);
+    scroller.addEventListener('scroll', syncScrollState, { passive: true });
     window.addEventListener('resize', syncScrollState);
+
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(syncScrollState) : null;
+    ro?.observe(scroller);
+    for (const child of scroller.children) {
+      ro?.observe(child);
+    }
 
     return () => {
       scroller.removeEventListener('scroll', syncScrollState);
       window.removeEventListener('resize', syncScrollState);
+      ro?.disconnect();
     };
   }, []);
+
+  const handleStyleSlider = (nextValue: number) => {
+    setStyleScrollValue(nextValue);
+    const scroller = styleScrollerRef.current;
+    if (!scroller) return;
+    const maxScrollLeft = Math.max(scroller.scrollWidth - scroller.clientWidth, 0);
+    scroller.scrollTo({ left: (nextValue / 100) * maxScrollLeft, behavior: 'auto' });
+  };
 
   const onReferenceFile = async (file: File) => {
     if (!file.type.startsWith('image/')) return;
@@ -261,7 +281,7 @@ export const ChefsStudio: React.FC<Props> = ({
       return;
     }
     if (isFree) {
-      setError('Plan darmowy: dodawaj własne zdjęcia bez AI (przycisk „Dodaj zdjęcie bez ulepszania”).');
+      onRequestPremium?.();
       return;
     }
     if (!canUseAi) {
@@ -333,7 +353,7 @@ export const ChefsStudio: React.FC<Props> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-24">
+    <div className="max-w-7xl mx-auto min-w-0 space-y-8 pb-24">
       {/* Header */}
       <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
@@ -365,8 +385,8 @@ export const ChefsStudio: React.FC<Props> = ({
               </p>
             </div>
           </div>
-          <button type="button" onClick={onBuyPremium} className="bg-amber-500 text-slate-900 px-6 py-3 rounded-2xl font-black text-sm shrink-0">
-            Premium
+          <button type="button" onClick={onRequestPremium} className="bg-gradient-to-r from-emerald-400 to-green-500 text-[#0a1a12] px-6 py-3 rounded-2xl font-black text-sm shrink-0 shadow-[0_0_16px_rgba(52,211,153,0.35)]">
+            Odblokuj Premium
           </button>
         </div>
       )}
@@ -379,8 +399,8 @@ export const ChefsStudio: React.FC<Props> = ({
               Trial trwa do końca 14 dni — własne zdjęcia bez AI. Premium przywraca generowanie.
             </p>
           </div>
-          <button type="button" onClick={onBuyPremium} className="bg-amber-500 text-slate-900 px-5 py-2.5 rounded-2xl font-black text-sm shrink-0">
-            Premium
+          <button type="button" onClick={onRequestPremium} className="bg-gradient-to-r from-emerald-400 to-green-500 text-[#0a1a12] px-5 py-2.5 rounded-2xl font-black text-sm shrink-0">
+            Odblokuj Premium
           </button>
         </div>
       )}
@@ -411,9 +431,9 @@ export const ChefsStudio: React.FC<Props> = ({
       )}
 
       {/* 2-col layout: Controls (left) + Preview (right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 min-w-0">
         {/* ───── LEFT: controls ───── */}
-        <div className="space-y-5">
+        <div className="space-y-5 min-w-0">
           {/* Step 1 — Upload */}
           <div className={STEP_CARD_CLS}>
             <StepHeader n={1} title="Wgraj zdjęcie dania" required />
@@ -474,11 +494,11 @@ export const ChefsStudio: React.FC<Props> = ({
           </div>
 
           {/* Step 2 — Style (required): kwadratowe karty ze zdjęciem + etykieta */}
-          <div className={STEP_CARD_CLS}>
+          <div className={`${STEP_CARD_CLS} min-w-0 overflow-hidden`}>
             <StepHeader n={2} title="Wybierz styl zdjęcia" required />
             <div
               ref={styleScrollerRef}
-              className="flex gap-3 overflow-x-auto pb-1 pt-0.5 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex w-full min-w-0 max-w-full gap-3 overflow-x-auto overscroll-x-contain pb-1 pt-0.5 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {ENHANCE_STYLES.map((opt) => (
                 <div key={opt.id} className="shrink-0 snap-center">
@@ -489,37 +509,52 @@ export const ChefsStudio: React.FC<Props> = ({
                 <QuickAddOriginalCard disabled={!dishReference} onClick={handleQuickAddOriginal} />
               </div>
             </div>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={1}
-              value={styleScrollValue}
-              onChange={(e) => {
-                const nextValue = Number(e.target.value);
-                setStyleScrollValue(nextValue);
-                const scroller = styleScrollerRef.current;
-                if (!scroller) return;
-                const maxScrollLeft = Math.max(scroller.scrollWidth - scroller.clientWidth, 0);
-                scroller.scrollTo({ left: (nextValue / 100) * maxScrollLeft, behavior: 'smooth' });
-              }}
-              disabled={!hasStyleOverflow}
-              className="mt-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 disabled:cursor-default disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-slate-200 [&::-webkit-slider-thumb]:-mt-1 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-md [&::-webkit-slider-thumb]:bg-orange-500 [&::-webkit-slider-thumb]:shadow-sm [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-7 [&::-moz-range-thumb]:rounded-md [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-orange-500"
-              aria-label="Przewijaj style zdjęcia"
-            />
+            {hasStyleOverflow && (
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={styleScrollValue}
+                onPointerDown={() => {
+                  isStyleSliderDraggingRef.current = true;
+                }}
+                onPointerUp={() => {
+                  isStyleSliderDraggingRef.current = false;
+                }}
+                onPointerCancel={() => {
+                  isStyleSliderDraggingRef.current = false;
+                }}
+                onInput={(e) => handleStyleSlider(Number(e.currentTarget.value))}
+                onChange={(e) => handleStyleSlider(Number(e.target.value))}
+                className="mt-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-slate-200 [&::-webkit-slider-thumb]:-mt-1 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-md [&::-webkit-slider-thumb]:bg-orange-500 [&::-webkit-slider-thumb]:shadow-sm [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-7 [&::-moz-range-thumb]:rounded-md [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-orange-500"
+                aria-label="Przewijaj style zdjęcia"
+              />
+            )}
           </div>
 
           {/* Generate button */}
           <button
-            onClick={() => void handleGenerate()}
-            disabled={!canGenerate}
-            className="w-full py-5 bg-chef-dark text-white rounded-[28px] font-black text-lg flex items-center justify-center gap-3 shadow-xl hover:bg-chef-dark2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
+            onClick={() => {
+              if (isFree) {
+                onRequestPremium?.();
+                return;
+              }
+              void handleGenerate();
+            }}
+            disabled={isGenerating || (!isFree && !canGenerate)}
+            className={`w-full py-5 rounded-[28px] font-black text-lg flex items-center justify-center gap-3 shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+              isFree
+                ? 'bg-gradient-to-r from-emerald-400 to-green-500 text-[#0a1a12] shadow-[0_0_24px_rgba(52,211,153,0.35)] hover:from-emerald-300 hover:to-green-400'
+                : 'bg-chef-dark text-white hover:bg-chef-dark2'
+            }`}
           >
             {isGenerating ? <Loader2 className="animate-spin" size={22} /> : <Wand2 size={22} />}
             {isGenerating
               ? 'ULEPSZAM...'
               : isFree
-                ? 'AI NIEDOSTĘPNE (PLAN DARMOWY)'
+                ? 'ODBLOKUJ AI — PREMIUM'
                 : !canUseAi
                   ? 'BRAK TOKENÓW TRIAL'
                   : 'ULEPSZ ZDJĘCIE'}
@@ -527,7 +562,7 @@ export const ChefsStudio: React.FC<Props> = ({
         </div>
 
         {/* ───── RIGHT: preview ───── */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-sm sticky top-6 space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-black tracking-tight text-slate-800 flex items-center gap-2">

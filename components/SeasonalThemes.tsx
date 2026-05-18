@@ -50,7 +50,7 @@ interface Props {
     credits: number,
     tokens?: { trial: number; subscription: number; extra: number; total: number }
   ) => void;
-  onBuyPremium?: () => void;
+  onRequestPremium?: () => void;
 }
 
 const STEP_LABEL_CLS = 'text-[10px] font-black uppercase tracking-widest text-slate-400';
@@ -75,7 +75,7 @@ export const SeasonalThemes: React.FC<Props> = ({
   savedBackdrops = [],
   onGenerationSuccess,
   onCreditsUpdated,
-  onBuyPremium,
+  onRequestPremium,
 }) => {
   const [dishReference, setDishReference] = useState<string | null>(null);
   const [isUploadingRef, setIsUploadingRef] = useState(false);
@@ -142,7 +142,7 @@ export const SeasonalThemes: React.FC<Props> = ({
       return;
     }
     if (isFree) {
-      setError('Motywy sezonowe wymagają trialu lub Premium.');
+      onRequestPremium?.();
       return;
     }
     if (!canUseAi) {
@@ -274,7 +274,7 @@ export const SeasonalThemes: React.FC<Props> = ({
             </div>
           </div>
           <button
-            onClick={onBuyPremium}
+            onClick={onRequestPremium}
             className="bg-amber-500 text-slate-900 px-6 py-3 rounded-2xl font-black text-sm hover:bg-amber-400 transition-colors"
           >
             Plan Premium
@@ -448,15 +448,26 @@ export const SeasonalThemes: React.FC<Props> = ({
 
           {/* Generate */}
           <button
-            onClick={() => void handleGenerate()}
-            disabled={!canGenerate}
-            className="w-full py-5 bg-chef-dark text-white rounded-[28px] font-black text-lg flex items-center justify-center gap-3 shadow-xl hover:bg-chef-dark2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
+            onClick={() => {
+              if (isFree) {
+                onRequestPremium?.();
+                return;
+              }
+              void handleGenerate();
+            }}
+            disabled={isGenerating || (!isFree && !canGenerate)}
+            className={`w-full py-5 rounded-[28px] font-black text-lg flex items-center justify-center gap-3 shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+              isFree
+                ? 'bg-gradient-to-r from-emerald-400 to-green-500 text-[#0a1a12] shadow-[0_0_24px_rgba(52,211,153,0.35)] hover:from-emerald-300 hover:to-green-400'
+                : 'bg-chef-dark text-white hover:bg-chef-dark2'
+            }`}
           >
             {isGenerating ? <Loader2 className="animate-spin" size={22} /> : <Wand2 size={22} />}
             {isGenerating
               ? 'TWORZĘ SCENĘ...'
               : isFree
-                ? 'AI NIEDOSTĘPNE (PLAN DARMOWY)'
+                ? 'ODBLOKUJ AI — PREMIUM'
                 : hasNoCredits
                   ? 'BRAK TOKENÓW'
                   : 'WYGENERUJ MOTYW'}

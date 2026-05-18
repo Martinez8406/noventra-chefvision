@@ -23,12 +23,14 @@ interface Props {
   showFreeWatermark?: boolean;
   /** Generowanie / obróbka tła AI (trial z tokenami lub Premium). */
   canUseAi?: boolean;
+  onRequestPremium?: () => void;
 }
 
 export const BackdropLab: React.FC<Props> = ({
   onSaveBackdrop,
   showFreeWatermark = false,
   canUseAi = false,
+  onRequestPremium,
 }) => {
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
@@ -52,11 +54,11 @@ export const BackdropLab: React.FC<Props> = ({
   const handleProcess = async () => {
     if (!sourceImage) return;
     if (!canUseAi) {
-      alert(
-        showFreeWatermark
-          ? 'Plan darmowy: zapisz oryginalne tło bez AI lub wykup Premium.'
-          : 'Brak tokenów — Studio Tła AI wymaga trialu z tokenami lub Premium.'
-      );
+      if (showFreeWatermark) {
+        onRequestPremium?.();
+      } else {
+        alert('Brak tokenów — Studio Tła AI wymaga trialu z tokenami lub Premium.');
+      }
       return;
     }
     setIsProcessing(true);
