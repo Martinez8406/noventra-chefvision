@@ -16,6 +16,7 @@ import { DishDetailPanel } from './components/DishDetailPanel';
 import { Auth } from './components/Auth';
 import { SuccessPage } from './components/SuccessPage';
 import { FreePlanUpgradeCard } from './components/FreePlanUpgradeCard';
+import { TrialPlanUpgradeCard } from './components/TrialPlanUpgradeCard';
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import { BRAND_LOGO_SRC, TRIAL_TOKENS } from './constants';
 import { formatTokenStatus, hasProFeatures } from './utils/tokens';
@@ -35,7 +36,6 @@ import {
   Layers,
   Sparkles,
   Loader2,
-  Gift,
   CheckCircle,
   BarChart3,
   Megaphone,
@@ -531,25 +531,22 @@ const App: React.FC = () => {
 
           {isFree ? (
             <FreePlanUpgradeCard onUpgrade={openPremiumUpsell} />
+          ) : isTrial ? (
+            <TrialPlanUpgradeCard
+              statusLabel={formatTokenStatus(
+                currentUser?.subscriptionStatus,
+                currentUser?.credits ?? 0,
+                currentUser?.tokens,
+                currentUser?.trialEndsAt
+              )}
+              onUpgrade={openPremiumUpsell}
+            />
           ) : (
-            <div
-              className={`p-3 rounded-2xl border transition-all ${
-                isPremium
-                  ? 'bg-green-500/10 border-green-500/20 text-green-400'
-                  : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
-              }`}
-            >
+            <div className="p-3 rounded-2xl border transition-all bg-green-500/10 border-green-500/20 text-green-400">
               <div className="flex items-center gap-2">
-                {isPremium ? <Crown size={16} /> : <Gift size={16} />}
+                <Crown size={16} />
                 <span className="text-[10px] font-black uppercase tracking-widest">
-                  {isPremium
-                    ? `Premium · ${currentUser?.tokens?.total ?? currentUser?.credits ?? 0} tokenów`
-                    : formatTokenStatus(
-                        currentUser?.subscriptionStatus,
-                        currentUser?.credits ?? 0,
-                        currentUser?.tokens,
-                        currentUser?.trialEndsAt
-                      )}
+                  {`Premium · ${currentUser?.tokens?.total ?? currentUser?.credits ?? 0} tokenów`}
                 </span>
               </div>
             </div>
