@@ -1,6 +1,14 @@
 import React from 'react';
 import { MenuLogoBadge } from './MenuLogoBadge';
 import type { LogoObjectPosition } from '../utils/logoFrame';
+import {
+  coverImageStyle,
+  DEFAULT_COVER_POSITION,
+  DEFAULT_COVER_SCALE,
+  normalizeCoverPosition,
+  normalizeCoverScale,
+  type CoverObjectPosition,
+} from '../utils/coverFrame';
 
 interface Props {
   logoUrl: string | null;
@@ -8,6 +16,8 @@ interface Props {
   logoScale?: number | null;
   restaurantTitle: string;
   coverUrl?: string | null;
+  coverPosition?: CoverObjectPosition | string | null;
+  coverScale?: number | null;
   primaryColor?: string;
   /** Mniejsza wysokość covera w panelu ustawień (proporcje jak Live Menu). */
   compactCover?: boolean;
@@ -24,12 +34,16 @@ export const MenuHeroIdentityPreview: React.FC<Props> = ({
   logoScale,
   restaurantTitle,
   coverUrl,
+  coverPosition,
+  coverScale,
   primaryColor = '#6366f1',
   compactCover = false,
   titleAsH1 = false,
 }) => {
   const coverHeight = compactCover ? 'h-40 sm:h-48' : 'h-56 sm:h-72 lg:h-80';
   const logoOverlap = compactCover ? '-mt-12 sm:-mt-14' : '-mt-14 sm:-mt-16';
+  const coverPos = normalizeCoverPosition(coverPosition ?? DEFAULT_COVER_POSITION);
+  const coverZoom = normalizeCoverScale(coverScale ?? DEFAULT_COVER_SCALE);
 
   return (
     <section className="relative pointer-events-none select-none">
@@ -38,7 +52,7 @@ export const MenuHeroIdentityPreview: React.FC<Props> = ({
       >
         {coverUrl ? (
           <>
-            <img src={coverUrl} alt="" className="w-full h-full object-cover" />
+            <img src={coverUrl} alt="" style={coverImageStyle(coverPos, coverZoom)} />
             <div
               className="absolute inset-0"
               style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.5) 100%)' }}

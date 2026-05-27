@@ -4,8 +4,6 @@ import { Dish } from '../types';
 import { Link2, Eye, EyeOff, ExternalLink, QrCode, Trash2, Edit, Settings } from 'lucide-react';
 import { supabase } from '../services/supabaseService';
 import { MENU_CATEGORIES } from '../constants';
-import { UploadCover } from './UploadCover';
-
 interface Props {
   dishes: Dish[];
   onToggleOnline: (id: string) => void;
@@ -339,12 +337,6 @@ export const MenuManager: React.FC<Props> = ({
             )}
           </div>
         </div>
-
-        {menuUserId && (
-          <div className="mt-6 pt-6 border-t border-slate-200">
-            <UploadCover userId={menuUserId} />
-          </div>
-        )}
 
         <div className="mt-6 pt-6 border-t border-slate-200 flex flex-wrap items-center gap-3">
           <button

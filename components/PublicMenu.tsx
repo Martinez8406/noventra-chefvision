@@ -9,6 +9,7 @@ import { MENU_CATEGORIES } from '../constants';
 import { getPublicMenuCategoryDisplay, isRtlMenuLocale } from '../utils/menuTranslations';
 import { MenuHeroIdentityPreview } from './MenuHeroIdentityPreview';
 import { normalizeLogoPosition, normalizeLogoScale } from '../utils/logoFrame';
+import { normalizeCoverPosition, normalizeCoverScale } from '../utils/coverFrame';
 
 interface Props {
   dishes: Dish[];
@@ -64,6 +65,8 @@ export const PublicMenu: React.FC<Props> = ({
   const [logoObjectPosition, setLogoObjectPosition] = useState<string>('center');
   const [logoScale, setLogoScale] = useState(1);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [coverObjectPosition, setCoverObjectPosition] = useState<string>('center');
+  const [coverScale, setCoverScale] = useState(1);
   const [primaryColor, setPrimaryColor] = useState('#6366f1');
   const [secondaryColor, setSecondaryColor] = useState('#ffffff');
   const [fontFamily, setFontFamily] = useState('Inter');
@@ -137,7 +140,7 @@ export const PublicMenu: React.FC<Props> = ({
     if (!supabase || !userId) return;
     supabase
       .from('profiles')
-      .select('logo_url, logo_object_position, logo_scale, cover_url, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations')
+      .select('logo_url, logo_object_position, logo_scale, cover_url, cover_object_position, cover_scale, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations')
       .eq('id', userId)
       .single()
       .then(({ data, error: profileError }) => {
@@ -162,6 +165,8 @@ export const PublicMenu: React.FC<Props> = ({
         setLogoObjectPosition(normalizeLogoPosition(data?.logo_object_position));
         setLogoScale(normalizeLogoScale(data?.logo_scale));
         if (data?.cover_url) setCoverUrl(data.cover_url);
+        setCoverObjectPosition(normalizeCoverPosition(data?.cover_object_position));
+        setCoverScale(normalizeCoverScale(data?.cover_scale));
         if (data?.primary_color) setPrimaryColor(data.primary_color);
         if (data?.secondary_color) setSecondaryColor(data.secondary_color);
         if (data?.font_family) setFontFamily(data.font_family);
@@ -662,6 +667,8 @@ export const PublicMenu: React.FC<Props> = ({
           logoScale={logoScale}
           restaurantTitle={restaurantTitle}
           coverUrl={coverUrl}
+          coverPosition={coverObjectPosition}
+          coverScale={coverScale}
           primaryColor={primaryColor}
           titleAsH1
         />

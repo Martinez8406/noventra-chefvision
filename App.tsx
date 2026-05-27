@@ -6,9 +6,7 @@ import { SeasonalThemes } from './components/SeasonalThemes';
 import { BackdropLab } from './components/BackdropLab';
 import { PublicMenu } from './components/PublicMenu';
 import { MenuStatsPanel } from './components/MenuStatsPanel';
-import { QRGenerator } from './components/QRGenerator';
-import { UploadLogo } from './components/UploadLogo';
-import { GoogleReviewsSettings } from './components/GoogleReviewsSettings';
+import { SettingsPanel } from './components/SettingsPanel';
 import { KitchenWall } from './components/KitchenWall';
 import { MenuManager } from './components/MenuManager';
 import { PromotionsManager } from './components/PromotionsManager';
@@ -39,7 +37,8 @@ import {
   CheckCircle,
   BarChart3,
   Megaphone,
-  Lock
+  Lock,
+  Settings
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -55,7 +54,9 @@ const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
-  const [activeTab, setActiveTab] = useState<'kuchnia' | 'studio' | 'themes' | 'backdrops' | 'menu' | 'stats' | 'qr' | 'promotions'>('kuchnia');
+  const [activeTab, setActiveTab] = useState<
+    'kuchnia' | 'studio' | 'themes' | 'backdrops' | 'menu' | 'stats' | 'settings' | 'promotions'
+  >('kuchnia');
   const [premiumUpsellOpen, setPremiumUpsellOpen] = useState(false);
   const [selectedDishId, setSelectedDishId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(true);
@@ -450,7 +451,7 @@ const App: React.FC = () => {
     { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen },
     { id: 'stats', label: 'Statystyki', icon: BarChart3 },
     { id: 'promotions', label: 'Rekomendacje i promocje', icon: Megaphone, premiumLocked: true },
-    { id: 'qr', label: 'Kod QR / Logo / Opinie Google', icon: MenuIcon },
+    { id: 'settings', label: 'Ustawienia', icon: Settings },
   ];
 
   const handleNavClick = (tabId: typeof activeTab, premiumLocked?: boolean) => {
@@ -685,16 +686,8 @@ const App: React.FC = () => {
               )}
             </div>
           )}
-          {activeTab === 'qr' && (
-            <div className="space-y-10">
-              {currentUser?.id && (
-                <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100">
-                  <UploadLogo userId={currentUser.id} restaurantName={currentUser.name} />
-                </div>
-              )}
-              <QRGenerator userId={currentUser?.id ?? null} />
-              <GoogleReviewsSettings userId={currentUser?.id ?? null} />
-            </div>
+          {activeTab === 'settings' && (
+            <SettingsPanel userId={currentUser?.id ?? null} restaurantName={currentUser?.name} />
           )}
         </div>
       </main>
