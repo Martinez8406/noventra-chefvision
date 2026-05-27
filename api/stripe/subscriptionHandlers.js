@@ -44,6 +44,28 @@ async function getProfileByStripeCustomer(supabase, stripeCustomerId) {
   return data;
 }
 
+async function getProfileByEmail(supabase, email) {
+  if (!email || typeof email !== 'string') return null;
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return null;
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .ilike('email', normalized)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+function getEmailFromCheckoutSession(session) {
+  return (
+    session?.customer_details?.email ||
+    session?.customer_email ||
+    session?.metadata?.email ||
+    null
+  );
+}
+
 async function resolveUserId(supabase, { userId, stripeCustomerId }) {
   if (userId) {
     const profile = await getProfileByUserId(supabase, userId);
@@ -174,7 +196,26 @@ export async function handleCheckoutSessionCompleted(session, stripe) {
   const supabase = getSupabaseAdmin();
   if (!supabase) throw new Error('Supabase admin not configured.');
 
-  const resolvedUserId = await resolveUserId(supabase, { userId, stripeCustomerId });
+  let resolvedUserId = await resolveUserId(supabase, { userId, stripeCustomerId });
+
+  // Payment Links often don't set client_reference_id/metadata.userId.
+  // Fallback: resolve profile by email from the Checkout Session and link stripe_customer_id.
+  if (!resolvedUserId) {
+    const email = getEmailFromCheckoutSession(session);
+    if (email) {
+      const byEmail = await getProfileByEmail(supabase, email);
+      if (byEmail?.id) {
+        resolvedUserId = byEmail.id;
+        if (stripeCustomerId) {
+          await supabase
+            .from('profiles')
+            .update({ stripe_customer_id: stripeCustomerId })
+            .eq('id', resolvedUserId);
+        }
+      }
+    }
+  }
+
   if (!resolvedUserId) {
     console.warn('[stripe-webhook] checkout.session.completed: no user for session', session.id);
     return { ok: false, reason: 'user_not_found' };

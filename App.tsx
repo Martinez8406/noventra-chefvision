@@ -689,7 +689,7 @@ const App: React.FC = () => {
             <div className="space-y-10">
               {currentUser?.id && (
                 <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100">
-                  <UploadLogo userId={currentUser.id} />
+                  <UploadLogo userId={currentUser.id} restaurantName={currentUser.name} />
                 </div>
               )}
               <QRGenerator userId={currentUser?.id ?? null} />

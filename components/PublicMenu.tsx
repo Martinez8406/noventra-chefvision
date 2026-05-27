@@ -7,6 +7,8 @@ import { MenuLanguageSwitcher } from './MenuLanguageSwitcher';
 import { supabase } from '../services/supabaseService';
 import { MENU_CATEGORIES } from '../constants';
 import { getPublicMenuCategoryDisplay, isRtlMenuLocale } from '../utils/menuTranslations';
+import { MenuHeroIdentityPreview } from './MenuHeroIdentityPreview';
+import { normalizeLogoPosition, normalizeLogoScale } from '../utils/logoFrame';
 
 interface Props {
   dishes: Dish[];
@@ -59,6 +61,8 @@ export const PublicMenu: React.FC<Props> = ({
   const menuBaseHash = `#/menu/${userId}`;
 
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoObjectPosition, setLogoObjectPosition] = useState<string>('center');
+  const [logoScale, setLogoScale] = useState(1);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [primaryColor, setPrimaryColor] = useState('#6366f1');
   const [secondaryColor, setSecondaryColor] = useState('#ffffff');
@@ -133,11 +137,30 @@ export const PublicMenu: React.FC<Props> = ({
     if (!supabase || !userId) return;
     supabase
       .from('profiles')
-      .select('logo_url, cover_url, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations')
+      .select('logo_url, logo_object_position, logo_scale, cover_url, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations')
       .eq('id', userId)
       .single()
-      .then(({ data }) => {
+      .then(({ data, error: profileError }) => {
+        if (profileError) {
+          supabase
+            .from('profiles')
+            .select('logo_url, cover_url, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations')
+            .eq('id', userId)
+            .single()
+            .then(({ data: fallback }) => {
+              if (fallback?.logo_url) setLogoUrl(fallback.logo_url);
+              if (fallback?.cover_url) setCoverUrl(fallback.cover_url);
+              if (fallback?.primary_color) setPrimaryColor(fallback.primary_color);
+              if (fallback?.secondary_color) setSecondaryColor(fallback.secondary_color);
+              if (fallback?.font_family) setFontFamily(fallback.font_family);
+              if (fallback?.restaurant_name) setRestaurantName(fallback.restaurant_name);
+              setGooglePlaceId(fallback?.google_place_id?.trim() || null);
+            });
+          return;
+        }
         if (data?.logo_url) setLogoUrl(data.logo_url);
+        setLogoObjectPosition(normalizeLogoPosition(data?.logo_object_position));
+        setLogoScale(normalizeLogoScale(data?.logo_scale));
         if (data?.cover_url) setCoverUrl(data.cover_url);
         if (data?.primary_color) setPrimaryColor(data.primary_color);
         if (data?.secondary_color) setSecondaryColor(data.secondary_color);
@@ -633,53 +656,15 @@ export const PublicMenu: React.FC<Props> = ({
       </style>
       <MenuLanguageSwitcher value={menuLocale} onChange={persistMenuLocale} />
       <div className="max-w-6xl mx-auto pt-5 sm:pt-7">
-        {/* HERO + tożsamość restauracji pod zdjęciem */}
-        <section className="relative">
-          <div className="relative h-56 sm:h-72 lg:h-80 rounded-[30px] overflow-hidden shadow-2xl border border-black/5">
-            {coverUrl ? (
-              <>
-                <img
-                  src={coverUrl}
-                  alt="Cover menu"
-                  className="w-full h-full object-cover"
-                />
-                <div
-                  className="absolute inset-0"
-                  style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.5) 100%)' }}
-                />
-              </>
-            ) : (
-              <div
-                className="w-full h-full"
-                style={{ background: `linear-gradient(135deg, ${primaryColor}, #0f172a)` }}
-              />
-            )}
-          </div>
-
-          <div className="px-2 sm:px-6 relative z-10">
-            <div className="flex items-end gap-4 sm:gap-5 mt-4 sm:mt-5">
-              <div className="h-24 w-24 sm:h-28 sm:w-28 rounded-3xl bg-white border-4 border-white shadow-xl overflow-hidden shrink-0 -mt-14 sm:-mt-16">
-                {logoUrl ? (
-                  <img
-                    src={logoUrl}
-                    alt="Logo restauracji"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-500 text-xl font-black">
-                    {restaurantTitle.slice(0, 1).toUpperCase()}
-                  </div>
-                )}
-              </div>
-
-              <div className="min-w-0 pb-2">
-                <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-tight">
-                  {restaurantTitle}
-                </h1>
-              </div>
-            </div>
-          </div>
-        </section>
+        <MenuHeroIdentityPreview
+          logoUrl={logoUrl}
+          logoPosition={logoObjectPosition}
+          logoScale={logoScale}
+          restaurantTitle={restaurantTitle}
+          coverUrl={coverUrl}
+          primaryColor={primaryColor}
+          titleAsH1
+        />
       </div>
 
       <main className="max-w-6xl mx-auto pt-10 sm:pt-12 space-y-14">
