@@ -10,6 +10,7 @@ import { handleSaveMenuCategories } from '../api/save-menu-categories.js';
 import { handleTrackMenuOpen } from '../api/track-menu-open.js';
 import { handleGetMenuOpenStats } from '../api/get-menu-open-stats.js';
 import { handleStripeWebhook, readStripeWebhookBody } from '../api/stripe/webhook.js';
+import { createBillingPortalSession } from '../api/stripe/createBillingPortalSession.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(__dirname, '..', '.env.local') });
@@ -84,6 +85,18 @@ app.post('/api/create-checkout-session', async (req, res) => {
     console.error('Stripe create-checkout-session:', e);
     return res.status(500).json({ error: e.message || 'Błąd tworzenia sesji.' });
   }
+});
+
+app.post('/api/create-billing-portal-session', async (req, res) => {
+  const { userId, returnUrl } = req.body || {};
+  const result = await createBillingPortalSession({
+    userId,
+    returnUrl: returnUrl || BASE_URL,
+  });
+  if (!result.ok) {
+    return res.status(result.status).json({ error: result.error });
+  }
+  return res.json({ url: result.url });
 });
 
 app.get('/api/confirm-premium', async (req, res) => {

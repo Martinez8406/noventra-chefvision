@@ -43,3 +43,27 @@ export async function confirmPremiumSession(sessionId: string): Promise<{ ok: bo
   if (!res.ok) throw new Error(data.error || 'Błąd weryfikacji płatności.');
   return { ok: data.ok === true, userId: data.userId ?? null };
 }
+
+/** Stripe Customer Portal — faktury, karta, anulowanie subskrypcji. */
+export async function createBillingPortalSession(options: {
+  userId: string;
+  returnUrl?: string;
+}): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/create-billing-portal-session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId: options.userId,
+      returnUrl: options.returnUrl ?? window.location.origin,
+    }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `Błąd API (${res.status})`);
+  }
+
+  const data = await res.json();
+  if (!data.url) throw new Error('Brak URL portalu Stripe.');
+  window.location.href = data.url;
+}

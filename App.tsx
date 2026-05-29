@@ -6,7 +6,7 @@ import { SeasonalThemes } from './components/SeasonalThemes';
 import { BackdropLab } from './components/BackdropLab';
 import { PublicMenu } from './components/PublicMenu';
 import { MenuStatsPanel } from './components/MenuStatsPanel';
-import { SettingsPanel } from './components/SettingsPanel';
+import { SettingsPanel, type SettingsSection } from './components/SettingsPanel';
 import { KitchenWall } from './components/KitchenWall';
 import { MenuManager } from './components/MenuManager';
 import { PromotionsManager } from './components/PromotionsManager';
@@ -38,8 +38,42 @@ import {
   BarChart3,
   Megaphone,
   Lock,
-  Settings
+  Settings,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
+
+type AppTab =
+  | 'kuchnia'
+  | 'studio'
+  | 'themes'
+  | 'backdrops'
+  | 'menu'
+  | 'stats'
+  | 'promotions'
+  | 'settings-qr'
+  | 'settings-branding'
+  | 'settings-google'
+  | 'settings-subscription';
+
+const SETTINGS_SUB_NAV: { id: AppTab; label: string }[] = [
+  { id: 'settings-qr', label: 'Kod QR' },
+  { id: 'settings-branding', label: 'Logo / zdjęcie główne' },
+  { id: 'settings-google', label: 'Opinie Google' },
+  { id: 'settings-subscription', label: 'Zarządzaj subskrypcją' },
+];
+
+function settingsSectionFromTab(tab: AppTab): SettingsSection | null {
+  if (tab === 'settings-qr') return 'qr';
+  if (tab === 'settings-branding') return 'branding';
+  if (tab === 'settings-google') return 'google';
+  if (tab === 'settings-subscription') return 'subscription';
+  return null;
+}
+
+function isSettingsTab(tab: AppTab): boolean {
+  return settingsSectionFromTab(tab) !== null;
+}
 
 const App: React.FC = () => {
   const safeDecodeRouteParam = (value: string | undefined): string | null => {
@@ -54,9 +88,8 @@ const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
-  const [activeTab, setActiveTab] = useState<
-    'kuchnia' | 'studio' | 'themes' | 'backdrops' | 'menu' | 'stats' | 'settings' | 'promotions'
-  >('kuchnia');
+  const [activeTab, setActiveTab] = useState<AppTab>('kuchnia');
+  const [settingsExpanded, setSettingsExpanded] = useState(false);
   const [premiumUpsellOpen, setPremiumUpsellOpen] = useState(false);
   const [selectedDishId, setSelectedDishId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(true);
@@ -439,7 +472,7 @@ const App: React.FC = () => {
   }
 
   const navItems: {
-    id: typeof activeTab;
+    id: AppTab;
     label: string;
     icon: typeof LayoutDashboard;
     premiumLocked?: boolean;
@@ -451,16 +484,29 @@ const App: React.FC = () => {
     { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen },
     { id: 'stats', label: 'Statystyki', icon: BarChart3 },
     { id: 'promotions', label: 'Rekomendacje i promocje', icon: Megaphone, premiumLocked: true },
-    { id: 'settings', label: 'Ustawienia', icon: Settings },
   ];
 
-  const handleNavClick = (tabId: typeof activeTab, premiumLocked?: boolean) => {
+  const settingsSectionActive = settingsSectionFromTab(activeTab);
+  const settingsMenuOpen = settingsExpanded || settingsSectionActive !== null;
+
+  const handleNavClick = (tabId: AppTab, premiumLocked?: boolean) => {
     if (isFree && premiumLocked) {
       openPremiumUpsell();
       setIsSidebarOpen(false);
       return;
     }
     setActiveTab(tabId);
+    if (!isSettingsTab(tabId)) setSettingsExpanded(false);
+    setIsSidebarOpen(false);
+  };
+
+  const handleSettingsToggle = () => {
+    setSettingsExpanded((open) => !open);
+  };
+
+  const handleSettingsSubClick = (tabId: AppTab) => {
+    setActiveTab(tabId);
+    setSettingsExpanded(true);
     setIsSidebarOpen(false);
   };
 
@@ -512,6 +558,51 @@ const App: React.FC = () => {
                 </button>
               );
             })}
+
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={handleSettingsToggle}
+                aria-expanded={settingsMenuOpen}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/25 ${
+                  settingsSectionActive ? 'text-white bg-white/5' : 'text-zinc-500 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center gap-4 text-left min-w-0">
+                  <span className="w-5 shrink-0 flex justify-center">
+                    <Settings size={20} />
+                  </span>
+                  <span className="leading-tight">Ustawienia</span>
+                </div>
+                {settingsMenuOpen ? (
+                  <ChevronDown size={18} className="shrink-0 text-zinc-400" aria-hidden />
+                ) : (
+                  <ChevronRight size={18} className="shrink-0 text-zinc-400" aria-hidden />
+                )}
+              </button>
+
+              {settingsMenuOpen && (
+                <div className="mt-1 ml-4 pl-4 border-l border-white/10 space-y-0.5">
+                  {SETTINGS_SUB_NAV.map((sub) => {
+                    const subActive = activeTab === sub.id;
+                    return (
+                      <button
+                        key={sub.id}
+                        type="button"
+                        onClick={() => handleSettingsSubClick(sub.id)}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-colors ${
+                          subActive
+                            ? 'text-white bg-white/10'
+                            : 'text-zinc-500 hover:text-white hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        {sub.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </nav>
         </div>
 
@@ -686,8 +777,12 @@ const App: React.FC = () => {
               )}
             </div>
           )}
-          {activeTab === 'settings' && (
-            <SettingsPanel userId={currentUser?.id ?? null} restaurantName={currentUser?.name} />
+          {settingsSectionActive && (
+            <SettingsPanel
+              section={settingsSectionActive}
+              userId={currentUser?.id ?? null}
+              restaurantName={currentUser?.name}
+            />
           )}
         </div>
       </main>
