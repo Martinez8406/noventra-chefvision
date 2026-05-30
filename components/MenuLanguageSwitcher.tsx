@@ -5,7 +5,7 @@ const OPTIONS: { locale: PublicMenuLocale; label: string }[] = [
   { locale: 'pl', label: 'Polski' },
   { locale: 'en', label: 'English (UK)' },
   { locale: 'he', label: 'עברית' },
-  { locale: 'ar', label: 'العربية' },
+  { locale: 'zh', label: '中文 (简体)' },
   { locale: 'uk', label: 'Українська' },
   { locale: 'de', label: 'Deutsch' },
   { locale: 'es', label: 'Español' },
@@ -15,7 +15,7 @@ const OPTIONS: { locale: PublicMenuLocale; label: string }[] = [
   { locale: 'fr', label: 'Français' },
   { locale: 'cs', label: 'Čeština' },
   { locale: 'nl', label: 'Nederlands' },
-  { locale: 'zh', label: '中文 (简体)' },
+  { locale: 'ar', label: 'العربية' },
 ];
 
 function optionFor(locale: PublicMenuLocale) {

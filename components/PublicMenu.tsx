@@ -6,10 +6,12 @@ import { PublicDishDetail } from './PublicDishDetail';
 import { MenuLanguageSwitcher } from './MenuLanguageSwitcher';
 import { supabase } from '../services/supabaseService';
 import { MENU_CATEGORIES } from '../constants';
-import { getPublicMenuCategoryDisplay, isRtlMenuLocale } from '../utils/menuTranslations';
+import { getPublicMenuCategoryDisplay, getPublicDishCopy, isRtlMenuLocale } from '../utils/menuTranslations';
 import { MenuHeroIdentityPreview } from './MenuHeroIdentityPreview';
+import { ShareLinkButton } from './ShareLinkButton';
 import { normalizeLogoPosition, normalizeLogoScale } from '../utils/logoFrame';
 import { normalizeCoverPosition, normalizeCoverScale } from '../utils/coverFrame';
+import { buildPublicMenuUrl, getShareMenuText } from '../utils/publicMenuShare';
 
 interface Props {
   dishes: Dish[];
@@ -237,6 +239,9 @@ export const PublicMenu: React.FC<Props> = ({
   const menuLangAttr: string = menuLocale === 'pl' ? 'pl' : menuLocale;
   const rtlFontStack = `'Noto Sans Hebrew', 'Noto Naskh Arabic', 'Segoe UI', system-ui, sans-serif`;
   const isPolishLocale = menuLocale === 'pl';
+  const menuShareUrl = buildPublicMenuUrl(userId, { usePathRouting: !!usePathRouting });
+  const menuShareTitle = restaurantTitle;
+  const menuShareText = `${restaurantTitle} — ${getShareMenuText(menuLocale)}`;
   const reviewFabLabels = isPolishLocale
     ? {
         tooltip: 'Pomóż nam się rozwijać! 20 sek',
@@ -502,6 +507,12 @@ export const PublicMenu: React.FC<Props> = ({
             onBack={goBack}
             showWatermark={showWatermark}
             fontFamily={fontFamily}
+            shareUrl={buildPublicMenuUrl(userId, {
+              dishId: dish.id,
+              usePathRouting: !!usePathRouting,
+            })}
+            shareTitle={getPublicDishCopy(dish, menuLocale).name}
+            shareText={`${getPublicDishCopy(dish, menuLocale).name} — ${restaurantTitle}`}
           />
           {hasGoogleReviews && (
             <div className="google-review-fab-wrap">
@@ -660,6 +671,15 @@ export const PublicMenu: React.FC<Props> = ({
         `}
       </style>
       <MenuLanguageSwitcher value={menuLocale} onChange={persistMenuLocale} />
+      <div className={`fixed top-4 z-[110] ${isRtl ? 'right-4 left-auto' : 'left-4 right-auto'}`}>
+        <ShareLinkButton
+          url={menuShareUrl}
+          title={menuShareTitle}
+          text={menuShareText}
+          menuLocale={menuLocale}
+          variant="fab"
+        />
+      </div>
       <div className="max-w-6xl mx-auto pt-5 sm:pt-7">
         <MenuHeroIdentityPreview
           logoUrl={logoUrl}
@@ -711,7 +731,9 @@ export const PublicMenu: React.FC<Props> = ({
 
             {/* Siatka kart */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-              {groups[category].map((dish) => (
+              {groups[category].map((dish) => {
+                const dishCopy = getPublicDishCopy(dish, menuLocale);
+                return (
                 <PublicDishCard
                   key={dish.id}
                   dish={dish}
@@ -722,8 +744,14 @@ export const PublicMenu: React.FC<Props> = ({
                   usePathRouting={!!usePathRouting}
                   onPathChange={onPathChange}
                   showWatermark={showWatermark}
+                  shareUrl={buildPublicMenuUrl(userId, {
+                    dishId: dish.id,
+                    usePathRouting: !!usePathRouting,
+                  })}
+                  shareTitle={dishCopy.name}
+                  shareText={`${dishCopy.name} — ${restaurantTitle}`}
                 />
-              ))}
+              )})}
             </div>
           </section>
         ))}

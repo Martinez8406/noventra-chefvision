@@ -1,6 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { QrCode, Download, Share2, Image } from 'lucide-react';
+import { buildPublicMenuUrl, getShareCopiedLabel, getShareFailedLabel, sharePublicLink } from '../utils/publicMenuShare';
 
 interface Props {
   userId: string | null;
@@ -8,11 +9,9 @@ interface Props {
 
 export const QRGenerator: React.FC<Props> = ({ userId }) => {
   const qrContainerRef = useRef<HTMLDivElement>(null);
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
-  const baseUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}${(window.location.pathname || '/').replace(/\/+$/, '') || ''}`
-    : '';
-  const menuUrl = userId && baseUrl ? `${baseUrl}/#/menu/${userId}` : '';
+  const menuUrl = userId ? buildPublicMenuUrl(userId) : '';
 
   const handleDownloadPng = () => {
     const canvas = qrContainerRef.current?.querySelector('canvas');
@@ -24,6 +23,21 @@ export const QRGenerator: React.FC<Props> = ({ userId }) => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  };
+
+  const handleShareLink = async () => {
+    if (!menuUrl) return;
+    const outcome = await sharePublicLink({
+      url: menuUrl,
+      title: 'ChefVision — Digital Dining Assistant',
+      text: 'Cyfrowe menu restauracji',
+    });
+    if (outcome === 'copied') setShareFeedback(getShareCopiedLabel('pl'));
+    else if (outcome === 'failed') setShareFeedback(getShareFailedLabel('pl'));
+    else setShareFeedback(null);
+    if (outcome === 'copied' || outcome === 'failed') {
+      window.setTimeout(() => setShareFeedback(null), 2600);
+    }
   };
 
   return (
@@ -64,9 +78,12 @@ export const QRGenerator: React.FC<Props> = ({ userId }) => {
               <Image size={18} />
               Pobierz jako obraz PNG
             </button>
-            <button className="bg-indigo-400 text-white py-3 px-4 rounded-xl hover:bg-indigo-300 transition-colors flex items-center gap-2">
+            <button
+              onClick={() => void handleShareLink()}
+              className="bg-indigo-400 text-white py-3 px-4 rounded-xl hover:bg-indigo-300 transition-colors flex items-center gap-2"
+            >
               <Share2 size={18} />
-              Udostępnij link
+              {shareFeedback || 'Udostępnij link'}
             </button>
           </div>
         </div>

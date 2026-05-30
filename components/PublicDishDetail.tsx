@@ -12,6 +12,7 @@ import {
 import { ChevronLeft, Info, Utensils, UtensilsCrossed } from 'lucide-react';
 import { BRAND_LOGO_SRC } from '../constants';
 import { WatermarkWrapper } from './WatermarkWrapper';
+import { ShareLinkButton } from './ShareLinkButton';
 
 interface Props {
   dish: Dish;
@@ -20,6 +21,9 @@ interface Props {
   onBack: () => void;
   showWatermark?: boolean;
   fontFamily?: string;
+  shareUrl?: string;
+  shareTitle?: string;
+  shareText?: string;
 }
 
 export const PublicDishDetail: React.FC<Props> = ({
@@ -29,6 +33,9 @@ export const PublicDishDetail: React.FC<Props> = ({
   onBack,
   showWatermark,
   fontFamily,
+  shareUrl,
+  shareTitle,
+  shareText,
 }) => {
   const copy = getPublicDishCopy(dish, menuLocale);
   const allergensUi = getPublicAllergenDisplay(dish, menuLocale);
@@ -51,8 +58,8 @@ export const PublicDishDetail: React.FC<Props> = ({
             50% { transform: translateY(-2px); }
           }
           @keyframes socialLinkGlow {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.0); }
-            50% { box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.16); }
+            0%, 100% { box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.45), 0 0 14px rgba(34, 197, 94, 0.25); }
+            50% { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0.65), 0 0 22px rgba(34, 197, 94, 0.4); }
           }
           .social-link-cta {
             animation: socialLinkFloat 3.2s ease-in-out infinite, socialLinkGlow 3.2s ease-in-out infinite;
@@ -87,6 +94,18 @@ export const PublicDishDetail: React.FC<Props> = ({
           </div>
         </>
       </WatermarkWrapper>
+
+      {shareUrl && (
+        <div className="max-w-2xl mx-auto px-6 pt-4 flex justify-end">
+          <ShareLinkButton
+            url={shareUrl}
+            title={shareTitle || copy.name}
+            text={shareText || copy.name}
+            menuLocale={menuLocale}
+            variant="pill"
+          />
+        </div>
+      )}
 
       {/* Content Section – zwarty blok, żeby nie zasłaniał zdjęcia */}
       <div className="max-w-2xl mx-auto px-6 py-6 space-y-6">

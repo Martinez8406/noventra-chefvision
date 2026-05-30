@@ -11,6 +11,7 @@ import {
 import { Info, UtensilsCrossed } from 'lucide-react';
 import { WatermarkWrapper } from './WatermarkWrapper';
 import { DishRecommendationBadge, DishRecommendationBox } from './DishRecommendationBox';
+import { ShareLinkButton } from './ShareLinkButton';
 import type { DishRecommendation } from '../types';
 
 interface Props {
@@ -22,6 +23,9 @@ interface Props {
   usePathRouting?: boolean;
   onPathChange?: () => void;
   showWatermark?: boolean;
+  shareUrl?: string;
+  shareTitle?: string;
+  shareText?: string;
 }
 
 export const PublicDishCard: React.FC<Props> = ({
@@ -33,6 +37,9 @@ export const PublicDishCard: React.FC<Props> = ({
   usePathRouting,
   onPathChange,
   showWatermark,
+  shareUrl,
+  shareTitle,
+  shareText,
 }) => {
   const copy = getPublicDishCopy(dish, menuLocale);
   const allergensUi = getPublicAllergenDisplay(dish, menuLocale);
@@ -67,8 +74,8 @@ export const PublicDishCard: React.FC<Props> = ({
             50% { transform: translateY(-2px); }
           }
           @keyframes socialLinkGlow {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.0); }
-            50% { box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.16); }
+            0%, 100% { box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.45), 0 0 14px rgba(34, 197, 94, 0.25); }
+            50% { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0.65), 0 0 22px rgba(34, 197, 94, 0.4); }
           }
           .social-link-cta {
             animation: socialLinkFloat 3.2s ease-in-out infinite, socialLinkGlow 3.2s ease-in-out infinite;
@@ -138,8 +145,8 @@ export const PublicDishCard: React.FC<Props> = ({
           />
         )}
 
-        {/* Więcej info */}
-        <div className="grid grid-cols-1 gap-3">
+        {/* Więcej info + Share it */}
+        <div className="grid grid-cols-[1fr_auto] gap-3">
           <button 
             onClick={(e) => { e.stopPropagation(); openDetail(); }}
             className="flex items-center justify-center gap-2 bg-amber-50 text-amber-700 py-3 rounded-2xl text-xs font-bold hover:bg-amber-100 transition-colors border border-amber-100"
@@ -147,6 +154,15 @@ export const PublicDishCard: React.FC<Props> = ({
             <Info size={16} />
             Więcej info
           </button>
+          {shareUrl && (
+            <ShareLinkButton
+              url={shareUrl}
+              title={shareTitle || copy.name}
+              text={shareText || copy.name}
+              menuLocale={menuLocale}
+              variant="compact"
+            />
+          )}
         </div>
 
         {/* Alergeny (neutralne tło + zamiana z sekcją "Więcej info" w kolejności) */}
