@@ -413,13 +413,20 @@ export const PublicMenu: React.FC<Props> = ({
             .google-review-fab-wrap {
               position: fixed;
               bottom: 24px;
-              right: 24px;
+              left: 24px;
+              right: auto;
               z-index: 120;
+            }
+
+            .google-review-fab-wrap--rtl {
+              left: auto;
+              right: 24px;
             }
 
             .google-review-fab-tooltip {
               position: absolute;
-              right: 0;
+              left: 0;
+              right: auto;
               bottom: calc(100% + 10px);
               background: #ffffff;
               color: #3c4043;
@@ -479,9 +486,19 @@ export const PublicMenu: React.FC<Props> = ({
               }
             }
 
+            .google-review-fab-wrap--rtl .google-review-fab-tooltip {
+              left: auto;
+              right: 0;
+            }
+
             @media (max-width: 600px) {
               .google-review-fab-wrap {
                 bottom: 16px;
+                left: 16px;
+              }
+
+              .google-review-fab-wrap--rtl {
+                left: auto;
                 right: 16px;
               }
 
@@ -515,7 +532,7 @@ export const PublicMenu: React.FC<Props> = ({
             shareText={`${getPublicDishCopy(dish, menuLocale).name} — ${restaurantTitle}`}
           />
           {hasGoogleReviews && (
-            <div className="google-review-fab-wrap">
+            <div className={`google-review-fab-wrap${isRtl ? ' google-review-fab-wrap--rtl' : ''}`}>
               {showReviewTooltip && (
                 <div className="google-review-fab-tooltip">{reviewFabLabels.tooltip}</div>
               )}
@@ -584,13 +601,20 @@ export const PublicMenu: React.FC<Props> = ({
           .google-review-fab-wrap {
             position: fixed;
             bottom: 24px;
-            right: 24px;
+            left: 24px;
+            right: auto;
             z-index: 120;
+          }
+
+          .google-review-fab-wrap--rtl {
+            left: auto;
+            right: 24px;
           }
 
           .google-review-fab-tooltip {
             position: absolute;
-            right: 0;
+            left: 0;
+            right: auto;
             bottom: calc(100% + 10px);
             background: #ffffff;
             color: #3c4043;
@@ -650,9 +674,19 @@ export const PublicMenu: React.FC<Props> = ({
             }
           }
 
+          .google-review-fab-wrap--rtl .google-review-fab-tooltip {
+            left: auto;
+            right: 0;
+          }
+
           @media (max-width: 600px) {
             .google-review-fab-wrap {
               bottom: 16px;
+              left: 16px;
+            }
+
+            .google-review-fab-wrap--rtl {
+              left: auto;
               right: 16px;
             }
 
@@ -771,7 +805,7 @@ export const PublicMenu: React.FC<Props> = ({
       </main>
 
       {hasGoogleReviews && (
-        <div className="google-review-fab-wrap">
+        <div className={`google-review-fab-wrap${isRtl ? ' google-review-fab-wrap--rtl' : ''}`}>
           {showReviewTooltip && <div className="google-review-fab-tooltip">{reviewFabLabels.tooltip}</div>}
           <a
             href={reviewUrl}
