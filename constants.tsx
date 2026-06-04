@@ -2,6 +2,9 @@
 export const BRAND_LOGO_SRC =
   '/Zrzut_ekranu_2026-05-02_115035-removebg-preview.png';
 
+/** Baner CTA „Video Link” na publicznym menu (social media). */
+export const VIDEO_LINK_BANNER_SRC = '/video-link-banner.png';
+
 /** Tokeny trial przy rejestracji (14 dni — patrz Supabase trial_ends_at). */
 export const TRIAL_TOKENS = 50;
 

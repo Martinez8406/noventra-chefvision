@@ -12,6 +12,7 @@ import { Info, UtensilsCrossed } from 'lucide-react';
 import { WatermarkWrapper } from './WatermarkWrapper';
 import { DishRecommendationBadge, DishRecommendationBox } from './DishRecommendationBox';
 import { ShareLinkButton } from './ShareLinkButton';
+import { SocialLinkButton } from './SocialLinkButton';
 import type { DishRecommendation } from '../types';
 import type { RecommendationTranslationCache } from '../utils/recommendationTranslations';
 
@@ -70,29 +71,6 @@ export const PublicDishCard: React.FC<Props> = ({
           : undefined
       }
     >
-      <style>
-        {`
-          @keyframes socialLinkFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-2px); }
-          }
-          @keyframes socialLinkGlow {
-            0%, 100% { box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.45), 0 0 14px rgba(34, 197, 94, 0.25); }
-            50% { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0.65), 0 0 22px rgba(34, 197, 94, 0.4); }
-          }
-          .social-link-cta {
-            animation: socialLinkFloat 3.2s ease-in-out infinite, socialLinkGlow 3.2s ease-in-out infinite;
-          }
-          .social-link-cta:hover {
-            animation-play-state: paused;
-          }
-          @media (prefers-reduced-motion: reduce) {
-            .social-link-cta {
-              animation: none;
-            }
-          }
-        `}
-      </style>
       {/* Hero Image */}
       <div className="relative h-64 overflow-hidden">
         {recommendation?.isActive && (
@@ -185,23 +163,12 @@ export const PublicDishCard: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Social Link (przeniesiony niżej, pod alergeny) */}
         {dish.videoUrl && (
-          <a
+          <SocialLinkButton
             href={dish.videoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+            className="mt-4"
             onClick={(e) => e.stopPropagation()}
-            className="social-link-cta mt-4 block rounded-2xl overflow-hidden transition-transform duration-200 ease-out hover:-translate-y-0.5 active:-translate-y-0.5"
-            aria-label="Social Link"
-          >
-            <img
-              src="/Gemini_Generated_Image_HD.png"
-              alt="Social Link"
-              className="w-full h-24 object-cover object-[center_65%]"
-              loading="lazy"
-            />
-          </a>
+          />
         )}
       </div>
     </div>
