@@ -398,7 +398,7 @@ export const PublicMenu: React.FC<Props> = ({
     if (dish) {
       return (
         <div
-          className="min-h-screen"
+          className="min-h-screen w-full max-w-full overflow-x-hidden"
           dir={isRtl ? 'rtl' : 'ltr'}
           lang={menuLangAttr}
           style={{ fontFamily: isRtl ? `${rtlFontStack}, ${fontFamily}` : fontFamily }}
@@ -566,7 +566,7 @@ export const PublicMenu: React.FC<Props> = ({
     }
 
     return (
-      <div className="min-h-screen flex items-center justify-center px-6 text-center" style={{ backgroundColor: secondaryColor, fontFamily }}>
+      <div className="min-h-screen w-full max-w-full overflow-x-hidden flex items-center justify-center px-6 text-center" style={{ backgroundColor: secondaryColor, fontFamily }}>
         <div className="max-w-md bg-white rounded-3xl border border-slate-100 shadow-xl p-8 space-y-4">
           <p className="text-slate-700 font-semibold">Nie znaleziono dania pod tym adresem.</p>
           <button
@@ -583,7 +583,7 @@ export const PublicMenu: React.FC<Props> = ({
 
   return (
     <div
-      className="min-h-screen pb-20 px-4 sm:px-6"
+      className="min-h-screen w-full max-w-full overflow-x-hidden pb-20 px-4 sm:px-6"
       dir={isRtl ? 'rtl' : 'ltr'}
       lang={menuLangAttr}
       style={{
@@ -728,7 +728,7 @@ export const PublicMenu: React.FC<Props> = ({
         />
       </div>
 
-      <main className="max-w-6xl mx-auto pt-10 sm:pt-12 space-y-14">
+      <main className="w-full max-w-6xl mx-auto overflow-x-hidden pt-10 sm:pt-12 space-y-14">
         {/* Stan ładowania */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-32 gap-5">
@@ -738,10 +738,13 @@ export const PublicMenu: React.FC<Props> = ({
         )}
 
         {!loading && orderedKeys.map((category) => (
-          <section key={category}>
-            {/* Nagłówek kategorii */}
-            <div className="flex items-center gap-4 mb-8">
-              <h2 className="text-xs font-black tracking-[0.25em] uppercase whitespace-nowrap" style={{ color: primaryColor }}>
+          <section key={category} className="min-w-0 max-w-full">
+            {/* Nagłówek kategorii — długie tłumaczenia zawijają się w dół, bez rozciągania menu */}
+            <div className="mb-8 min-w-0 max-w-full space-y-3">
+              <h2
+                className="max-w-full text-xs font-black uppercase leading-relaxed tracking-[0.15em] break-words [overflow-wrap:anywhere] sm:tracking-[0.2em]"
+                style={{ color: primaryColor }}
+              >
                 {(() => {
                   const base = getPublicMenuCategoryDisplay(category, menuLocale);
                   if (menuLocale === 'pl') return base;
@@ -760,7 +763,7 @@ export const PublicMenu: React.FC<Props> = ({
                   return customCategoryTranslations[key]?.[menuLocale] || category;
                 })()}
               </h2>
-              <div className="flex-1 h-px" style={{ backgroundColor: primaryColor, opacity: 0.25 }} />
+              <div className="h-px w-full" style={{ backgroundColor: primaryColor, opacity: 0.25 }} />
             </div>
 
             {/* Siatka kart */}
