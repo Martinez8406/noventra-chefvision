@@ -216,12 +216,14 @@ export const MenuLanguageSwitcher: React.FC<Props> = ({ value, onChange }) => {
   };
 
   const btnClass =
-    'flex h-11 w-11 items-center justify-center rounded-xl bg-white/95 p-1.5 shadow-lg ring-2 ring-slate-800/25 transition hover:bg-white hover:ring-slate-800/40';
+    'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/95 p-1.5 shadow-lg ring-2 ring-slate-800/25 transition hover:bg-white hover:ring-slate-800/40';
+
+  const isRtlAnchor = value === 'he' || value === 'ar';
 
   return (
     <div
       ref={rootRef}
-      className={`fixed top-4 z-[110] ${value === 'he' || value === 'ar' ? 'left-6 right-auto' : 'right-6 left-auto'}`}
+      className={`fixed top-4 z-[110] w-11 ${isRtlAnchor ? 'left-6 right-auto' : 'right-6 left-auto'}`}
       role="group"
       aria-label="Język menu"
     >
@@ -242,15 +244,17 @@ export const MenuLanguageSwitcher: React.FC<Props> = ({ value, onChange }) => {
         <ul
           id="menu-lang-list"
           role="listbox"
-          className="absolute end-0 top-full mt-2 flex flex-col gap-1.5 rounded-2xl border border-slate-200 bg-white/98 p-2 shadow-xl ring-1 ring-black/10"
+          className={`absolute top-full mt-2 flex w-11 flex-col gap-1.5 rounded-2xl border border-slate-200 bg-white/98 p-2 shadow-xl ring-1 ring-black/10 ${
+            isRtlAnchor ? 'start-0' : 'end-0'
+          }`}
         >
           {others.map(({ locale, label }) => (
-            <li key={locale} role="option" aria-selected={value === locale}>
+            <li key={locale} role="option" aria-selected={value === locale} className="flex justify-center">
               <button
                 type="button"
                 title={label}
                 onClick={() => pick(locale)}
-                className={`${btnClass} w-full min-w-[2.75rem]`}
+                className={btnClass}
               >
                 <FlagSvg locale={locale} />
                 <span className="sr-only">{label}</span>
