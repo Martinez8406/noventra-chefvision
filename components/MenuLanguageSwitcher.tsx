@@ -218,10 +218,14 @@ export const MenuLanguageSwitcher: React.FC<Props> = ({ value, onChange }) => {
   const btnClass =
     'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/95 p-1.5 shadow-lg ring-2 ring-slate-800/25 transition hover:bg-white hover:ring-slate-800/40';
 
+  const isRtlFlagAnchor = value === 'he' || value === 'ar';
+
   return (
     <div
       ref={rootRef}
-      className="fixed top-4 right-4 z-[110] w-11 sm:right-6"
+      className={`fixed top-4 z-[110] w-11 ${
+        isRtlFlagAnchor ? 'left-4 right-auto sm:left-6' : 'right-4 left-auto sm:right-6'
+      }`}
       role="group"
       aria-label="Język menu"
     >
@@ -242,7 +246,9 @@ export const MenuLanguageSwitcher: React.FC<Props> = ({ value, onChange }) => {
         <ul
           id="menu-lang-list"
           role="listbox"
-          className="absolute end-0 top-full mt-2 flex w-11 flex-col gap-1.5 rounded-2xl border border-slate-200 bg-white/98 p-2 shadow-xl ring-1 ring-black/10"
+          className={`absolute top-full mt-2 flex w-11 flex-col gap-1.5 rounded-2xl border border-slate-200 bg-white/98 p-2 shadow-xl ring-1 ring-black/10 ${
+            isRtlFlagAnchor ? 'start-0' : 'end-0'
+          }`}
         >
           {others.map(({ locale, label }) => (
             <li key={locale} role="option" aria-selected={value === locale} className="flex justify-center">
