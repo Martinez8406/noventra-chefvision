@@ -7,7 +7,7 @@ import {
   RECOMMENDATION_BADGE,
   RECOMMENDATION_DEFAULT_HEADER,
 } from '../utils/dishRecommendations';
-import { ChevronDown, Plus, Trash2, Megaphone, ToggleLeft, ToggleRight } from 'lucide-react';
+import { ChevronDown, Gift, Plus, Trash2, Megaphone, ToggleLeft, ToggleRight } from 'lucide-react';
 
 interface Props {
   dishes: Dish[];
@@ -18,7 +18,7 @@ interface Props {
 const TYPE_OPTIONS: { value: DishRecommendationType; label: string; desc: string; icon?: string }[] = [
   { value: 'polecane', label: 'Polecane', desc: 'Pairing kelnerski — wino, dodatek', icon: '👌' },
   { value: 'popularne', label: 'Popularne', desc: 'Social proof — co inni zamawiają', icon: '🔥' },
-  { value: 'zestaw', label: 'W zestawie taniej', desc: 'Zestaw promocyjny z oszczędnością', icon: '⭐' },
+  { value: 'zestaw', label: 'W zestawie taniej', desc: 'Zestaw promocyjny z oszczędnością', icon: 'gift' },
 ];
 
 function newItem(): DishRecommendationItem {
@@ -262,7 +262,11 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                   }`}
                 >
                   <span className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    {opt.icon && <span aria-hidden>{opt.icon}</span>}
+                    {opt.icon === 'gift' ? (
+                      <Gift size={16} className="text-emerald-700 shrink-0" aria-hidden />
+                    ) : (
+                      opt.icon && <span aria-hidden>{opt.icon}</span>
+                    )}
                     {opt.label}
                   </span>
                   <span className="block text-xs text-slate-500 mt-0.5">{opt.desc}</span>

@@ -1,16 +1,22 @@
 import React from 'react';
-import type { DishRecommendation } from '../types';
+import { Gift } from 'lucide-react';
+import type { DishRecommendation, PublicMenuLocale } from '../types';
+import { calcSavingsPercent } from '../utils/dishRecommendations';
 import {
-  calcSavingsPercent,
-  formatZestawDisplayTitles,
-  getRecommendationHeader,
-  RECOMMENDATION_BADGE,
-} from '../utils/dishRecommendations';
+  formatZestawDisplayTitlesLocalized,
+  getPublicRecommendationBadge,
+  getPublicRecommendationHeader,
+  getPublicRecommendationItemCopy,
+  getPublicSavingsLabel,
+  type RecommendationTranslationCache,
+} from '../utils/recommendationTranslations';
 
 interface Props {
   recommendation: DishRecommendation;
   /** Nazwa dania, do którego przypisana jest rekomendacja (dla zestawu dopisywana automatycznie). */
   dishName?: string;
+  menuLocale?: PublicMenuLocale;
+  translationCache?: RecommendationTranslationCache | null;
   className?: string;
 }
 
@@ -18,19 +24,28 @@ const TYPE_STYLES = {
   polecane: {
     box: 'bg-emerald-50/80 border-emerald-100',
     header: 'text-emerald-700',
-    iconEmoji: '👌',
   },
   popularne: {
     box: 'bg-violet-50/70 border-violet-100',
     header: 'text-violet-700',
-    iconEmoji: '🔥',
   },
   zestaw: {
     box: 'bg-emerald-50/80 border-emerald-100',
     header: 'text-emerald-700',
-    iconEmoji: '⭐',
   },
 } as const;
+
+function RecommendationTypeIcon({ type }: { type: DishRecommendation['type'] }) {
+  if (type === 'zestaw') {
+    return <Gift size={14} className="shrink-0" strokeWidth={2.25} aria-hidden />;
+  }
+  const emoji = type === 'polecane' ? '👌' : '🔥';
+  return (
+    <span className="text-sm leading-none shrink-0" aria-hidden>
+      {emoji}
+    </span>
+  );
+}
 
 function ItemThumb({ item }: { item: DishRecommendation['items'][0] }) {
   if (!item.imageUrl) return null;
@@ -63,7 +78,10 @@ const BADGE_SWAY_STYLES = `
   }
 `;
 
-export const DishRecommendationBadge: React.FC<{ type: DishRecommendation['type'] }> = ({ type }) => {
+export const DishRecommendationBadge: React.FC<{
+  type: DishRecommendation['type'];
+  menuLocale?: PublicMenuLocale;
+}> = ({ type, menuLocale = 'pl' }) => {
   const badgeClass =
     type === 'popularne' ? 'bg-violet-600/90 text-white' : 'bg-emerald-600/90 text-white';
 
@@ -73,22 +91,31 @@ export const DishRecommendationBadge: React.FC<{ type: DishRecommendation['type'
       <span
         className={`chefvision-rec-badge-sway absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-sm ${badgeClass}`}
       >
-        {RECOMMENDATION_BADGE[type]}
+        {getPublicRecommendationBadge(type, menuLocale)}
       </span>
     </>
   );
 };
 
-function PolecaneContent({ items }: { items: DishRecommendation['items'] }) {
+function PolecaneContent({
+  items,
+  menuLocale,
+  translationCache,
+}: {
+  items: DishRecommendation['items'];
+  menuLocale: PublicMenuLocale;
+  translationCache?: RecommendationTranslationCache | null;
+}) {
   const item = items[0];
   if (!item) return null;
+  const copy = getPublicRecommendationItemCopy(item, menuLocale, translationCache);
   return (
     <div className="flex items-center gap-3">
       <ItemThumb item={item} />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-slate-800 leading-tight truncate">{item.title}</p>
-        {item.subtitle && (
-          <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{item.subtitle}</p>
+        <p className="text-sm font-bold text-slate-800 leading-tight truncate">{copy.title}</p>
+        {copy.subtitle && (
+          <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{copy.subtitle}</p>
         )}
         {item.price && (
           <p className="text-xs font-semibold text-slate-700 mt-1 tabular-nums">{item.price} zł</p>
@@ -98,23 +125,34 @@ function PolecaneContent({ items }: { items: DishRecommendation['items'] }) {
   );
 }
 
-function PopularneContent({ items }: { items: DishRecommendation['items'] }) {
+function PopularneContent({
+  items,
+  menuLocale,
+  translationCache,
+}: {
+  items: DishRecommendation['items'];
+  menuLocale: PublicMenuLocale;
+  translationCache?: RecommendationTranslationCache | null;
+}) {
   return (
     <div className="space-y-2.5">
-      {items.map((item) => (
-        <div key={item.id} className="flex items-center gap-3">
-          <ItemThumb item={item} />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-slate-800 leading-tight truncate">{item.title}</p>
-            {item.subtitle && (
-              <p className="text-[11px] text-slate-500 mt-0.5 leading-snug line-clamp-1">{item.subtitle}</p>
+      {items.map((item) => {
+        const copy = getPublicRecommendationItemCopy(item, menuLocale, translationCache);
+        return (
+          <div key={item.id} className="flex items-center gap-3">
+            <ItemThumb item={item} />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-slate-800 leading-tight truncate">{copy.title}</p>
+              {copy.subtitle && (
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug line-clamp-1">{copy.subtitle}</p>
+              )}
+            </div>
+            {item.price && (
+              <span className="text-xs font-semibold text-slate-700 tabular-nums shrink-0">{item.price} zł</span>
             )}
           </div>
-          {item.price && (
-            <span className="text-xs font-semibold text-slate-700 tabular-nums shrink-0">{item.price} zł</span>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -125,21 +163,25 @@ function ZestawContent({
   bundlePrice,
   bundlePriceOutside,
   savingsPercent,
+  menuLocale,
+  translationCache,
 }: {
   items: DishRecommendation['items'];
   dishName?: string;
   bundlePrice?: string;
   bundlePriceOutside?: string;
   savingsPercent: number | null;
+  menuLocale: PublicMenuLocale;
+  translationCache?: RecommendationTranslationCache | null;
 }) {
-  const titles = formatZestawDisplayTitles(items, dishName ?? '');
+  const titles = formatZestawDisplayTitlesLocalized(items, dishName ?? '', menuLocale, translationCache);
 
   return (
     <div>
       <p className="text-sm font-bold text-slate-800 text-center leading-snug">{titles}</p>
       {savingsPercent != null && savingsPercent > 0 && (
         <p className="text-[11px] text-emerald-700 font-medium text-center mt-1">
-          Oszczędzasz {savingsPercent}%
+          {getPublicSavingsLabel(savingsPercent, menuLocale)}
         </p>
       )}
       {(bundlePrice || bundlePriceOutside) && (
@@ -156,10 +198,16 @@ function ZestawContent({
   );
 }
 
-export const DishRecommendationBox: React.FC<Props> = ({ recommendation, dishName = '', className = '' }) => {
+export const DishRecommendationBox: React.FC<Props> = ({
+  recommendation,
+  dishName = '',
+  menuLocale = 'pl',
+  translationCache = null,
+  className = '',
+}) => {
   const { type, items } = recommendation;
   const styles = TYPE_STYLES[type];
-  const headerText = getRecommendationHeader(recommendation);
+  const headerText = getPublicRecommendationHeader(recommendation, menuLocale, translationCache);
 
   const savingsPercent =
     type === 'zestaw'
@@ -172,9 +220,7 @@ export const DishRecommendationBox: React.FC<Props> = ({ recommendation, dishNam
       onClick={(e: React.MouseEvent) => e.stopPropagation()}
     >
       <div className={`flex items-center gap-1.5 mb-2.5 ${styles.header}`}>
-        <span className="text-sm leading-none shrink-0" aria-hidden>
-          {styles.iconEmoji}
-        </span>
+        <RecommendationTypeIcon type={type} />
         <p className="text-[9px] font-black uppercase tracking-[0.12em] leading-tight">{headerText}</p>
       </div>
 
@@ -185,11 +231,13 @@ export const DishRecommendationBox: React.FC<Props> = ({ recommendation, dishNam
           bundlePrice={recommendation.bundlePrice}
           bundlePriceOutside={recommendation.bundlePriceOutside}
           savingsPercent={savingsPercent}
+          menuLocale={menuLocale}
+          translationCache={translationCache}
         />
       ) : type === 'polecane' ? (
-        <PolecaneContent items={items} />
+        <PolecaneContent items={items} menuLocale={menuLocale} translationCache={translationCache} />
       ) : (
-        <PopularneContent items={items} />
+        <PopularneContent items={items} menuLocale={menuLocale} translationCache={translationCache} />
       )}
     </div>
   );

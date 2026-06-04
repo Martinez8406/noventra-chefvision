@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { handleGenerateImage } from '../api/generate-image.js';
 import { handleTranslateDish } from '../api/translate-dish.js';
 import { handleTranslateCategory } from '../api/translate-category.js';
+import { handleTranslateRecommendation } from '../api/translate-recommendation.js';
 import { handleSaveMenuCategories } from '../api/save-menu-categories.js';
 import { handleTrackMenuOpen } from '../api/track-menu-open.js';
 import { handleGetMenuOpenStats } from '../api/get-menu-open-stats.js';
@@ -164,6 +165,14 @@ app.post('/api/translate-dish', async (req, res) => {
 
 app.post('/api/translate-category', async (req, res) => {
   const result = await handleTranslateCategory({
+    req,
+    body: req.body || {},
+  });
+  return res.status(result.status).json(result.body);
+});
+
+app.post('/api/translate-recommendation', async (req, res) => {
+  const result = await handleTranslateRecommendation({
     req,
     body: req.body || {},
   });

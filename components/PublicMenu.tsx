@@ -12,6 +12,14 @@ import { ShareLinkButton } from './ShareLinkButton';
 import { normalizeLogoPosition, normalizeLogoScale } from '../utils/logoFrame';
 import { normalizeCoverPosition, normalizeCoverScale } from '../utils/coverFrame';
 import { buildPublicMenuUrl, getShareMenuText } from '../utils/publicMenuShare';
+import {
+  fetchRecommendationTranslation,
+  loadRecommendationTranslations,
+  recommendationCacheReady,
+  recommendationNeedsTranslation,
+  saveRecommendationTranslations,
+  type RecommendationTranslationCache,
+} from '../utils/recommendationTranslations';
 
 interface Props {
   dishes: Dish[];
@@ -77,6 +85,7 @@ export const PublicMenu: React.FC<Props> = ({
   const [showReviewTooltip, setShowReviewTooltip] = useState(false);
   const [menuLocale, setMenuLocale] = useState<PublicMenuLocale>('pl');
   const [recommendations, setRecommendations] = useState<DishRecommendation[]>([]);
+  const [recTranslations, setRecTranslations] = useState<Record<string, RecommendationTranslationCache>>({});
   const [customCategoryTranslations, setCustomCategoryTranslations] = useState<Record<string, Partial<Record<PublicMenuLocale, string>>>>({});
   const [profileMenuCategories, setProfileMenuCategories] = useState<string[]>([]);
   const [profileCategoryTranslations, setProfileCategoryTranslations] = useState<Record<string, Partial<Record<PublicMenuLocale, string>>>>({});
@@ -111,6 +120,44 @@ export const PublicMenu: React.FC<Props> = ({
       cancelled = true;
     };
   }, [userId, dishes]);
+
+  useEffect(() => {
+    if (!userId) {
+      setRecTranslations({});
+      return;
+    }
+    setRecTranslations(loadRecommendationTranslations(userId));
+  }, [userId]);
+
+  // Tłumaczenia treści rekomendacji (nagłówki własne, tytuły, opisy pozycji) — cache w localStorage.
+  useEffect(() => {
+    if (!userId || recommendations.length === 0) return;
+
+    const missing = recommendations.filter(
+      (rec) => recommendationNeedsTranslation(rec) && !recommendationCacheReady(rec, recTranslations[rec.id]),
+    );
+    if (missing.length === 0) return;
+
+    let cancelled = false;
+    missing.slice(0, 4).forEach((rec) => {
+      fetchRecommendationTranslation(rec)
+        .then((cache) => {
+          if (cancelled) return;
+          setRecTranslations((prev) => {
+            const next = { ...prev, [rec.id]: cache };
+            saveRecommendationTranslations(userId, next);
+            return next;
+          });
+        })
+        .catch(() => {
+          /* fallback: polskie etykiety statyczne + oryginalne treści */
+        });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, recommendations, recTranslations]);
 
   const recByDish = recommendationsByDishId(recommendations);
 
@@ -520,6 +567,7 @@ export const PublicMenu: React.FC<Props> = ({
           <PublicDishDetail
             dish={dish}
             recommendation={recByDish[dish.id] ?? null}
+            recTranslationCache={recTranslations[recByDish[dish.id]?.id ?? ''] ?? null}
             menuLocale={menuLocale}
             onBack={goBack}
             showWatermark={showWatermark}
@@ -775,6 +823,9 @@ export const PublicMenu: React.FC<Props> = ({
                   key={dish.id}
                   dish={dish}
                   recommendation={recByDish[dish.id] ?? null}
+                  recTranslationCache={
+                    recByDish[dish.id] ? recTranslations[recByDish[dish.id].id] ?? null : null
+                  }
                   menuLocale={menuLocale}
                   basePath={menuBasePath}
                   baseHash={menuBaseHash}

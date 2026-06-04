@@ -13,10 +13,12 @@ import { WatermarkWrapper } from './WatermarkWrapper';
 import { DishRecommendationBadge, DishRecommendationBox } from './DishRecommendationBox';
 import { ShareLinkButton } from './ShareLinkButton';
 import type { DishRecommendation } from '../types';
+import type { RecommendationTranslationCache } from '../utils/recommendationTranslations';
 
 interface Props {
   dish: Dish;
   recommendation?: DishRecommendation | null;
+  recTranslationCache?: RecommendationTranslationCache | null;
   menuLocale?: PublicMenuLocale;
   basePath?: string;
   baseHash?: string;
@@ -31,6 +33,7 @@ interface Props {
 export const PublicDishCard: React.FC<Props> = ({
   dish,
   recommendation = null,
+  recTranslationCache = null,
   menuLocale = 'pl',
   basePath = '/menu/demo',
   baseHash = '#/menu/demo',
@@ -92,7 +95,9 @@ export const PublicDishCard: React.FC<Props> = ({
       </style>
       {/* Hero Image */}
       <WatermarkWrapper show={!!showWatermark} className="h-64 overflow-hidden relative">
-        {recommendation?.isActive && <DishRecommendationBadge type={recommendation.type} />}
+        {recommendation?.isActive && (
+          <DishRecommendationBadge type={recommendation.type} menuLocale={menuLocale} />
+        )}
         <img
           src={dish.imageUrl}
           alt={copy.name}
@@ -141,6 +146,8 @@ export const PublicDishCard: React.FC<Props> = ({
           <DishRecommendationBox
             recommendation={recommendation}
             dishName={copy.name}
+            menuLocale={menuLocale}
+            translationCache={recTranslationCache}
             className="mb-4"
           />
         )}

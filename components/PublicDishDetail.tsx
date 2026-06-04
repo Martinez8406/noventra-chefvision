@@ -13,10 +13,12 @@ import { ChevronLeft, Info, Utensils, UtensilsCrossed } from 'lucide-react';
 import { BRAND_LOGO_SRC } from '../constants';
 import { WatermarkWrapper } from './WatermarkWrapper';
 import { ShareLinkButton } from './ShareLinkButton';
+import type { RecommendationTranslationCache } from '../utils/recommendationTranslations';
 
 interface Props {
   dish: Dish;
   recommendation?: DishRecommendation | null;
+  recTranslationCache?: RecommendationTranslationCache | null;
   menuLocale?: PublicMenuLocale;
   onBack: () => void;
   showWatermark?: boolean;
@@ -29,6 +31,7 @@ interface Props {
 export const PublicDishDetail: React.FC<Props> = ({
   dish,
   recommendation = null,
+  recTranslationCache = null,
   menuLocale = 'pl',
   onBack,
   showWatermark,
@@ -77,7 +80,9 @@ export const PublicDishDetail: React.FC<Props> = ({
       {/* Hero Image Section – wysokość tak, by całe danie + znak wodny były widoczne */}
       <WatermarkWrapper show={!!showWatermark} className="relative h-[75vh] md:h-[85vh] min-h-[400px] overflow-hidden bg-slate-950">
         <>
-          {recommendation?.isActive && <DishRecommendationBadge type={recommendation.type} />}
+          {recommendation?.isActive && (
+            <DishRecommendationBadge type={recommendation.type} menuLocale={menuLocale} />
+          )}
           <img src={dish.imageUrl} alt={copy.name} className="w-full h-full object-cover object-center scale-150" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
@@ -161,6 +166,8 @@ export const PublicDishDetail: React.FC<Props> = ({
           <DishRecommendationBox
             recommendation={recommendation}
             dishName={copy.name}
+            menuLocale={menuLocale}
+            translationCache={recTranslationCache}
           />
         )}
 
