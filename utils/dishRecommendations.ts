@@ -5,8 +5,8 @@ export const RECOMMENDATIONS_STORAGE_KEY = (userId: string) =>
   `chefvision_dish_recommendations:${userId}`;
 
 export const RECOMMENDATION_BADGE: Record<DishRecommendationType, string> = {
-  polecane: 'Polecane',
-  popularne: 'Popularne',
+  polecane: 'Szef kuchni poleca',
+  popularne: 'Najlepiej sprzedawane',
   zestaw: 'W zestawie taniej',
 };
 

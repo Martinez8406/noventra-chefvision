@@ -1,5 +1,5 @@
 import React from 'react';
-import { Gift } from 'lucide-react';
+import { Flame, Gift, Star } from 'lucide-react';
 import type { DishRecommendation, PublicMenuLocale } from '../types';
 import { calcSavingsPercent } from '../utils/dishRecommendations';
 import {
@@ -59,40 +59,97 @@ function ItemThumb({ item }: { item: DishRecommendation['items'][0] }) {
   );
 }
 
-const BADGE_SWAY_STYLES = `
-  @keyframes chefvisionRecBadgeSway {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(3px); }
-    75% { transform: translateX(-3px); }
+const GOLD_RIBBON_STYLES = `
+  .chefvision-gold-ribbon-wrap {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    max-width: calc(100% - 20px);
+    pointer-events: none;
   }
-  .chefvision-rec-badge-sway {
-    animation: chefvisionRecBadgeSway 3.2s ease-in-out infinite;
+  .chefvision-gold-ribbon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: #D4AF37;
+    color: #ffffff;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
   }
-  .group:hover .chefvision-rec-badge-sway {
-    animation-play-state: paused;
+  .chefvision-gold-ribbon::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 55%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.15) 35%,
+      rgba(255, 255, 255, 0.45) 50%,
+      rgba(255, 255, 255, 0.15) 65%,
+      transparent 100%
+    );
+    transform: skewX(-18deg);
+    animation: chefvisionRibbonShine 2.8s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes chefvisionRibbonShine {
+    0% {
+      left: -120%;
+    }
+    100% {
+      left: 140%;
+    }
+  }
+  .chefvision-gold-ribbon__icon,
+  .chefvision-gold-ribbon__text {
+    position: relative;
+    z-index: 1;
+  }
+  .chefvision-gold-ribbon__icon {
+    flex-shrink: 0;
+    opacity: 0.95;
   }
   @media (prefers-reduced-motion: reduce) {
-    .chefvision-rec-badge-sway {
+    .chefvision-gold-ribbon::after {
       animation: none;
     }
   }
 `;
 
+function RibbonIcon({ type }: { type: DishRecommendation['type'] }) {
+  const cls = 'chefvision-gold-ribbon__icon';
+  if (type === 'polecane') return <Star size={11} className={cls} strokeWidth={2.5} aria-hidden />;
+  if (type === 'popularne') return <Flame size={11} className={cls} strokeWidth={2.5} aria-hidden />;
+  return <Gift size={11} className={cls} strokeWidth={2.25} aria-hidden />;
+}
+
 export const DishRecommendationBadge: React.FC<{
   type: DishRecommendation['type'];
   menuLocale?: PublicMenuLocale;
 }> = ({ type, menuLocale = 'pl' }) => {
-  const badgeClass =
-    type === 'popularne' ? 'bg-violet-600/90 text-white' : 'bg-emerald-600/90 text-white';
+  const label = getPublicRecommendationBadge(type, menuLocale);
 
   return (
     <>
-      <style>{BADGE_SWAY_STYLES}</style>
-      <span
-        className={`chefvision-rec-badge-sway absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-sm ${badgeClass}`}
-      >
-        {getPublicRecommendationBadge(type, menuLocale)}
-      </span>
+      <style>{GOLD_RIBBON_STYLES}</style>
+      <div className="chefvision-gold-ribbon-wrap" aria-hidden>
+        <div className="chefvision-gold-ribbon">
+          <RibbonIcon type={type} />
+          <span className="chefvision-gold-ribbon__text">{label}</span>
+        </div>
+      </div>
     </>
   );
 };

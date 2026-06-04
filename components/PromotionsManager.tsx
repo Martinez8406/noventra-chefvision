@@ -16,8 +16,8 @@ interface Props {
 }
 
 const TYPE_OPTIONS: { value: DishRecommendationType; label: string; desc: string; icon?: string }[] = [
-  { value: 'polecane', label: 'Polecane', desc: 'Pairing kelnerski — wino, dodatek', icon: '👌' },
-  { value: 'popularne', label: 'Popularne', desc: 'Social proof — co inni zamawiają', icon: '🔥' },
+  { value: 'polecane', label: 'Szef kuchni poleca', desc: "Chef's choice — pairing kelnerski", icon: '👌' },
+  { value: 'popularne', label: 'Najlepiej sprzedawane', desc: 'Bestseller — social proof', icon: '🔥' },
   { value: 'zestaw', label: 'W zestawie taniej', desc: 'Zestaw promocyjny z oszczędnością', icon: 'gift' },
 ];
 

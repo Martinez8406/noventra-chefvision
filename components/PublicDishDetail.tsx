@@ -78,13 +78,14 @@ export const PublicDishDetail: React.FC<Props> = ({
         `}
       </style>
       {/* Hero Image Section – wysokość tak, by całe danie + znak wodny były widoczne */}
-      <WatermarkWrapper show={!!showWatermark} className="relative h-[75vh] md:h-[85vh] min-h-[400px] overflow-hidden bg-slate-950">
-        <>
-          {recommendation?.isActive && (
-            <DishRecommendationBadge type={recommendation.type} menuLocale={menuLocale} />
-          )}
-          <img src={dish.imageUrl} alt={copy.name} className="w-full h-full object-cover object-center scale-150" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+      <div className="relative h-[75vh] md:h-[85vh] min-h-[400px] overflow-hidden bg-slate-950">
+        {recommendation?.isActive && (
+          <DishRecommendationBadge type={recommendation.type} menuLocale={menuLocale} />
+        )}
+        <WatermarkWrapper show={!!showWatermark} className="relative h-full">
+          <>
+            <img src={dish.imageUrl} alt={copy.name} className="w-full h-full object-cover object-center scale-150" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
           <button 
             onClick={onBack}
@@ -94,11 +95,12 @@ export const PublicDishDetail: React.FC<Props> = ({
             <ChevronLeft size={24} className={isRtl ? 'scale-x-[-1]' : undefined} aria-hidden />
           </button>
 
-          <div className="absolute bottom-8 start-8 end-8 text-white">
-            <h1 className="text-4xl md:text-6xl font-serif italic mb-2 tracking-tight">{copy.name}</h1>
-          </div>
-        </>
-      </WatermarkWrapper>
+            <div className="absolute bottom-8 start-8 end-8 text-white">
+              <h1 className="text-4xl md:text-6xl font-serif italic mb-2 tracking-tight">{copy.name}</h1>
+            </div>
+          </>
+        </WatermarkWrapper>
+      </div>
 
       {shareUrl && (
         <div className="max-w-2xl mx-auto px-6 pt-4 flex justify-end">

@@ -94,16 +94,18 @@ export const PublicDishCard: React.FC<Props> = ({
         `}
       </style>
       {/* Hero Image */}
-      <WatermarkWrapper show={!!showWatermark} className="h-64 overflow-hidden relative">
+      <div className="relative h-64 overflow-hidden">
         {recommendation?.isActive && (
           <DishRecommendationBadge type={recommendation.type} menuLocale={menuLocale} />
         )}
-        <img
-          src={dish.imageUrl}
-          alt={copy.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        />
-      </WatermarkWrapper>
+        <WatermarkWrapper show={!!showWatermark} className="h-full">
+          <img
+            src={dish.imageUrl}
+            alt={copy.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        </WatermarkWrapper>
+      </div>
 
       <div className="p-6">
         {dish.menuPrice ? (
