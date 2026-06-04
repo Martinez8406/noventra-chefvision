@@ -307,7 +307,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                   value={editing.bundlePriceOutside ?? ''}
                   onChange={(e) => updateEditing({ bundlePriceOutside: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm"
-                  placeholder="67"
+                  placeholder="np 67"
                 />
               </div>
               <div className="space-y-2">
@@ -320,7 +320,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                   value={editing.bundlePrice ?? ''}
                   onChange={(e) => updateEditing({ bundlePrice: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm"
-                  placeholder="55"
+                  placeholder="np 55"
                 />
               </div>
               {savingsPreview != null && savingsPreview > 0 && (
