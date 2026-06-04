@@ -221,7 +221,7 @@ export const MenuLanguageSwitcher: React.FC<Props> = ({ value, onChange }) => {
   return (
     <div
       ref={rootRef}
-      className={`fixed top-4 z-[110] ${value === 'he' || value === 'ar' ? 'left-4 right-auto' : 'right-4 left-auto'}`}
+      className={`fixed top-4 z-[110] ${value === 'he' || value === 'ar' ? 'left-6 right-auto' : 'right-6 left-auto'}`}
       role="group"
       aria-label="Język menu"
     >
