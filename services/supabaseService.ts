@@ -696,6 +696,52 @@ export const authService = {
         if (repaired) profileData = repaired;
       }
 
+      // Trial bez trial_ends_at → w aplikacji trial nigdy nie wygasa (isTrialActive).
+      const isTrialWithoutEndDate =
+        profileData &&
+        (profileData.plan === 'trial' || profileData.subscription_status === 'trial') &&
+        !profileData.trial_ends_at;
+
+      if (isTrialWithoutEndDate && profileData) {
+        const signupAt = user.created_at ? new Date(user.created_at) : new Date();
+        const trialEnds = new Date(signupAt);
+        trialEnds.setDate(trialEnds.getDate() + 14);
+        const { data: repaired } = await supabase
+          .from('profiles')
+          .update({
+            trial_ends_at: trialEnds.toISOString(),
+            trial_tokens: profileData.trial_tokens ?? TRIAL_TOKENS,
+            plan: profileData.plan ?? 'trial',
+            subscription_status: profileData.subscription_status ?? 'trial',
+            ai_credits: profileData.ai_credits ?? profileData.trial_tokens ?? TRIAL_TOKENS,
+          })
+          .eq('id', user.id)
+          .select()
+          .single();
+        if (repaired) profileData = repaired;
+      }
+
+      // Trial po dacie trial_ends_at — zsynchronizuj plan w bazie (inaczej w tabeli zostaje "trial").
+      const isExpiredTrial =
+        profileData &&
+        (profileData.plan === 'trial' || profileData.subscription_status === 'trial') &&
+        profileData.trial_ends_at &&
+        new Date(profileData.trial_ends_at).getTime() <= Date.now() &&
+        !profileData.stripe_subscription_id;
+
+      if (isExpiredTrial && profileData) {
+        const { data: repaired } = await supabase
+          .from('profiles')
+          .update({
+            plan: 'free',
+            subscription_status: 'free_limited',
+          })
+          .eq('id', user.id)
+          .select()
+          .single();
+        if (repaired) profileData = repaired;
+      }
+
       if (typeof window !== 'undefined') {
         if (isPremiumFromDb) {
           localStorage.setItem('chefvision_premium', '1');

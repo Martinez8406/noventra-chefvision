@@ -46,7 +46,7 @@ export const TrialPlanUpgradeCard: React.FC<Props> = ({ statusLabel, onUpgrade }
         </ul>
 
         <p className="mt-3 text-[10px] leading-relaxed text-zinc-500">
-          Po trialie przejdź na Premium, aby zachować generowanie AI.
+          Po skończeniu planu Trial przejdź na Premium, aby zachować wszystkie funkcje.
         </p>
 
         <button

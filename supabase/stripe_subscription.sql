@@ -53,7 +53,7 @@ $$;
 
 drop trigger if exists profiles_set_trial_defaults on public.profiles;
 create trigger profiles_set_trial_defaults
-  before insert on public.profiles
+  before insert or update on public.profiles
   for each row execute function public.set_trial_defaults_on_profile();
 
 commit;
