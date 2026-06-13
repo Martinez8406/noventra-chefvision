@@ -1,6 +1,6 @@
-import { handleTranslateCategory } from './translate/category.js';
-import { handleTranslateDish } from './translate/dish.js';
-import { handleTranslateRecommendation } from './translate/recommendation.js';
+import { handleTranslateCategory } from '../lib/translate/category.js';
+import { handleTranslateDish } from '../lib/translate/dish.js';
+import { handleTranslateRecommendation } from '../lib/translate/recommendation.js';
 
 const VALID_TARGETS = new Set(['dish', 'category', 'recommendation']);
 
