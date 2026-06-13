@@ -100,6 +100,7 @@ const App: React.FC = () => {
   const [savedBackdrops, setSavedBackdrops] = useState<Backdrop[]>([]);
   const [statusToast, setStatusToast] = useState<string | null>(null);
   const [publicHasWatermark, setPublicHasWatermark] = useState<boolean>(false);
+  const [publicMenuLoading, setPublicMenuLoading] = useState(false);
   
   useEffect(() => {
     let subscription: any = null;
@@ -155,12 +156,16 @@ const App: React.FC = () => {
     // Nie ustawiamy isSyncing=true przy ponownych odświeżeniach (np. po token refresh),
     // żeby nie odmontowywać ChefsStudio i nie resetować stanu formularza.
     if (isInitialLoad) setIsSyncing(true);
+    let loadingPublicMenu = false;
     try {
       const hashMatch = hash.match(/#\/menu\/([^/?#]+)(?:\/dish\/([^/?#]+))?/);
       const pathMatch = pathname.match(/^\/menu\/([^/]+)(?:\/dish\/([^/]+))?\/?$/);
       const publicMenuUserId =
         safeDecodeRouteParam(hashMatch?.[1]) ?? safeDecodeRouteParam(pathMatch?.[1]);
       if (publicMenuUserId) {
+        loadingPublicMenu = true;
+        setPublicMenuLoading(true);
+        setDishes([]);
         const ownerProfile = await authService.getProfileById(publicMenuUserId);
         if (ownerProfile) {
           setPublicHasWatermark(ownerProfile.subscriptionStatus === 'free_limited');
@@ -172,6 +177,7 @@ const App: React.FC = () => {
         setDishes(data);
         setSavedBackdrops([]);
       } else {
+        setPublicMenuLoading(false);
         if (session?.user?.id === 'demo') {
           const demoProfile: UserProfile = {
             id: 'local-chef',
@@ -219,6 +225,7 @@ const App: React.FC = () => {
     } finally { 
       setIsSyncing(false);
       setIsInitialLoad(false);
+      if (loadingPublicMenu) setPublicMenuLoading(false);
     }
   };
 
@@ -454,7 +461,7 @@ const App: React.FC = () => {
         usePathRouting={usePathRouting}
         onPathChange={() => setPathname(window.location.pathname)}
         showWatermark={publicHasWatermark}
-        loading={isSyncing}
+        loading={publicMenuLoading}
       />
     );
   }

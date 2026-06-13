@@ -12,6 +12,7 @@ import { ShareLinkButton } from './ShareLinkButton';
 import { normalizeLogoPosition, normalizeLogoScale } from '../utils/logoFrame';
 import { normalizeCoverPosition, normalizeCoverScale } from '../utils/coverFrame';
 import { buildPublicMenuUrl, getShareMenuText } from '../utils/publicMenuShare';
+import { PublicMenuSkeleton } from './PublicMenuSkeleton';
 import {
   fetchRecommendationTranslation,
   loadRecommendationTranslations,
@@ -89,6 +90,7 @@ export const PublicMenu: React.FC<Props> = ({
   const [customCategoryTranslations, setCustomCategoryTranslations] = useState<Record<string, Partial<Record<PublicMenuLocale, string>>>>({});
   const [profileMenuCategories, setProfileMenuCategories] = useState<string[]>([]);
   const [profileCategoryTranslations, setProfileCategoryTranslations] = useState<Record<string, Partial<Record<PublicMenuLocale, string>>>>({});
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   // Track in-flight category translation requests to avoid duplicates
   const [inFlightKeys, setInFlightKeys] = useState<Record<string, true>>({});
@@ -186,20 +188,42 @@ export const PublicMenu: React.FC<Props> = ({
   };
 
   useEffect(() => {
-    if (!supabase || !userId) return;
+    setProfileLoaded(false);
+    setLogoUrl(null);
+    setLogoObjectPosition('center');
+    setLogoScale(1);
+    setCoverUrl(null);
+    setCoverObjectPosition('center');
+    setCoverScale(1);
+    setPrimaryColor('#6366f1');
+    setSecondaryColor('#ffffff');
+    setFontFamily('Inter');
+    setRestaurantName(null);
+    setGooglePlaceId(null);
+    setProfileMenuCategories([]);
+    setProfileCategoryTranslations({});
+
+    if (!supabase || !userId) {
+      setProfileLoaded(true);
+      return;
+    }
+
+    let cancelled = false;
     supabase
       .from('profiles')
       .select('logo_url, logo_object_position, logo_scale, cover_url, cover_object_position, cover_scale, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations')
       .eq('id', userId)
       .single()
       .then(({ data, error: profileError }) => {
+        if (cancelled) return;
         if (profileError) {
-          supabase
+          return supabase
             .from('profiles')
             .select('logo_url, cover_url, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations')
             .eq('id', userId)
             .single()
             .then(({ data: fallback }) => {
+              if (cancelled) return;
               if (fallback?.logo_url) setLogoUrl(fallback.logo_url);
               if (fallback?.cover_url) setCoverUrl(fallback.cover_url);
               if (fallback?.primary_color) setPrimaryColor(fallback.primary_color);
@@ -208,7 +232,6 @@ export const PublicMenu: React.FC<Props> = ({
               if (fallback?.restaurant_name) setRestaurantName(fallback.restaurant_name);
               setGooglePlaceId(fallback?.google_place_id?.trim() || null);
             });
-          return;
         }
         if (data?.logo_url) setLogoUrl(data.logo_url);
         setLogoObjectPosition(normalizeLogoPosition(data?.logo_object_position));
@@ -233,7 +256,14 @@ export const PublicMenu: React.FC<Props> = ({
         } else {
           setProfileCategoryTranslations({});
         }
+      })
+      .finally(() => {
+        if (!cancelled) setProfileLoaded(true);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   useEffect(() => {
@@ -429,6 +459,11 @@ export const PublicMenu: React.FC<Props> = ({
         });
     });
   }, [orderedKeys.join('|'), userId, customCategoryTranslations, inFlightKeys]);
+
+  const isMenuReady = !loading && profileLoaded;
+  if (!isMenuReady) {
+    return <PublicMenuSkeleton />;
+  }
 
   if (dishId) {
     const rawDishId = String(dishId).trim();
@@ -777,15 +812,7 @@ export const PublicMenu: React.FC<Props> = ({
       </div>
 
       <main className="w-full max-w-6xl mx-auto overflow-x-hidden pt-10 sm:pt-12 space-y-14">
-        {/* Stan ładowania */}
-        {loading && (
-          <div className="flex flex-col items-center justify-center py-32 gap-5">
-            <div className="w-10 h-10 border-4 border-slate-200 rounded-full animate-spin" style={{ borderTopColor: primaryColor }} />
-            <p className="text-slate-400 text-sm font-medium tracking-wide">Ładowanie menu…</p>
-          </div>
-        )}
-
-        {!loading && orderedKeys.map((category) => (
+        {orderedKeys.map((category) => (
           <section key={category} className="min-w-0 max-w-full">
             {/* Nagłówek kategorii — długie tłumaczenia zawijają się w dół, bez rozciągania menu */}
             <div className="mb-8 min-w-0 max-w-full space-y-3">
@@ -844,13 +871,13 @@ export const PublicMenu: React.FC<Props> = ({
           </section>
         ))}
 
-        {!loading && userDishes.length === 0 && (
+        {userDishes.length === 0 && (
           <p className="text-center text-slate-400 py-24 font-medium">
             Menu jest puste – zajrzyj tu wkrótce!
           </p>
         )}
 
-        {!loading && userDishes.length > 0 && (
+        {userDishes.length > 0 && (
           <p className="text-slate-400 text-xs text-center mt-6 pb-2 px-2">
             W naszej kuchni stawiamy na świeże składniki, dlatego każde podane danie jest unikalne i może
             nieznacznie różnić się od tego na zdjęciu
