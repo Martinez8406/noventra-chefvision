@@ -413,10 +413,10 @@ export const PublicMenu: React.FC<Props> = ({
     missing.slice(0, 5).forEach((category) => {
       const key = normalizeCategoryKey(category);
       setInFlightKeys((prev) => ({ ...prev, [key]: true }));
-      fetch('/api/translate-category', {
+      fetch('/api/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: category }),
+        body: JSON.stringify({ target: 'category', text: category }),
       })
         .then(async (r) => {
           const data = await r.json().catch(() => null);

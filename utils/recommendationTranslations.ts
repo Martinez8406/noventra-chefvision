@@ -267,10 +267,11 @@ export function recommendationCacheReady(
 export async function fetchRecommendationTranslation(
   rec: DishRecommendation,
 ): Promise<RecommendationTranslationCache> {
-  const res = await fetch('/api/translate-recommendation', {
+  const res = await fetch('/api/translate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      target: 'recommendation',
       type: rec.type,
       customHeaderText: rec.customHeaderText?.trim() || null,
       items: rec.items.map((i) => ({

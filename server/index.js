@@ -4,9 +4,7 @@ import Stripe from 'stripe';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { handleGenerateImage } from '../api/generate-image.js';
-import { handleTranslateDish } from '../api/translate-dish.js';
-import { handleTranslateCategory } from '../api/translate-category.js';
-import { handleTranslateRecommendation } from '../api/translate-recommendation.js';
+import { handleTranslate } from '../api/translate.js';
 import { handleSaveMenuCategories } from '../api/save-menu-categories.js';
 import { handleTrackMenuOpen } from '../api/track-menu-open.js';
 import { handleGetMenuOpenStats } from '../api/get-menu-open-stats.js';
@@ -147,36 +145,26 @@ app.post('/api/generate-image', async (req, res) => {
   }
 });
 
-app.post('/api/translate-dish', async (req, res) => {
+app.post('/api/translate', async (req, res) => {
+  const target = typeof req?.body?.target === 'string' ? req.body.target.trim() : '';
   const dishId =
     typeof req?.body?.dishId === 'string' ? req.body.dishId.trim() : '';
   const hasAuth = typeof req.headers.authorization === 'string' && req.headers.authorization.trim().length > 0;
-  console.log(`[translate-dish] request dishId=${dishId || '(missing)'} auth=${hasAuth ? 'yes' : 'no'}`);
-  const result = await handleTranslateDish({
+  if (target === 'dish') {
+    console.log(`[translate/dish] request dishId=${dishId || '(missing)'} auth=${hasAuth ? 'yes' : 'no'}`);
+  }
+  const result = await handleTranslate({
+    req,
     authorization: req.headers.authorization,
     body: req.body || {},
   });
-  if (result.status !== 200) {
-    console.warn('[translate-dish] response', result.status, result.body?.error || result.body);
-  } else {
-    console.log('[translate-dish] ok');
+  if (target === 'dish') {
+    if (result.status !== 200) {
+      console.warn('[translate/dish] response', result.status, result.body?.error || result.body);
+    } else {
+      console.log('[translate/dish] ok');
+    }
   }
-  return res.status(result.status).json(result.body);
-});
-
-app.post('/api/translate-category', async (req, res) => {
-  const result = await handleTranslateCategory({
-    req,
-    body: req.body || {},
-  });
-  return res.status(result.status).json(result.body);
-});
-
-app.post('/api/translate-recommendation', async (req, res) => {
-  const result = await handleTranslateRecommendation({
-    req,
-    body: req.body || {},
-  });
   return res.status(result.status).json(result.body);
 });
 

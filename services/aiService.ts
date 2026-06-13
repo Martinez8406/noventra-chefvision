@@ -169,10 +169,10 @@ export async function requestMenuTranslations(
 ): Promise<{ translations: Record<'en' | 'he' | 'ar' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'ja' | 'fr' | 'cs' | 'nl' | 'zh', MenuTranslationEntry> } | null> {
   let response: Response;
   try {
-    response = await fetch('/api/translate-dish', {
+    response = await fetch('/api/translate', {
       method: 'POST',
       headers: await getAuthHeaders(),
-      body: JSON.stringify({ dishId }),
+      body: JSON.stringify({ target: 'dish', dishId }),
     });
   } catch (error) {
     console.warn('[translate-dish] Nie udało się połączyć z API tłumaczeń.', error);

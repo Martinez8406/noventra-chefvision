@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
-import { getDishOwnerId, getSupabaseServerCredentials } from './supabaseServerEnv.js';
+import { getDishOwnerId, getSupabaseServerCredentials } from '../supabaseServerEnv.js';
 
 async function verifyToken(authHeader) {
   const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
@@ -386,19 +386,4 @@ Opis dania do przetłumaczenia (PL): ${description}`;
     const message = err instanceof Error ? err.message : String(err);
     return { status: 500, body: { error: message || 'Błąd API OpenAI.' } };
   }
-}
-
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  const result = await handleTranslateDish({
-    authorization: req.headers.authorization,
-    body: req.body || {},
-  });
-  return res.status(result.status).json(result.body);
 }
