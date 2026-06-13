@@ -64,7 +64,7 @@ export const PublicDishCard: React.FC<Props> = ({
       onClick={openDetail}
       dir={isRtl ? 'rtl' : 'ltr'}
       lang={menuLocale === 'pl' ? 'pl' : menuLocale}
-      className="bg-white rounded-3xl overflow-hidden shadow-xl border border-slate-100 max-w-sm mx-auto transition-all hover:scale-[1.02] cursor-pointer group"
+      className="bg-white rounded-3xl overflow-hidden shadow-xl border border-slate-100 w-full min-w-0 transition-all hover:scale-[1.02] cursor-pointer group"
       style={
         isRtl
           ? { fontFamily: `'Noto Sans Hebrew', 'Noto Naskh Arabic', 'Segoe UI', system-ui, sans-serif` }
@@ -72,7 +72,7 @@ export const PublicDishCard: React.FC<Props> = ({
       }
     >
       {/* Hero Image */}
-      <div className="relative h-64 overflow-hidden">
+      <div className="relative h-64 w-full overflow-hidden">
         {recommendation?.isActive && (
           <DishRecommendationBadge type={recommendation.type} menuLocale={menuLocale} />
         )}
