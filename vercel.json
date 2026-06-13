@@ -7,9 +7,6 @@
     "api/stripe-webhook.js": {
       "maxDuration": 30,
       "includeFiles": "api/stripe/**"
-    },
-    "api/**/*.js": {
-      "maxDuration": 30
     }
   },
   "rewrites": [
