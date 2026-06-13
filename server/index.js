@@ -11,7 +11,6 @@ import { handleSaveMenuCategories } from '../api/save-menu-categories.js';
 import { handleTrackMenuOpen } from '../api/track-menu-open.js';
 import { handleGetMenuOpenStats } from '../api/get-menu-open-stats.js';
 import { handleFeedback } from '../api/feedback.js';
-import { handleTestEmail } from '../api/test-email.js';
 import { handleStripeWebhook, readStripeWebhookBody } from '../api/stripe/webhook.js';
 import { createBillingPortalSession } from '../api/stripe/createBillingPortalSession.js';
 
@@ -209,11 +208,6 @@ app.post('/api/feedback', async (req, res) => {
     req,
     body: req.body || {},
   });
-  return res.status(result.status).json(result.body);
-});
-
-app.post('/api/test-email', async (req, res) => {
-  const result = await handleTestEmail();
   return res.status(result.status).json(result.body);
 });
 
