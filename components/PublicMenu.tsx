@@ -13,6 +13,7 @@ import { normalizeLogoPosition, normalizeLogoScale } from '../utils/logoFrame';
 import { normalizeCoverPosition, normalizeCoverScale } from '../utils/coverFrame';
 import { buildPublicMenuUrl, getShareMenuText } from '../utils/publicMenuShare';
 import { PublicMenuSkeleton } from './PublicMenuSkeleton';
+import { GuestFeedbackSection } from './GuestFeedbackSection';
 import {
   fetchRecommendationTranslation,
   loadRecommendationTranslations,
@@ -91,6 +92,7 @@ export const PublicMenu: React.FC<Props> = ({
   const [profileMenuCategories, setProfileMenuCategories] = useState<string[]>([]);
   const [profileCategoryTranslations, setProfileCategoryTranslations] = useState<Record<string, Partial<Record<PublicMenuLocale, string>>>>({});
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [feedbackAvailable, setFeedbackAvailable] = useState(false);
 
   // Track in-flight category translation requests to avoid duplicates
   const [inFlightKeys, setInFlightKeys] = useState<Record<string, true>>({});
@@ -202,6 +204,7 @@ export const PublicMenu: React.FC<Props> = ({
     setGooglePlaceId(null);
     setProfileMenuCategories([]);
     setProfileCategoryTranslations({});
+    setFeedbackAvailable(false);
 
     if (!supabase || !userId) {
       setProfileLoaded(true);
@@ -211,7 +214,7 @@ export const PublicMenu: React.FC<Props> = ({
     let cancelled = false;
     supabase
       .from('profiles')
-      .select('logo_url, logo_object_position, logo_scale, cover_url, cover_object_position, cover_scale, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations')
+      .select('logo_url, logo_object_position, logo_scale, cover_url, cover_object_position, cover_scale, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations, feedback_available')
       .eq('id', userId)
       .single()
       .then(({ data, error: profileError }) => {
@@ -231,6 +234,7 @@ export const PublicMenu: React.FC<Props> = ({
               if (fallback?.font_family) setFontFamily(fallback.font_family);
               if (fallback?.restaurant_name) setRestaurantName(fallback.restaurant_name);
               setGooglePlaceId(fallback?.google_place_id?.trim() || null);
+              setFeedbackAvailable(false);
             });
         }
         if (data?.logo_url) setLogoUrl(data.logo_url);
@@ -244,6 +248,7 @@ export const PublicMenu: React.FC<Props> = ({
         if (data?.font_family) setFontFamily(data.font_family);
         if (data?.restaurant_name) setRestaurantName(data.restaurant_name);
         setGooglePlaceId(data?.google_place_id?.trim() || null);
+        setFeedbackAvailable((data as { feedback_available?: boolean })?.feedback_available === true);
         if (Array.isArray((data as any)?.menu_categories)) {
           const list = (data as any).menu_categories.map((x: any) => String(x).trim()).filter(Boolean);
           setProfileMenuCategories(list);
@@ -797,7 +802,7 @@ export const PublicMenu: React.FC<Props> = ({
           variant="fab"
         />
       </div>
-      <div className="max-w-6xl mx-auto pt-5 sm:pt-7">
+      <div className="w-full max-w-6xl mx-auto pt-5 sm:pt-7">
         <MenuHeroIdentityPreview
           logoUrl={logoUrl}
           logoPosition={logoObjectPosition}
@@ -813,7 +818,7 @@ export const PublicMenu: React.FC<Props> = ({
 
       <main className="w-full max-w-6xl mx-auto overflow-x-hidden pt-10 sm:pt-12 space-y-14">
         {orderedKeys.map((category) => (
-          <section key={category} className="min-w-0 max-w-full">
+          <section key={category} className="w-full min-w-0 max-w-full">
             {/* Nagłówek kategorii — długie tłumaczenia zawijają się w dół, bez rozciągania menu */}
             <div className="mb-8 min-w-0 max-w-full space-y-3">
               <h2
@@ -841,13 +846,17 @@ export const PublicMenu: React.FC<Props> = ({
               <div className="h-px w-full" style={{ backgroundColor: primaryColor, opacity: 0.25 }} />
             </div>
 
-            {/* Siatka kart */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+            {/* Siatka kart — na mobile zawsze 1 kolumna; pojedyncze danie rozciąga się na całą szerokość siatki */}
+            <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2 md:gap-10 lg:grid-cols-3 justify-items-stretch">
               {groups[category].map((dish) => {
                 const dishCopy = getPublicDishCopy(dish, menuLocale);
+                const singleDishInSection = groups[category].length === 1;
                 return (
-                <PublicDishCard
+                <div
                   key={dish.id}
+                  className={`w-full min-w-0 ${singleDishInSection ? 'md:col-span-2 lg:col-span-3' : ''}`}
+                >
+                <PublicDishCard
                   dish={dish}
                   recommendation={recByDish[dish.id] ?? null}
                   recTranslationCache={
@@ -866,7 +875,9 @@ export const PublicMenu: React.FC<Props> = ({
                   shareTitle={dishCopy.name}
                   shareText={`${dishCopy.name} — ${restaurantTitle}`}
                 />
-              )})}
+                </div>
+              );
+              })}
             </div>
           </section>
         ))}
@@ -879,9 +890,18 @@ export const PublicMenu: React.FC<Props> = ({
 
         {userDishes.length > 0 && (
           <p className="text-slate-400 text-xs text-center mt-6 pb-2 px-2">
-            W naszej kuchni stawiamy na świeże składniki, dlatego każde podane danie jest unikalne i może
-            nieznacznie różnić się od tego na zdjęciu
+            {isPolishLocale
+              ? 'W naszej kuchni stawiamy na świeże składniki, dlatego każde podane danie jest unikalne i może nieznacznie różnić się od tego na zdjęciu'
+              : 'In our kitchen we focus on fresh ingredients, so each dish served is unique and may differ slightly from the one in the photo'}
           </p>
+        )}
+
+        {feedbackAvailable && (
+          <GuestFeedbackSection
+            restaurantId={userId}
+            primaryColor={primaryColor}
+            menuLocale={menuLocale}
+          />
         )}
       </main>
 

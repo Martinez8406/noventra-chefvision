@@ -54,12 +54,14 @@ type AppTab =
   | 'settings-qr'
   | 'settings-branding'
   | 'settings-google'
+  | 'settings-feedback'
   | 'settings-subscription';
 
 const SETTINGS_SUB_NAV: { id: AppTab; label: string }[] = [
   { id: 'settings-qr', label: 'Kod QR' },
   { id: 'settings-branding', label: 'Logo / zdjęcie główne' },
   { id: 'settings-google', label: 'Opinie Google' },
+  { id: 'settings-feedback', label: 'Opinie i sugestie' },
   { id: 'settings-subscription', label: 'Zarządzaj subskrypcją' },
 ];
 
@@ -67,6 +69,7 @@ function settingsSectionFromTab(tab: AppTab): SettingsSection | null {
   if (tab === 'settings-qr') return 'qr';
   if (tab === 'settings-branding') return 'branding';
   if (tab === 'settings-google') return 'google';
+  if (tab === 'settings-feedback') return 'feedback';
   if (tab === 'settings-subscription') return 'subscription';
   return null;
 }

@@ -64,7 +64,7 @@ export const PublicDishCard: React.FC<Props> = ({
       onClick={openDetail}
       dir={isRtl ? 'rtl' : 'ltr'}
       lang={menuLocale === 'pl' ? 'pl' : menuLocale}
-      className="bg-white rounded-3xl overflow-hidden shadow-xl border border-slate-100 w-full min-w-0 transition-all hover:scale-[1.02] cursor-pointer group"
+      className="flex w-full max-w-none flex-col self-stretch overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-xl transition-all cursor-pointer group sm:hover:scale-[1.02]"
       style={
         isRtl
           ? { fontFamily: `'Noto Sans Hebrew', 'Noto Naskh Arabic', 'Segoe UI', system-ui, sans-serif` }
@@ -72,11 +72,11 @@ export const PublicDishCard: React.FC<Props> = ({
       }
     >
       {/* Hero Image */}
-      <div className="relative h-64 w-full overflow-hidden">
+      <div className="relative h-64 w-full shrink-0 overflow-hidden">
         {recommendation?.isActive && (
           <DishRecommendationBadge type={recommendation.type} menuLocale={menuLocale} />
         )}
-        <WatermarkWrapper show={!!showWatermark} className="h-full">
+        <WatermarkWrapper show={!!showWatermark} className="block h-full w-full">
           <img
             src={dish.imageUrl}
             alt={copy.name}
@@ -85,7 +85,7 @@ export const PublicDishCard: React.FC<Props> = ({
         </WatermarkWrapper>
       </div>
 
-      <div className="p-6">
+      <div className="w-full min-w-0 p-6">
         {dish.menuPrice ? (
           <div className={`mb-2 flex items-baseline gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
             <h3 className={`font-serif text-2xl text-slate-900 leading-tight ${isRtl ? 'text-end' : ''}`}>

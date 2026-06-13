@@ -2,9 +2,10 @@ import React from 'react';
 import { QRGenerator } from './QRGenerator';
 import { UploadLogo } from './UploadLogo';
 import { GoogleReviewsSettings } from './GoogleReviewsSettings';
+import { GuestFeedbackSettings } from './GuestFeedbackSettings';
 import { SubscriptionSettings } from './SubscriptionSettings';
 
-export type SettingsSection = 'qr' | 'branding' | 'google' | 'subscription';
+export type SettingsSection = 'qr' | 'branding' | 'google' | 'feedback' | 'subscription';
 
 interface Props {
   section: SettingsSection;
@@ -24,6 +25,10 @@ const SECTION_TITLES: Record<SettingsSection, { title: string; description: stri
   google: {
     title: 'Opinie Google',
     description: 'Połącz menu z Google, aby goście mogli zostawiać opinie jednym kliknięciem.',
+  },
+  feedback: {
+    title: 'Opinie i sugestie',
+    description: 'Pozwól gościom wysyłać uwagi i sugestie bezpośrednio z Live Menu na Twój e-mail.',
   },
   subscription: {
     title: 'Zarządzaj subskrypcją',
@@ -58,6 +63,10 @@ export const SettingsPanel: React.FC<Props> = ({ section, userId, restaurantName
         <div className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100">
           <GoogleReviewsSettings userId={userId} />
         </div>
+      )}
+
+      {section === 'feedback' && (
+        <GuestFeedbackSettings userId={userId} />
       )}
 
       {section === 'subscription' && (
