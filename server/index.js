@@ -9,8 +9,8 @@ import { handleSaveMenuCategories } from '../api/save-menu-categories.js';
 import { handleTrackMenuOpen } from '../api/track-menu-open.js';
 import { handleGetMenuOpenStats } from '../api/get-menu-open-stats.js';
 import { handleFeedback } from '../api/feedback.js';
-import { handleStripeWebhook, readStripeWebhookBody } from '../api/stripe/webhook.js';
-import { createBillingPortalSession } from '../api/stripe/createBillingPortalSession.js';
+import { handleStripeWebhook, readStripeWebhookBody } from '../lib/stripe/webhook.js';
+import { createBillingPortalSession } from '../lib/stripe/createBillingPortalSession.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(__dirname, '..', '.env.local') });

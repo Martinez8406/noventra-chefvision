@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
-import { getSupabaseServerCredentials } from './supabaseServerEnv.js';
-import { getSupabaseAdmin } from './stripe/supabaseAdmin.js';
+import { getSupabaseServerCredentials } from '../lib/supabaseServerEnv.js';
+import { getSupabaseAdmin } from '../lib/stripe/supabaseAdmin.js';
 
 // ─── Prompt constants (mirrors aiService.ts) ──────────────────────────────────
 

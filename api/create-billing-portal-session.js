@@ -1,4 +1,4 @@
-import { createBillingPortalSession } from './stripe/createBillingPortalSession.js';
+import { createBillingPortalSession } from '../lib/stripe/createBillingPortalSession.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

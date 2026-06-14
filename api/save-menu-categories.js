@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
-import { getSupabaseServerCredentials } from './supabaseServerEnv.js';
+import { getSupabaseServerCredentials } from '../lib/supabaseServerEnv.js';
 
 const TARGET_LOCALES = ['en', 'he', 'ar', 'uk', 'de', 'es', 'it', 'ko', 'ja', 'fr', 'cs', 'nl', 'zh'];
 

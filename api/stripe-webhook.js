@@ -4,7 +4,7 @@
  * Stripe Dashboard URL: https://<your-domain>/api/stripe/webhook
  * vercel.json rewrites that path → this function (/api/stripe-webhook).
  */
-import { handleStripeWebhook, readStripeWebhookBody } from './stripe/webhookCore.js';
+import { handleStripeWebhook, readStripeWebhookBody } from '../lib/stripe/webhookCore.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { getSupabaseServerCredentials } from './supabaseServerEnv.js';
+import { getSupabaseServerCredentials } from '../lib/supabaseServerEnv.js';
 
 async function verifyToken(authHeader) {
   const token = authHeader?.replace(/^Bearer\s+/i, '').trim();

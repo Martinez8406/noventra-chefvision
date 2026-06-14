@@ -4,9 +4,9 @@
   "devCommand": "npm run dev:full",
   "framework": "vite",
   "functions": {
-    "api/stripe-webhook.js": {
+    "api/**/*.js": {
       "maxDuration": 30,
-      "includeFiles": "api/stripe/**"
+      "includeFiles": "lib/**"
     }
   },
   "rewrites": [
