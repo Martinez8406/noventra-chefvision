@@ -19,7 +19,13 @@ export const PublicMenuSkeleton: React.FC = () => {
           </div>
         </div>
 
-        <div className="pt-10 sm:pt-12 space-y-14">
+        <div className="flex gap-2 overflow-hidden py-3 sm:py-4">
+          {[0, 1, 2, 3].map((tab) => (
+            <div key={tab} className="h-9 w-24 sm:w-28 shrink-0 rounded-full bg-slate-200/90" />
+          ))}
+        </div>
+
+        <div className="pt-6 sm:pt-8 space-y-14">
           {[0, 1].map((section) => (
             <section key={section} className="space-y-8">
               <div className="space-y-3">

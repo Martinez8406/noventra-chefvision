@@ -13,6 +13,7 @@ import { normalizeLogoPosition, normalizeLogoScale } from '../utils/logoFrame';
 import { normalizeCoverPosition, normalizeCoverScale } from '../utils/coverFrame';
 import { buildPublicMenuUrl, getShareMenuText } from '../utils/publicMenuShare';
 import { PublicMenuSkeleton } from './PublicMenuSkeleton';
+import { PublicMenuCategoryTabs } from './PublicMenuCategoryTabs';
 import { GuestFeedbackSection } from './GuestFeedbackSection';
 import {
   fetchRecommendationTranslation,
@@ -376,6 +377,21 @@ export const PublicMenu: React.FC<Props> = ({
     ...categoryOrder.filter((c) => groups[c]?.length),
     ...Object.keys(groups).filter((c) => !categoryOrder.includes(c) && groups[c]?.length),
   ];
+
+  const categorySectionId = (category: string) =>
+    `menu-cat-${normalizeCategoryKey(category).replace(/\s+/g, '-')}`;
+
+  const getCategoryLabel = (category: string): string => {
+    const base = getPublicMenuCategoryDisplay(category, menuLocale);
+    if (menuLocale === 'pl') return base;
+    const key = normalizeCategoryKey(category);
+    const fromProfile = Object.entries(profileCategoryTranslations || {}).find(
+      ([k]) => normalizeCategoryKey(String(k)) === key
+    )?.[1]?.[menuLocale];
+    if (typeof fromProfile === 'string' && fromProfile.trim()) return fromProfile;
+    if (base !== category) return base;
+    return customCategoryTranslations[key]?.[menuLocale] || category;
+  };
 
   // Pre-translate custom categories (not covered by our static map) and cache in localStorage.
   // This runs even in PL so that switching language later is instant.
@@ -816,32 +832,34 @@ export const PublicMenu: React.FC<Props> = ({
         />
       </div>
 
-      <main className="w-full max-w-6xl mx-auto overflow-x-hidden pt-10 sm:pt-12 space-y-14">
+      {orderedKeys.length > 0 && (
+        <div className="w-full max-w-6xl mx-auto">
+          <PublicMenuCategoryTabs
+            categories={orderedKeys}
+            getLabel={getCategoryLabel}
+            getSectionId={categorySectionId}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            fontFamily={isRtl ? `${rtlFontStack}, ${fontFamily}` : fontFamily}
+            isRtl={isRtl}
+          />
+        </div>
+      )}
+
+      <main className="w-full max-w-6xl mx-auto overflow-x-hidden pt-6 sm:pt-8 space-y-14">
         {orderedKeys.map((category) => (
-          <section key={category} className="w-full min-w-0 max-w-full">
+          <section
+            key={category}
+            id={categorySectionId(category)}
+            className="w-full min-w-0 max-w-full scroll-mt-20"
+          >
             {/* Nagłówek kategorii — długie tłumaczenia zawijają się w dół, bez rozciągania menu */}
             <div className="mb-8 min-w-0 max-w-full space-y-3">
               <h2
                 className="max-w-full text-xs font-black uppercase leading-relaxed tracking-[0.15em] break-words [overflow-wrap:anywhere] sm:tracking-[0.2em]"
                 style={{ color: primaryColor }}
               >
-                {(() => {
-                  const base = getPublicMenuCategoryDisplay(category, menuLocale);
-                  if (menuLocale === 'pl') return base;
-                  const key = normalizeCategoryKey(category);
-
-                  // 1) translations persisted in Supabase profiles
-                  const fromProfile = Object.entries(profileCategoryTranslations || {}).find(
-                    ([k]) => normalizeCategoryKey(String(k)) === key
-                  )?.[1]?.[menuLocale];
-                  if (typeof fromProfile === 'string' && fromProfile.trim()) return fromProfile;
-
-                  // 2) static map for built-in categories
-                  if (base !== category) return base;
-
-                  // 3) local cache / fallback
-                  return customCategoryTranslations[key]?.[menuLocale] || category;
-                })()}
+                {getCategoryLabel(category)}
               </h2>
               <div className="h-px w-full" style={{ backgroundColor: primaryColor, opacity: 0.25 }} />
             </div>

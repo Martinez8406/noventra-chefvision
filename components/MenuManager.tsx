@@ -243,6 +243,38 @@ export const MenuManager: React.FC<Props> = ({
     }
   };
 
+  const countDishesInCategory = (category: string) =>
+    dishes.filter((d) => (d.category ?? '').trim() === category.trim()).length;
+
+  const deleteCategory = (category: string) => {
+    const name = category.trim();
+    if (!name) return;
+
+    if (menuCategories.length <= 1) {
+      alert('Musi pozostać co najmniej jedna kategoria w menu.');
+      return;
+    }
+
+    const dishCount = countDishesInCategory(name);
+    const confirmMsg =
+      dishCount > 0
+        ? `Kategoria „${name}” jest przypisana do ${dishCount} pozycji w menu. Usunąć kategorię i odpiąć te dania?`
+        : `Czy na pewno chcesz usunąć kategorię „${name}"?`;
+
+    if (!confirm(confirmMsg)) return;
+
+    persistMenuCategories(menuCategories.filter((c) => c !== name));
+
+    for (const dish of dishes) {
+      if ((dish.category ?? '').trim() === name) onUpdateCategory(dish.id, null);
+    }
+
+    if (categoryEditName === name) {
+      setCategoryEditName(null);
+      setCategoryEditDraft('');
+    }
+  };
+
   const getBaseUrl = () =>
     `${window.location.origin}${(window.location.pathname || '/').replace(/\/+$/, '') || ''}`;
   const menuUrl = menuUserId ? `${getBaseUrl()}/#/menu/${menuUserId}` : '';
@@ -474,13 +506,21 @@ export const MenuManager: React.FC<Props> = ({
                                         >
                                           Zapisz
                                         </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => deleteCategory(cat)}
+                                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                          title="Usuń kategorię"
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
                                       </>
                                     ) : (
                                       <>
                                         <div className="flex-1 text-xs font-semibold text-slate-700 truncate" title={cat}>
                                           {cat}
                                         </div>
-                                        <div className="relative">
+                                        <div className="flex items-center gap-0.5 shrink-0">
                                           <button
                                             type="button"
                                             onClick={() => {
@@ -492,6 +532,14 @@ export const MenuManager: React.FC<Props> = ({
                                             title="Edycja"
                                           >
                                             <Settings size={14} />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => deleteCategory(cat)}
+                                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                            title="Usuń kategorię"
+                                          >
+                                            <Trash2 size={14} />
                                           </button>
                                         </div>
                                       </>
