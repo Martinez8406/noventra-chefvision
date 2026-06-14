@@ -1,3 +1,4 @@
+import '../lib/loadEnv.js';
 import { config } from 'dotenv';
 import express from 'express';
 import Stripe from 'stripe';
@@ -14,6 +15,16 @@ import { createBillingPortalSession } from '../lib/stripe/createBillingPortalSes
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(__dirname, '..', '.env.local') });
+
+const hasResend =
+  !!process.env.RESEND_API_KEY?.trim() && !!process.env.RESEND_FROM_EMAIL?.trim();
+if (!hasResend) {
+  console.warn(
+    '[SERVER] Brak RESEND_API_KEY lub RESEND_FROM_EMAIL — opinie gości (/api/feedback) nie wyślą e-maila.'
+  );
+} else {
+  console.log('[SERVER] Resend skonfigurowany (feedback e-mail).');
+}
 
 const app = express();
 

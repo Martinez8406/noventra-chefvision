@@ -1,3 +1,4 @@
+import '../lib/loadEnv.js';
 import { getSupabaseAdmin } from '../lib/stripe/supabaseAdmin.js';
 import {
   getClientIp,
@@ -72,13 +73,17 @@ export async function handleFeedback({ req, body = {} }) {
     timeStyle: 'short',
   });
 
-  if (!process.env.RESEND_API_KEY?.trim()) {
-    console.error('[feedback] Brak RESEND_API_KEY w .env.local / Vercel Environment Variables');
+  if (!process.env.RESEND_API_KEY?.trim() || !process.env.RESEND_FROM_EMAIL?.trim()) {
+    const missing = [
+      !process.env.RESEND_API_KEY?.trim() ? 'RESEND_API_KEY' : null,
+      !process.env.RESEND_FROM_EMAIL?.trim() ? 'RESEND_FROM_EMAIL' : null,
+    ].filter(Boolean);
+    console.error('[feedback] Brak zmiennych środowiskowych:', missing.join(', '));
     return {
       status: 503,
       body: {
         error:
-          'Wysyłka e-mail nie jest skonfigurowana. Dodaj RESEND_API_KEY do .env.local i uruchom ponownie npm run dev.',
+          'Wysyłka e-mail nie jest skonfigurowana na serwerze API. Zrestartuj npm run dev (musi działać proces SERVER). Na Vercel dodaj zmienne i zrób redeploy.',
       },
     };
   }
@@ -94,7 +99,16 @@ export async function handleFeedback({ req, body = {} }) {
     });
   } catch (err) {
     console.error('[feedback]', err);
-    return { status: 502, body: { error: 'Nie udało się wysłać wiadomości. Spróbuj ponownie później.' } };
+    const detail = err instanceof Error ? err.message : String(err);
+    const isDev = process.env.NODE_ENV !== 'production';
+    return {
+      status: 502,
+      body: {
+        error: isDev
+          ? `Nie udało się wysłać wiadomości: ${detail}`
+          : 'Nie udało się wysłać wiadomości. Spróbuj ponownie później.',
+      },
+    };
   }
 
   return {
@@ -117,4 +131,4 @@ export default async function handler(req, res) {
   });
   return res.status(result.status).json(result.body);
 }
-
+
