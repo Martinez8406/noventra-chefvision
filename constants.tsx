@@ -1,3 +1,5 @@
+import type { DietaryTag, SpiceLevel } from './types';
+
 /** Logo w `public/Zrzut_ekranu_2026-05-02_115035-removebg-preview.png` */
 export const BRAND_LOGO_SRC =
   '/Zrzut_ekranu_2026-05-02_115035-removebg-preview.png';
@@ -129,6 +131,78 @@ export const STYLE_OPTIONS = [
 export const ALLERGENS_LIST: string[] = [
   'Gluten', 'Laktoza', 'Orzechy', 'Skorupiaki', 'Jaja', 'Ryby', 'Soja', 'Gorczyca'
 ];
+
+/** Oznaczenia dietetyczne w panelu edycji i menu live. */
+export const DIETARY_TAG_OPTIONS: {
+  id: DietaryTag;
+  label: string;
+  shortLabel: string;
+  description: string;
+  badgeClass: string;
+}[] = [
+  {
+    id: 'vegetarian',
+    label: 'Vegetarian',
+    shortLabel: 'V',
+    description: '',
+    badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  },
+  {
+    id: 'vegan',
+    label: 'Vegan',
+    shortLabel: 'VG',
+    description: '',
+    badgeClass: 'bg-green-50 text-green-900 border-green-200',
+  },
+  {
+    id: 'halal',
+    label: 'Halal',
+    shortLabel: 'Halal',
+    description: 'Zgodne z zasadami islamu.',
+    badgeClass: 'bg-teal-50 text-teal-900 border-teal-200',
+  },
+  {
+    id: 'kosher',
+    label: 'Koszerne',
+    shortLabel: 'Koszer',
+    description: 'Zgodne z zasadami judaizmu.',
+    badgeClass: 'bg-blue-50 text-blue-900 border-blue-200',
+  },
+  {
+    id: 'gluten_free',
+    label: 'Bezglutenowe',
+    shortLabel: 'GF',
+    description: 'Danie nie zawiera glutenu (możliwe śladowe ilości).',
+    badgeClass: 'bg-amber-50 text-amber-900 border-amber-200',
+  },
+  {
+    id: 'lactose_free',
+    label: 'Bez laktozy',
+    shortLabel: 'LF',
+    description: 'Dla osób z nietolerancją mleka.',
+    badgeClass: 'bg-sky-50 text-sky-900 border-sky-200',
+  },
+];
+
+/** Poziomy ostrości — jeden na danie. */
+export const SPICE_LEVEL_OPTIONS: {
+  id: SpiceLevel;
+  label: string;
+  peppers: string;
+  description: string;
+}[] = [
+  { id: 'mild', label: 'Łagodne', peppers: '🌶️', description: 'Dla dzieci lub osób wrażliwych.' },
+  { id: 'medium', label: 'Średnio pikantne', peppers: '🌶️🌶️', description: 'Umiarkowana ostrość.' },
+  { id: 'hot', label: 'Bardzo ostre', peppers: '🌶️🌶️🌶️', description: 'Dla miłośników mocnych smaków.' },
+];
+
+export const DIETARY_TAG_BY_ID = Object.fromEntries(
+  DIETARY_TAG_OPTIONS.map((o) => [o.id, o])
+) as Record<DietaryTag, (typeof DIETARY_TAG_OPTIONS)[number]>;
+
+export const SPICE_LEVEL_BY_ID = Object.fromEntries(
+  SPICE_LEVEL_OPTIONS.map((o) => [o.id, o])
+) as Record<SpiceLevel, (typeof SPICE_LEVEL_OPTIONS)[number]>;
 
 /** Kategorie menu cyfrowego — kolejność = kolejność sekcji u gościa. */
 export const MENU_CATEGORIES = [

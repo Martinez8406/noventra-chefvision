@@ -2,6 +2,7 @@
 import React from 'react';
 import { Dish, DishRecommendation, PublicMenuLocale } from '../types';
 import { DishRecommendationBadge, DishRecommendationBox } from './DishRecommendationBox';
+import { DishDietaryBadges } from './DishDietaryBadges';
 import {
   getPublicAllergenDisplay,
   getPublicDishCopy,
@@ -114,6 +115,12 @@ export const PublicDishDetail: React.FC<Props> = ({
             )}
           </div>
         </div>
+
+        <DishDietaryBadges
+          dietaryTags={dish.dietaryTags}
+          spiceLevel={dish.spiceLevel}
+          size="md"
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Ingredients */}

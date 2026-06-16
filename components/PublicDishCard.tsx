@@ -11,6 +11,7 @@ import {
 import { Info, UtensilsCrossed } from 'lucide-react';
 import { WatermarkWrapper } from './WatermarkWrapper';
 import { DishRecommendationBadge, DishRecommendationBox } from './DishRecommendationBox';
+import { DishDietaryBadges } from './DishDietaryBadges';
 import { ShareLinkButton } from './ShareLinkButton';
 import { SocialLinkButton } from './SocialLinkButton';
 import type { DishRecommendation } from '../types';
@@ -104,6 +105,12 @@ export const PublicDishCard: React.FC<Props> = ({
         <p className={`text-slate-600 text-sm mb-4 line-clamp-3 leading-relaxed ${isRtl ? 'text-end' : ''}`}>
           {copy.description}
         </p>
+
+        <DishDietaryBadges
+          dietaryTags={dish.dietaryTags}
+          spiceLevel={dish.spiceLevel}
+          className={`mb-4 ${isRtl ? 'justify-end' : ''}`}
+        />
 
         {/* Ingredients */}
         <div className="mb-4">

@@ -29,6 +29,18 @@ export enum BlurLevel {
 
 export type Allergen = 'Gluten' | 'Laktoza' | 'Orzechy' | 'Skorupiaki' | 'Jaja' | 'Ryby' | 'Soja' | 'Gorczyca';
 
+/** Oznaczenia dietetyczne / religijne w karcie menu. */
+export type DietaryTag =
+  | 'vegetarian'
+  | 'vegan'
+  | 'halal'
+  | 'kosher'
+  | 'gluten_free'
+  | 'lactose_free';
+
+/** Poziom ostrości dania. */
+export type SpiceLevel = 'mild' | 'medium' | 'hot';
+
 /** Języki w publicznym menu (UI); `pl` = oryginał z panelu (polski). */
 export type PublicMenuLocale =
   | 'pl'
@@ -90,6 +102,10 @@ export interface Dish {
   technique: string;
   ingredients: string[];
   allergens: Allergen[];
+  /** Oznaczenia dietetyczne / religijne (V, VG, Halal, itd.) */
+  dietaryTags?: DietaryTag[];
+  /** Poziom ostrości — null = brak oznaczenia */
+  spiceLevel?: SpiceLevel | null;
   videoUrl?: string;
   /** Cena pozycji w menu cyfrowym (bez sufiksu "zł") */
   menuPrice?: string | null;

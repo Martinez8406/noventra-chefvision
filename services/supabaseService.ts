@@ -231,6 +231,8 @@ const mapRow = (row: any): Dish => ({
   technique: row.technique ?? '',
   ingredients: coerceStringArray(row.ingredients),
   allergens: coerceStringArray(row.allergens) as Dish['allergens'],
+  dietaryTags: coerceStringArray(row.dietary_tags ?? row.dietaryTags) as Dish['dietaryTags'],
+  spiceLevel: (row.spice_level ?? row.spiceLevel ?? null) as Dish['spiceLevel'],
   videoUrl: row.social_link ?? row.video_url ?? row.videoUrl ?? undefined,
   menuPrice: row.menu_price ?? row.menuPrice ?? null,
   category: row.category ?? null,
@@ -281,6 +283,8 @@ export const db = {
       if (dish.technique   !== undefined) payload.technique   = dish.technique;
       if (dish.ingredients !== undefined) payload.ingredients = dish.ingredients;
       if (dish.allergens   !== undefined) payload.allergens   = dish.allergens;
+      if (dish.dietaryTags !== undefined) payload.dietary_tags = dish.dietaryTags;
+      if (dish.spiceLevel  !== undefined) payload.spice_level  = dish.spiceLevel;
       if (dish.isOnline    !== undefined) payload.isOnline    = dish.isOnline;
       if (dish.status      !== undefined) payload.status      = dish.status;
       if (dish.createdAt   !== undefined) payload.createdAt   = dish.createdAt;

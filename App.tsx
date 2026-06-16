@@ -311,6 +311,8 @@ const App: React.FC = () => {
         technique: '',
         ingredients: [],
         allergens: [],
+        dietaryTags: [],
+        spiceLevel: null,
         isStandard: false,
         isOnline: false,
         status: DishStatus.PENDING,

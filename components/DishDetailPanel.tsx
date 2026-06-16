@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Dish, Allergen } from '../types';
-import { ALLERGENS_LIST } from '../constants';
+import { Dish, Allergen, DietaryTag, SpiceLevel } from '../types';
+import { ALLERGENS_LIST, DIETARY_TAG_OPTIONS, SPICE_LEVEL_OPTIONS } from '../constants';
 import { compressImageForUpload } from '../services/imageService';
 import { uploadDishImage } from '../services/supabaseService';
 import {
@@ -14,7 +14,9 @@ import {
   AlertTriangle,
   CheckCircle2,
   Camera,
-  Loader2
+  Loader2,
+  Leaf,
+  Flame
 } from 'lucide-react';
 
 interface Props {
@@ -39,6 +41,8 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
   const [editedDish, setEditedDish] = useState<Dish>({
     ...dish,
     technique: normalizeTechnique(dish.technique),
+    dietaryTags: dish.dietaryTags ?? [],
+    spiceLevel: dish.spiceLevel ?? null,
   });
   const [newIngredient, setNewIngredient] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -48,6 +52,8 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
     setEditedDish({
       ...dish,
       technique: normalizeTechnique(dish.technique),
+      dietaryTags: dish.dietaryTags ?? [],
+      spiceLevel: dish.spiceLevel ?? null,
     });
   }, [dish]);
 
@@ -74,6 +80,21 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
       ? editedDish.allergens.filter(a => a !== allergen)
       : [...editedDish.allergens, allergen];
     setEditedDish({ ...editedDish, allergens: next as Allergen[] });
+  };
+
+  const toggleDietaryTag = (tag: DietaryTag) => {
+    const current = editedDish.dietaryTags ?? [];
+    const next = current.includes(tag)
+      ? current.filter((t) => t !== tag)
+      : [...current, tag];
+    setEditedDish({ ...editedDish, dietaryTags: next });
+  };
+
+  const setSpiceLevel = (level: SpiceLevel) => {
+    setEditedDish({
+      ...editedDish,
+      spiceLevel: editedDish.spiceLevel === level ? null : level,
+    });
   };
 
   const addIngredient = () => {
@@ -190,7 +211,7 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
         </div>
 
         {/* Allergens */}
-        <div className="space-y-4 pb-10">
+        <div className="space-y-4">
           <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2 flex items-center gap-2 text-red-500">
             <AlertTriangle size={12}/> Alergeny
           </label>
@@ -205,6 +226,82 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
                 {editedDish.allergens.includes(allergen as Allergen) && <CheckCircle2 size={12}/>}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Dietary tags */}
+        <div className="space-y-4">
+          <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2 flex items-center gap-2 text-emerald-600">
+            <Leaf size={12}/> Oznaczenia dietetyczne
+          </label>
+          <div className="space-y-2">
+            {DIETARY_TAG_OPTIONS.map((opt) => {
+              const selected = (editedDish.dietaryTags ?? []).includes(opt.id);
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => toggleDietaryTag(opt.id)}
+                  className={`w-full flex items-start gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all ${
+                    selected
+                      ? 'bg-emerald-50 border-emerald-500 shadow-sm'
+                      : 'bg-white border-slate-50 hover:border-slate-200'
+                  }`}
+                >
+                  <span
+                    className={`shrink-0 mt-0.5 inline-flex items-center justify-center min-w-[2rem] px-2 py-1 rounded-lg border text-[10px] font-black uppercase ${opt.badgeClass}`}
+                  >
+                    {opt.shortLabel}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className={`block text-xs font-black ${selected ? 'text-emerald-800' : 'text-slate-700'}`}>
+                      {opt.label}
+                    </span>
+                    {opt.description ? (
+                      <span className="block text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                        {opt.description}
+                      </span>
+                    ) : null}
+                  </span>
+                  {selected && <CheckCircle2 size={14} className="shrink-0 text-emerald-600 mt-1" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Spice level */}
+        <div className="space-y-4 pb-10">
+          <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2 flex items-center gap-2 text-orange-600">
+            <Flame size={12}/> Poziom ostrości
+          </label>
+          <div className="space-y-2">
+            {SPICE_LEVEL_OPTIONS.map((opt) => {
+              const selected = editedDish.spiceLevel === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setSpiceLevel(opt.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all ${
+                    selected
+                      ? 'bg-orange-50 border-orange-500 shadow-sm'
+                      : 'bg-white border-slate-50 hover:border-slate-200'
+                  }`}
+                >
+                  <span className="text-xl shrink-0" aria-hidden>{opt.peppers}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className={`block text-xs font-black ${selected ? 'text-orange-800' : 'text-slate-700'}`}>
+                      {opt.label}
+                    </span>
+                    <span className="block text-[11px] text-slate-500 font-medium mt-0.5">
+                      {opt.description}
+                    </span>
+                  </span>
+                  {selected && <CheckCircle2 size={14} className="shrink-0 text-orange-600" />}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
