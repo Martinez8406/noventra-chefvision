@@ -539,7 +539,7 @@ const App: React.FC = () => {
     icon: typeof LayoutDashboard;
     premiumLocked?: boolean;
   }[] = [
-    { id: 'kuchnia', label: 'Panel menu', icon: LayoutDashboard },
+    { id: 'kuchnia', label: 'Edycja menu', icon: LayoutDashboard },
     { id: 'studio', label: 'Dodaj do menu', icon: Camera },
     { id: 'themes', label: 'Motywy sezonowe', icon: Sparkles, premiumLocked: true },
     { id: 'backdrops', label: 'Studio Tła', icon: Layers, premiumLocked: true },
@@ -740,7 +740,7 @@ const App: React.FC = () => {
         <div className="p-6 md:p-10 max-w-5xl mx-auto min-h-0 w-full">
           {activeTab === 'kuchnia' && (
             <div className="space-y-8">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">Panel menu</h2>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">Edycja menu</h2>
               <KitchenWall 
                 dishes={dishes} 
                 onApprove={handleApprove} 
