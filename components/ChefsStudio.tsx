@@ -34,6 +34,7 @@ import {
   Trash2,
   Upload,
   Wand2,
+  RotateCcw,
   X,
 } from 'lucide-react';
 
@@ -195,6 +196,7 @@ export const ChefsStudio: React.FC<Props> = ({
   const hasNoCredits = !canUseAi;
   const tokenLabel = formatTokenStatus(subscriptionStatus, credits, tokens, trialEndsAt);
   const canGenerate = canUseAi && !!dishReference && !!style && !isGenerating;
+  const latestGeneratedImage = generatedImages[0] ?? null;
 
   const currentEnhanceSettings: EnhanceSettings = useMemo(
     () => ({
@@ -359,14 +361,6 @@ export const ChefsStudio: React.FC<Props> = ({
         <div className="flex items-center gap-4">
           <div className="p-4 bg-indigo-50 text-indigo-600 rounded-3xl">
             <Palette size={28} />
-          </div>
-          <div>
-            <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight italic">Studio zdjęć</h2>
-            <p className="text-xs text-slate-500 mt-1">
-              {isFree
-                ? 'Plan darmowy: wgraj własne zdjęcia do menu (bez AI).'
-                : 'Ulepszanie prawdziwych zdjęć dań — krok po kroku.'}
-            </p>
           </div>
         </div>
         <div className="text-[10px] font-black uppercase tracking-widest">
@@ -636,6 +630,31 @@ export const ChefsStudio: React.FC<Props> = ({
           </div>
         </div>
       </div>
+
+      {latestGeneratedImage && !isGenerating && (
+        <div className="sticky bottom-4 z-30 flex flex-col sm:flex-row gap-3 p-4 sm:p-5 bg-white rounded-[28px] border border-slate-200 shadow-[0_8px_40px_rgba(0,0,0,0.12)]">
+          <button
+            type="button"
+            onClick={() => {
+              setSaveTargetImage(latestGeneratedImage);
+              setSaveDishName('');
+            }}
+            className="flex-1 py-4 px-6 rounded-2xl bg-chef-gold text-white font-black text-sm sm:text-base flex items-center justify-center gap-2 hover:bg-chef-gold2 transition-colors shadow-md"
+          >
+            <Save size={20} />
+            Zapisz do menu
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleGenerate()}
+            disabled={!canGenerate}
+            className="flex-1 py-4 px-6 rounded-2xl bg-chef-dark text-white font-black text-sm sm:text-base flex items-center justify-center gap-2 hover:bg-chef-dark2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+          >
+            <RotateCcw size={20} />
+            Spróbuj jeszcze raz
+          </button>
+        </div>
+      )}
 
       {/* Save-to-menu modal */}
       {saveTargetImage && (

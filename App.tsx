@@ -540,7 +540,7 @@ const App: React.FC = () => {
     premiumLocked?: boolean;
   }[] = [
     { id: 'kuchnia', label: 'Panel menu', icon: LayoutDashboard },
-    { id: 'studio', label: 'Studio zdjęć', icon: Camera },
+    { id: 'studio', label: 'Dodaj do menu', icon: Camera },
     { id: 'themes', label: 'Motywy sezonowe', icon: Sparkles, premiumLocked: true },
     { id: 'backdrops', label: 'Studio Tła', icon: Layers, premiumLocked: true },
     { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen },
