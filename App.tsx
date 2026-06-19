@@ -9,6 +9,7 @@ import { MenuStatsPanel } from './components/MenuStatsPanel';
 import { SettingsPanel, type SettingsSection } from './components/SettingsPanel';
 import { KitchenWall } from './components/KitchenWall';
 import { MenuManager } from './components/MenuManager';
+import { HotelHubManager } from './components/HotelHubManager';
 import { PromotionsManager } from './components/PromotionsManager';
 import { DishDetailPanel } from './components/DishDetailPanel';
 import { Auth } from './components/Auth';
@@ -19,6 +20,7 @@ import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import { BRAND_LOGO_SRC, TRIAL_TOKENS } from './constants';
 import { formatTokenStatus, hasProFeatures } from './utils/tokens';
 import { supabase, db, authService, uploadDishImage } from './services/supabaseService';
+import { hotelHubDb } from './services/hotelHubService';
 import { requestMenuTranslations } from './services/aiService';
 import { shouldRequestMenuTranslation } from './utils/menuTranslations';
 import { createCheckoutSession, confirmPremiumSession } from './services/stripeService';
@@ -40,7 +42,8 @@ import {
   Lock,
   Settings,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Building2
 } from 'lucide-react';
 
 type AppTab =
@@ -49,6 +52,7 @@ type AppTab =
   | 'themes'
   | 'backdrops'
   | 'menu'
+  | 'hotel-hub'
   | 'stats'
   | 'promotions'
   | 'settings-qr'
@@ -161,8 +165,8 @@ const App: React.FC = () => {
     if (isInitialLoad) setIsSyncing(true);
     let loadingPublicMenu = false;
     try {
-      const hashMatch = hash.match(/#\/menu\/([^/?#]+)(?:\/dish\/([^/?#]+))?/);
-      const pathMatch = pathname.match(/^\/menu\/([^/]+)(?:\/dish\/([^/]+))?\/?$/);
+      const hashMatch = hash.match(/#\/menu\/([^/?#]+)(?:\/hub(?:\/([^/?#]+))?(?:\/dish\/([^/?#]+))?)?/);
+      const pathMatch = pathname.match(/^\/menu\/([^/]+)(?:\/hub(?:\/([^/]+))?(?:\/dish\/([^/]+))?)?\/?$/);
       const publicMenuUserId =
         safeDecodeRouteParam(hashMatch?.[1]) ?? safeDecodeRouteParam(pathMatch?.[1]);
       if (publicMenuUserId) {
@@ -255,13 +259,17 @@ const App: React.FC = () => {
     }
   };
 
-  const hashMatch = hash.match(/#\/menu\/([^/?#]+)(?:\/dish\/([^/?#]+))?/);
-  const pathMatch = pathname.match(/^\/menu\/([^/]+)(?:\/dish\/([^/]+))?\/?$/);
+  const hashMatch = hash.match(/#\/menu\/([^/?#]+)(?:\/hub(?:\/([^/?#]+))?(?:\/dish\/([^/?#]+))?)?/);
+  const pathMatch = pathname.match(/^\/menu\/([^/]+)(?:\/hub(?:\/([^/]+))?(?:\/dish\/([^/]+))?)?\/?$/);
   const publicMenuUserId =
     safeDecodeRouteParam(hashMatch?.[1]) ?? safeDecodeRouteParam(pathMatch?.[1]);
-  const publicDishId =
+  const publicHubSectionId =
     safeDecodeRouteParam(hashMatch?.[2]) ?? safeDecodeRouteParam(pathMatch?.[2]);
+  const publicDishId =
+    safeDecodeRouteParam(hashMatch?.[3]) ?? safeDecodeRouteParam(pathMatch?.[3]);
   const isPublicMenu = !!publicMenuUserId;
+  const publicMenuMode: 'restaurant' | 'hub' =
+    pathname.includes('/hub') || hash.includes('/hub') ? 'hub' : 'restaurant';
   const isSuccessPage = hash.includes('#/success');
 
   const refreshCurrentProfile = async () => {
@@ -380,6 +388,46 @@ const App: React.FC = () => {
     }
   };
 
+  const toggleHotelHubVisibility = async (id: string) => {
+    const dish = dishes.find((d) => d.id === id);
+    if (!dish) return;
+    const next = !dish.visibleInHotelHub;
+    const success = await db.toggleDishHotelHubVisibility(id, next);
+    if (success) {
+      setDishes((prev) => prev.map((d) => (d.id === id ? { ...d, visibleInHotelHub: next } : d)));
+      setStatusToast('Widoczność Hotel Hub zaktualizowana');
+      setTimeout(() => setStatusToast(null), 3000);
+    }
+  };
+
+  const handleUpdateHubAssignments = async (
+    dishId: string,
+    assignments: Array<{ sectionId: string; categoryId: string }>,
+  ) => {
+    const uid = session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id;
+    if (!uid) return;
+    const ok = await hotelHubDb.setDishAssignments(uid, dishId, assignments);
+    if (!ok) {
+      alert(
+        'Nie udało się zapisać przypisań Hotel Hub. Upewnij się, że uruchomiłeś migrację supabase/hotel_hub.sql w Supabase SQL Editor.',
+      );
+      return;
+    }
+
+    const dish = dishes.find((d) => d.id === dishId);
+    if (assignments.length > 0 && !dish?.visibleInHotelHub) {
+      const visOk = await db.toggleDishHotelHubVisibility(dishId, true);
+      if (visOk) {
+        setDishes((prev) =>
+          prev.map((d) => (d.id === dishId ? { ...d, visibleInHotelHub: true } : d)),
+        );
+      }
+    }
+
+    setStatusToast('Przypisanie Hotel Hub zapisane');
+    setTimeout(() => setStatusToast(null), 3000);
+  };
+
   const handleDeleteDish = async (id: string) => {
     const dish = dishes.find(d => d.id === id);
     if (!dish) return;
@@ -460,13 +508,15 @@ const App: React.FC = () => {
     const usePathRouting = pathname.startsWith('/menu/');
     return (
       <PublicMenu
-        dishes={dishes.filter(d => d.isOnline === true)}
+        dishes={dishes}
         dishId={publicDishId}
         userId={publicMenuUserId}
         usePathRouting={usePathRouting}
         onPathChange={() => setPathname(window.location.pathname)}
         showWatermark={publicHasWatermark}
         loading={publicMenuLoading}
+        hubSectionId={publicHubSectionId}
+        initialMenuMode={publicMenuMode}
       />
     );
   }
@@ -494,6 +544,7 @@ const App: React.FC = () => {
     { id: 'themes', label: 'Motywy sezonowe', icon: Sparkles, premiumLocked: true },
     { id: 'backdrops', label: 'Studio Tła', icon: Layers, premiumLocked: true },
     { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen },
+    { id: 'hotel-hub', label: 'Hotel Hub', icon: Building2 },
     { id: 'stats', label: 'Statystyki', icon: BarChart3 },
     { id: 'promotions', label: 'Rekomendacje i promocje', icon: Megaphone, premiumLocked: true },
   ];
@@ -755,13 +806,20 @@ const App: React.FC = () => {
           {activeTab === 'menu' && (
             <MenuManager 
               dishes={dishes} 
-              onToggleOnline={toggleStatus} 
+              onToggleOnline={toggleStatus}
+              onToggleHotelHub={toggleHotelHubVisibility}
+              onUpdateHubAssignments={handleUpdateHubAssignments}
               onUpdateVideo={handleUpdateSocialLink} 
               onDelete={handleDeleteDish} 
               onSelect={setSelectedDishId}
               onUpdatePrice={handleUpdateDishPrice}
               onUpdateCategory={handleUpdateDishCategory}
               menuUserId={currentUser?.id ?? null}
+            />
+          )}
+          {activeTab === 'hotel-hub' && (
+            <HotelHubManager
+              userId={session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id ?? null}
             />
           )}
           {activeTab === 'stats' && (

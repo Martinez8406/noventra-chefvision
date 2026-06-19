@@ -1,12 +1,20 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dish } from '../types';
-import { Link2, Eye, EyeOff, ExternalLink, QrCode, Trash2, Edit, Settings } from 'lucide-react';
+import { Dish, HotelHubData } from '../types';
+import { Link2, Eye, EyeOff, ExternalLink, QrCode, Trash2, Edit, Settings, Building2 } from 'lucide-react';
 import { supabase } from '../services/supabaseService';
+import { hotelHubDb } from '../services/hotelHubService';
 import { MENU_CATEGORIES } from '../constants';
+import { sortHotelHubCategories, sortHotelHubSections } from '../utils/hotelHub';
+import { HotelHubSectionIcon } from './HotelHubSectionIcon';
 interface Props {
   dishes: Dish[];
   onToggleOnline: (id: string) => void;
+  onToggleHotelHub?: (id: string) => void;
+  onUpdateHubAssignments?: (
+    dishId: string,
+    assignments: Array<{ sectionId: string; categoryId: string }>,
+  ) => void;
   onUpdateVideo: (id: string, url: string) => void;
   onDelete: (id: string) => void;
   onSelect: (id: string) => void;
@@ -18,6 +26,8 @@ interface Props {
 export const MenuManager: React.FC<Props> = ({
   dishes,
   onToggleOnline,
+  onToggleHotelHub,
+  onUpdateHubAssignments,
   onUpdateVideo,
   onDelete,
   onSelect,
@@ -48,6 +58,9 @@ export const MenuManager: React.FC<Props> = ({
   const [categoriesSaved, setCategoriesSaved] = useState(false);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [hasProfileMenuCategories, setHasProfileMenuCategories] = useState(false);
+  const [hotelHubEnabled, setHotelHubEnabled] = useState(false);
+  const [hubData, setHubData] = useState<HotelHubData | null>(null);
+  const [hubAssignOpenFor, setHubAssignOpenFor] = useState<string | null>(null);
 
   useEffect(() => {
     if (!menuUserId || !supabase) return;
@@ -109,6 +122,26 @@ export const MenuManager: React.FC<Props> = ({
     );
     setMenuCategories([...MENU_CATEGORIES, ...extra]);
   }, [menuUserId, dishes, hasProfileMenuCategories]);
+
+  useEffect(() => {
+    if (!menuUserId) {
+      setHotelHubEnabled(false);
+      setHubData(null);
+      return;
+    }
+    let cancelled = false;
+    hotelHubDb.getHotelHubData(menuUserId).then((data) => {
+      if (!cancelled) {
+        setHotelHubEnabled(data.enabled);
+        setHubData(data);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [menuUserId]);
+
+  const hubSections = sortHotelHubSections(hubData?.sections ?? []);
 
   const persistMenuCategories = (next: string[]) => {
     setMenuCategories(next);
@@ -395,7 +428,8 @@ export const MenuManager: React.FC<Props> = ({
             <tr>
               <th className="px-6 py-4">Produkt</th>
               <th className="px-6 py-4">Kategoria</th>
-              <th className="px-6 py-4">Status Online</th>
+              <th className="px-6 py-4">Widoczność</th>
+              {hotelHubEnabled && <th className="px-6 py-4">Hotel Hub</th>}
               <th className="px-6 py-4">Cena</th>
               <th className="px-6 py-4">Social Link</th>
               <th className="px-6 py-4 text-right">Akcje</th>
@@ -591,20 +625,116 @@ export const MenuManager: React.FC<Props> = ({
                   })()}
                 </td>
 
-                {/* Status Online */}
+                {/* Widoczność */}
                 <td className="px-6 py-4">
-                  <button
-                    onClick={() => handleToggleClick(dish.id)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight transition-all duration-200
-                      ${justToggledId === dish.id ? 'ring-2 ring-green-500 ring-offset-2 scale-105' : ''}
-                      ${dish.isOnline
-                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                        : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}
-                  >
-                    {dish.isOnline ? <Eye size={14} /> : <EyeOff size={14} />}
-                    {dish.isOnline ? 'Widoczne' : 'Ukryte'}
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => handleToggleClick(dish.id)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight transition-all duration-200 w-fit
+                        ${justToggledId === dish.id ? 'ring-2 ring-green-500 ring-offset-2 scale-105' : ''}
+                        ${dish.isOnline
+                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                          : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}
+                      title="Menu restauracji"
+                    >
+                      {dish.isOnline ? <Eye size={14} /> : <EyeOff size={14} />}
+                      Restauracja
+                    </button>
+                    {hotelHubEnabled && onToggleHotelHub && (
+                      <button
+                        onClick={() => onToggleHotelHub(dish.id)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight transition-all duration-200 w-fit
+                          ${dish.visibleInHotelHub
+                            ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                            : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}
+                        title="Hotel Hub"
+                      >
+                        {dish.visibleInHotelHub ? <Eye size={14} /> : <EyeOff size={14} />}
+                        Hotel Hub
+                      </button>
+                    )}
+                  </div>
                 </td>
+
+                {hotelHubEnabled && (
+                  <td className="px-6 py-4">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setHubAssignOpenFor((prev) => (prev === dish.id ? null : dish.id))}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                      >
+                        <Building2 size={14} />
+                        Sekcje
+                      </button>
+                      {hubAssignOpenFor === dish.id && hubData && onUpdateHubAssignments && (
+                        <div className="absolute left-0 top-full mt-2 z-20 w-72 rounded-xl border border-slate-200 bg-white shadow-xl p-4 space-y-3">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            Przypisz do sekcji
+                          </p>
+                          {hubSections.map((section) => {
+                            const cats = sortHotelHubCategories(
+                              hubData.categories.filter((c) => c.sectionId === section.id),
+                            );
+                            const dishAssignments = hubData.assignments.filter((a) => a.dishId === dish.id && a.sectionId === section.id);
+                            const selectedCatId = dishAssignments[0]?.categoryId ?? '';
+                            return (
+                              <div key={section.id} className="space-y-1">
+                                <span className="text-xs font-bold text-slate-700 inline-flex items-center gap-1.5">
+                                  <HotelHubSectionIcon icon={section.iconEmoji} size="sm" />
+                                  {section.name}
+                                </span>
+                                <select
+                                  value={selectedCatId}
+                                  onChange={(e) => {
+                                    const categoryId = e.target.value;
+                                    const dishAssignmentsForOtherSections = hubData.assignments
+                                      .filter((a) => a.dishId === dish.id && a.sectionId !== section.id)
+                                      .map((a) => ({ sectionId: a.sectionId, categoryId: a.categoryId }));
+                                    const next = categoryId
+                                      ? [...dishAssignmentsForOtherSections, { sectionId: section.id, categoryId }]
+                                      : dishAssignmentsForOtherSections;
+                                    onUpdateHubAssignments(dish.id, next);
+                                    setHubData((prev) => {
+                                      if (!prev) return prev;
+                                      const filtered = prev.assignments.filter((a) => a.dishId !== dish.id);
+                                      const added = next.map((a, idx) => ({
+                                        id: `tmp-${dish.id}-${idx}`,
+                                        userId: menuUserId!,
+                                        dishId: dish.id,
+                                        sectionId: a.sectionId,
+                                        categoryId: a.categoryId,
+                                      }));
+                                      return { ...prev, assignments: [...filtered, ...added] };
+                                    });
+                                  }}
+                                  className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-200"
+                                >
+                                  <option value="">— brak —</option>
+                                  {cats.map((c) => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            );
+                          })}
+                          <button
+                            type="button"
+                            onClick={() => setHubAssignOpenFor(null)}
+                            className="w-full py-1.5 text-[10px] font-black uppercase text-slate-500"
+                          >
+                            Zamknij
+                          </button>
+                          {!dish.visibleInHotelHub && (
+                            <p className="text-[11px] text-amber-700 bg-amber-50 rounded-lg px-3 py-2 leading-snug">
+                              Po przypisaniu danie zostanie automatycznie włączone w Hotel Hub.
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                )}
 
                 {/* Cena – inline edit */}
                 <td className="px-6 py-4">
@@ -683,7 +813,7 @@ export const MenuManager: React.FC<Props> = ({
 
             {dishes.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-8 py-12 text-center text-slate-400 font-medium">
+                <td colSpan={hotelHubEnabled ? 7 : 6} className="px-8 py-12 text-center text-slate-400 font-medium">
                   Brak dań w menu. Przejdź do Chef's Studio, aby stworzyć pierwsze danie.
                 </td>
               </tr>

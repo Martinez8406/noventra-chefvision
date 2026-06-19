@@ -114,7 +114,10 @@ export interface Dish {
   /** Tłumaczenia opisu i alergenów (JSONB). Klucze: en, he, ar, uk, de, es, it, ko, ja, fr, cs, nl, zh. Nazwa zawsze z pola `name`. */
   translations?: Partial<Record<'en' | 'he' | 'ar' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'ja' | 'fr' | 'cs' | 'nl' | 'zh', MenuTranslationEntry>> | null;
   isStandard: boolean;
+  /** Widoczne w menu restauracji (Live Menu → Restaurant) */
   isOnline: boolean;
+  /** Widoczne w sekcjach Hotel Hub */
+  visibleInHotelHub?: boolean;
   status: DishStatus;
   restaurantId?: string;
   createdAt: number;
@@ -146,4 +149,45 @@ export interface UserProfile {
 export interface Backdrop {
   id: string;
   imageUrl: string;
+}
+
+export type HotelHubAvailabilityMode = '24h' | 'custom';
+
+export interface HotelHubSection {
+  id: string;
+  userId: string;
+  name: string;
+  iconEmoji: string;
+  heroImageUrl?: string | null;
+  description: string;
+  isVisible: boolean;
+  availabilityMode: HotelHubAvailabilityMode;
+  availabilityFrom?: string | null;
+  availabilityTo?: string | null;
+  serviceNotes: string;
+  sortOrder: number;
+}
+
+export interface HotelHubCategory {
+  id: string;
+  userId: string;
+  sectionId: string;
+  name: string;
+  sortOrder: number;
+}
+
+export interface ProductSectionAssignment {
+  id: string;
+  userId: string;
+  dishId: string;
+  sectionId: string;
+  categoryId: string;
+}
+
+/** Pełny stan Hotel Hub dla panelu admina i menu publicznego */
+export interface HotelHubData {
+  enabled: boolean;
+  sections: HotelHubSection[];
+  categories: HotelHubCategory[];
+  assignments: ProductSectionAssignment[];
 }

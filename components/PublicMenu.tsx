@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Dish, DishRecommendation, PublicMenuLocale } from '../types';
+import { Dish, DishRecommendation, HotelHubData, PublicMenuLocale } from '../types';
 import { fetchRecommendationsForPublicMenu, recommendationsByDishId } from '../utils/dishRecommendations';
 import { PublicDishCard } from './PublicDishCard';
 import { PublicDishDetail } from './PublicDishDetail';
+import { PublicHotelHub } from './PublicHotelHub';
+import { PublicMenuModeTabs } from './PublicMenuModeTabs';
 import { MenuLanguageSwitcher } from './MenuLanguageSwitcher';
 import { supabase } from '../services/supabaseService';
+import { hotelHubDb } from '../services/hotelHubService';
 import { MENU_CATEGORIES } from '../constants';
 import { getPublicMenuCategoryDisplay, getPublicDishCopy, isRtlMenuLocale } from '../utils/menuTranslations';
 import { MenuHeroIdentityPreview } from './MenuHeroIdentityPreview';
@@ -32,6 +35,10 @@ interface Props {
   onPathChange?: () => void;
   showWatermark?: boolean;
   loading?: boolean;
+  /** Aktywna sekcja Hotel Hub z URL (null = home hub) */
+  hubSectionId?: string | null;
+  /** restaurant | hub — z URL */
+  initialMenuMode?: 'restaurant' | 'hub';
 }
 
 const CATEGORY_ORDER = [...MENU_CATEGORIES];
@@ -67,6 +74,8 @@ export const PublicMenu: React.FC<Props> = ({
   onPathChange,
   showWatermark,
   loading = false,
+  hubSectionId = null,
+  initialMenuMode = 'restaurant',
 }) => {
   const CATEGORY_TRANSLATIONS_KEY = (uid: string) => `chefvision_public_category_translations:${uid}`;
   const normalizeCategoryKey = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -94,6 +103,34 @@ export const PublicMenu: React.FC<Props> = ({
   const [profileCategoryTranslations, setProfileCategoryTranslations] = useState<Record<string, Partial<Record<PublicMenuLocale, string>>>>({});
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [feedbackAvailable, setFeedbackAvailable] = useState(false);
+  const [hotelHubEnabled, setHotelHubEnabled] = useState(false);
+  const [hubData, setHubData] = useState<HotelHubData>({
+    enabled: false,
+    sections: [],
+    categories: [],
+    assignments: [],
+  });
+  const [menuMode, setMenuMode] = useState<'restaurant' | 'hub'>(initialMenuMode);
+  const [activeHubSectionId, setActiveHubSectionId] = useState<string | null>(hubSectionId);
+
+  useEffect(() => {
+    setMenuMode(initialMenuMode);
+    setActiveHubSectionId(hubSectionId);
+  }, [initialMenuMode, hubSectionId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    hotelHubDb.getHotelHubDataForPublicMenu(userId).then((data) => {
+      if (!cancelled) {
+        setHubData(data);
+        setHotelHubEnabled(data.enabled);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   // Track in-flight category translation requests to avoid duplicates
   const [inFlightKeys, setInFlightKeys] = useState<Record<string, true>>({});
@@ -215,7 +252,7 @@ export const PublicMenu: React.FC<Props> = ({
     let cancelled = false;
     supabase
       .from('profiles')
-      .select('logo_url, logo_object_position, logo_scale, cover_url, cover_object_position, cover_scale, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations, feedback_available')
+      .select('logo_url, logo_object_position, logo_scale, cover_url, cover_object_position, cover_scale, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations, feedback_available, hotel_hub_enabled')
       .eq('id', userId)
       .single()
       .then(({ data, error: profileError }) => {
@@ -250,6 +287,7 @@ export const PublicMenu: React.FC<Props> = ({
         if (data?.restaurant_name) setRestaurantName(data.restaurant_name);
         setGooglePlaceId(data?.google_place_id?.trim() || null);
         setFeedbackAvailable((data as { feedback_available?: boolean })?.feedback_available === true);
+        setHotelHubEnabled((data as { hotel_hub_enabled?: boolean })?.hotel_hub_enabled === true);
         if (Array.isArray((data as any)?.menu_categories)) {
           const list = (data as any).menu_categories.map((x: any) => String(x).trim()).filter(Boolean);
           setProfileMenuCategories(list);
@@ -312,7 +350,30 @@ export const PublicMenu: React.FC<Props> = ({
     });
   }, [userId]);
 
-  const userDishes = dishes.filter((d) => d.isOnline);
+  const navigateMenuMode = (mode: 'restaurant' | 'hub', sectionId?: string | null) => {
+    setMenuMode(mode);
+    setActiveHubSectionId(sectionId ?? null);
+    if (usePathRouting) {
+      if (mode === 'restaurant') {
+        history.pushState({}, '', menuBasePath);
+      } else if (sectionId) {
+        history.pushState({}, '', `${menuBasePath}/hub/${encodeURIComponent(sectionId)}`);
+      } else {
+        history.pushState({}, '', `${menuBasePath}/hub`);
+      }
+      onPathChange?.();
+    } else if (mode === 'restaurant') {
+      window.location.hash = menuBaseHash;
+    } else if (sectionId) {
+      window.location.hash = `${menuBaseHash}/hub/${encodeURIComponent(sectionId)}`;
+    } else {
+      window.location.hash = `${menuBaseHash}/hub`;
+    }
+  };
+
+  const userDishes = dishes.filter((d) =>
+    menuMode === 'hub' ? d.visibleInHotelHub === true : d.isOnline,
+  );
   const hasGoogleReviews = !!googlePlaceId;
   const reviewUrl = hasGoogleReviews
     ? `https://search.google.com/local/writereview?placeid=${encodeURIComponent(googlePlaceId!)}`
@@ -832,6 +893,38 @@ export const PublicMenu: React.FC<Props> = ({
         />
       </div>
 
+      {hotelHubEnabled && (
+        <PublicMenuModeTabs
+          active={menuMode}
+          onChange={(mode) => navigateMenuMode(mode, mode === 'hub' ? activeHubSectionId : null)}
+          primaryColor={primaryColor}
+          secondaryColor={secondaryColor}
+          locale={menuLocale}
+        />
+      )}
+
+      {menuMode === 'hub' && hotelHubEnabled ? (
+        <PublicHotelHub
+          userId={userId}
+          hubData={hubData}
+          dishes={dishes}
+          sectionId={activeHubSectionId}
+          menuLocale={menuLocale}
+          primaryColor={primaryColor}
+          secondaryColor={secondaryColor}
+          fontFamily={isRtl ? `${rtlFontStack}, ${fontFamily}` : fontFamily}
+          restaurantTitle={restaurantTitle}
+          menuBasePath={menuBasePath}
+          menuBaseHash={menuBaseHash}
+          usePathRouting={!!usePathRouting}
+          onPathChange={onPathChange}
+          onSelectSection={(id) => navigateMenuMode('hub', id)}
+          showWatermark={showWatermark}
+          recByDish={recByDish}
+          recTranslations={recTranslations}
+        />
+      ) : (
+        <>
       {orderedKeys.length > 0 && (
         <div className="w-full max-w-6xl mx-auto">
           <PublicMenuCategoryTabs
@@ -922,8 +1015,10 @@ export const PublicMenu: React.FC<Props> = ({
           />
         )}
       </main>
+        </>
+      )}
 
-      {hasGoogleReviews && (
+      {menuMode === 'restaurant' && hasGoogleReviews && (
         <div className={`google-review-fab-wrap${isRtl ? ' google-review-fab-wrap--rtl' : ''}`}>
           {showReviewTooltip && <div className="google-review-fab-tooltip">{reviewFabLabels.tooltip}</div>}
           <a

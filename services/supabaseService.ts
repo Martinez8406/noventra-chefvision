@@ -237,6 +237,7 @@ const mapRow = (row: any): Dish => ({
   menuPrice: row.menu_price ?? row.menuPrice ?? null,
   category: row.category ?? null,
   translations: row.translations ?? null,
+  visibleInHotelHub: row.visible_in_hotel_hub ?? row.visibleInHotelHub ?? false,
 });
 
 export const db = {
@@ -254,20 +255,57 @@ export const db = {
     return getLocalDishes().filter(d => d.restaurantId === userId || (d as any).userId === userId);
   },
 
-  /** Pobiera dania menu publicznego – tylko dania danego użytkownika z isOnline = true. */
+  /** Pobiera dania widoczne w menu publicznym (restauracja i/lub Hotel Hub). */
   async getDishesForPublicMenu(userId: string): Promise<Dish[]> {
     if (supabase) {
+      let assignedIds: string[] = [];
+      const { data: assignmentRows, error: assignErr } = await supabase
+        .from('product_section_assignments')
+        .select('dish_id')
+        .eq('user_id', userId);
+      if (!assignErr && assignmentRows) {
+        assignedIds = [...new Set(assignmentRows.map((r) => String(r.dish_id)))];
+      }
+
+      let orFilter = 'isOnline.eq.true,visible_in_hotel_hub.eq.true';
+      if (assignedIds.length > 0) {
+        orFilter += `,id.in.(${assignedIds.join(',')})`;
+      }
+
       const { data, error } = await supabase
         .from('dishes')
         .select('*')
         .eq('userId', userId)
-        .eq('isOnline', true)
+        .or(orFilter)
         .order('createdAt', { ascending: false });
       if (!error && data) {
         return data.map(mapRow) as Dish[];
       }
+      // Fallback gdy kolumna visible_in_hotel_hub jeszcze nie istnieje
+      if (error?.message?.includes('visible_in_hotel_hub')) {
+        const { data: fallback } = await supabase
+          .from('dishes')
+          .select('*')
+          .eq('userId', userId)
+          .eq('isOnline', true)
+          .order('createdAt', { ascending: false });
+        if (fallback) return fallback.map(mapRow) as Dish[];
+      }
     }
-    return getLocalDishes().filter(d => (d.restaurantId === userId || (d as any).userId === userId) && d.isOnline);
+    const local = getLocalDishes().filter(
+      (d) => d.restaurantId === userId || (d as any).userId === userId,
+    );
+    let assignedIds: string[] = [];
+    try {
+      const raw = localStorage.getItem('chefvision_hotel_hub_assignments_v1');
+      const rows = raw ? JSON.parse(raw) : [];
+      assignedIds = rows.filter((a: { userId?: string }) => a.userId === userId).map((a: { dishId: string }) => a.dishId);
+    } catch {
+      /* ignore */
+    }
+    return local.filter(
+      (d) => d.isOnline || d.visibleInHotelHub === true || assignedIds.includes(d.id),
+    );
   },
 
   async saveDish(dish: Partial<Dish>): Promise<Dish | null> {
@@ -286,6 +324,7 @@ export const db = {
       if (dish.dietaryTags !== undefined) payload.dietary_tags = dish.dietaryTags;
       if (dish.spiceLevel  !== undefined) payload.spice_level  = dish.spiceLevel;
       if (dish.isOnline    !== undefined) payload.isOnline    = dish.isOnline;
+      if (dish.visibleInHotelHub !== undefined) payload.visible_in_hotel_hub = dish.visibleInHotelHub;
       if (dish.status      !== undefined) payload.status      = dish.status;
       if (dish.createdAt   !== undefined) payload.createdAt   = dish.createdAt;
       if (dish.clicks      !== undefined) payload.clicks      = dish.clicks;
@@ -398,6 +437,16 @@ export const db = {
       return !error;
     }
     const updated = getLocalDishes().map(d => d.id === id ? { ...d, isOnline } : d);
+    saveLocalDishes(updated);
+    return true;
+  },
+
+  async toggleDishHotelHubVisibility(id: string, visibleInHotelHub: boolean): Promise<boolean> {
+    if (supabase) {
+      const { error } = await supabase.from('dishes').update({ visible_in_hotel_hub: visibleInHotelHub }).eq('id', id);
+      return !error;
+    }
+    const updated = getLocalDishes().map(d => d.id === id ? { ...d, visibleInHotelHub } : d);
     saveLocalDishes(updated);
     return true;
   },

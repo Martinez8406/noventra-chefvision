@@ -4,7 +4,7 @@ export type ShareLinkOutcome = 'shared' | 'copied' | 'cancelled' | 'failed';
 
 export function buildPublicMenuUrl(
   userId: string,
-  options?: { dishId?: string | null; usePathRouting?: boolean }
+  options?: { dishId?: string | null; usePathRouting?: boolean; hubSectionId?: string | null }
 ): string {
   const origin =
     typeof window !== 'undefined' ? window.location.origin : 'https://app.chefvision.pl';
@@ -13,15 +13,18 @@ export function buildPublicMenuUrl(
       ? `${(window.location.pathname || '/').replace(/\/+$/, '') || ''}`
       : '';
   const encodedUserId = encodeURIComponent(userId);
+  const hubSegment = options?.hubSectionId
+    ? `/hub/${encodeURIComponent(options.hubSectionId)}`
+    : '';
   const dishSegment = options?.dishId
     ? `/dish/${encodeURIComponent(options.dishId)}`
     : '';
 
   if (options?.usePathRouting) {
-    return `${origin}/menu/${encodedUserId}${dishSegment}`;
+    return `${origin}/menu/${encodedUserId}${hubSegment}${dishSegment}`;
   }
 
-  return `${origin}${pathBase}#/menu/${encodedUserId}${dishSegment}`;
+  return `${origin}${pathBase}#/menu/${encodedUserId}${hubSegment}${dishSegment}`;
 }
 
 const SHARE_LABEL: Record<PublicMenuLocale, string> = {

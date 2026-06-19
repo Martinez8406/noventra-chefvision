@@ -7,6 +7,9 @@ export const BRAND_LOGO_SRC =
 /** Baner CTA „Video Link” na publicznym menu (social media). */
 export const VIDEO_LINK_BANNER_SRC = '/video-link-banner.png';
 
+/** Ikona sekcji Hotel Hub (PNG w public/). */
+export const HOTEL_HUB_ICON_SRC = '/Zrzut_ekranu_2026-06-19_122743-removebg-preview.png';
+
 /** Tokeny trial przy rejestracji (14 dni — patrz Supabase trial_ends_at). */
 export const TRIAL_TOKENS = 50;
 

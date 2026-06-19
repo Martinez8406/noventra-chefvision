@@ -1,21 +1,23 @@
 import { handleTranslateCategory } from '../lib/translate/category.js';
 import { handleTranslateDish } from '../lib/translate/dish.js';
 import { handleTranslateRecommendation } from '../lib/translate/recommendation.js';
+import { handleTranslateServiceNote } from '../lib/translate/serviceNote.js';
 
-const VALID_TARGETS = new Set(['dish', 'category', 'recommendation']);
+const VALID_TARGETS = new Set(['dish', 'category', 'recommendation', 'service_note']);
 
 /**
  * Unified translation API — routes by `body.target`:
  * - dish: requires JWT + dishId
  * - category: public, requires text
  * - recommendation: public, requires type + items/customHeaderText
+ * - service_note: public, requires text (Hotel Hub — PL -> EN)
  */
 export async function handleTranslate({ req, authorization, body = {} }) {
   const target = typeof body?.target === 'string' ? body.target.trim() : '';
   if (!VALID_TARGETS.has(target)) {
     return {
       status: 400,
-      body: { error: 'Wymagane pole target: dish | category | recommendation.' },
+      body: { error: 'Wymagane pole target: dish | category | recommendation | service_note.' },
     };
   }
 
@@ -24,6 +26,9 @@ export async function handleTranslate({ req, authorization, body = {} }) {
   }
   if (target === 'category') {
     return handleTranslateCategory({ req, body });
+  }
+  if (target === 'service_note') {
+    return handleTranslateServiceNote({ req, body });
   }
   return handleTranslateRecommendation({ req, body });
 }
