@@ -389,6 +389,10 @@ const App: React.FC = () => {
   };
 
   const toggleHotelHubVisibility = async (id: string) => {
+    if (!hasProAccess) {
+      openPremiumUpsell();
+      return;
+    }
     const dish = dishes.find((d) => d.id === id);
     if (!dish) return;
     const next = !dish.visibleInHotelHub;
@@ -404,6 +408,10 @@ const App: React.FC = () => {
     dishId: string,
     assignments: Array<{ sectionId: string; categoryId: string }>,
   ) => {
+    if (!hasProAccess) {
+      openPremiumUpsell();
+      return;
+    }
     const uid = session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id;
     if (!uid) return;
     const ok = await hotelHubDb.setDishAssignments(uid, dishId, assignments);
@@ -544,7 +552,7 @@ const App: React.FC = () => {
     { id: 'themes', label: 'Motywy sezonowe', icon: Sparkles, premiumLocked: true },
     { id: 'backdrops', label: 'Studio Tła', icon: Layers, premiumLocked: true },
     { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen },
-    { id: 'hotel-hub', label: 'Hotel Hub', icon: Building2 },
+    { id: 'hotel-hub', label: 'Hotel Hub', icon: Building2, premiumLocked: true },
     { id: 'stats', label: 'Statystyki', icon: BarChart3 },
     { id: 'promotions', label: 'Rekomendacje i promocje', icon: Megaphone, premiumLocked: true },
   ];
@@ -815,12 +823,35 @@ const App: React.FC = () => {
               onUpdatePrice={handleUpdateDishPrice}
               onUpdateCategory={handleUpdateDishCategory}
               menuUserId={currentUser?.id ?? null}
+              hotelHubAvailable={hasProAccess}
             />
           )}
           {activeTab === 'hotel-hub' && (
-            <HotelHubManager
-              userId={session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id ?? null}
-            />
+            hasProAccess ? (
+              <HotelHubManager
+                userId={session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id ?? null}
+              />
+            ) : (
+              <div className="space-y-6">
+                <h2 className="text-3xl font-black text-slate-900 tracking-tight italic flex items-center gap-3">
+                  <Building2 className="text-chef-gold" size={32} />
+                  Hotel Hub
+                </h2>
+                <div className="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm text-center space-y-4">
+                  <p className="text-slate-600 text-sm max-w-lg mx-auto">
+                    Hotel Hub jest dostępny w planie <strong>Trial</strong> i <strong>Premium</strong>.
+                    W planie darmowym możesz korzystać z menu restauracji.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={openPremiumUpsell}
+                    className="inline-flex px-6 py-3 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:from-emerald-300 hover:to-green-400 transition-all"
+                  >
+                    Odblokuj Premium
+                  </button>
+                </div>
+              </div>
+            )
           )}
           {activeTab === 'stats' && (
             <MenuStatsPanel userId={currentUser?.id ?? null} />

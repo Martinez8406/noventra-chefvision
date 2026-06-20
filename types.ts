@@ -153,6 +153,33 @@ export interface Backdrop {
 
 export type HotelHubAvailabilityMode = '24h' | 'custom';
 
+export type HotelHubSectionType = 'menu' | 'info';
+
+/** Pola sekcji „Informacje o hotelu”. */
+export interface HotelHubInfoAttraction {
+  name: string;
+  mapsUrl?: string;
+}
+
+export interface HotelHubInfoFields {
+  contact?: string;
+  address?: string;
+  receptionPhone?: string;
+  email?: string;
+  receptionHours?: string;
+  checkIn?: string;
+  checkOut?: string;
+  breakfast?: string;
+  spa?: string;
+  bar?: string;
+  wifiNetworkName?: string;
+  wifiPassword?: string;
+  taxiOrder?: string;
+  parking?: string;
+  airportTransfer?: string;
+  attractions?: HotelHubInfoAttraction[];
+}
+
 export interface HotelHubSection {
   id: string;
   userId: string;
@@ -161,6 +188,8 @@ export interface HotelHubSection {
   heroImageUrl?: string | null;
   description: string;
   isVisible: boolean;
+  sectionType: HotelHubSectionType;
+  infoFields?: HotelHubInfoFields | null;
   availabilityMode: HotelHubAvailabilityMode;
   availabilityFrom?: string | null;
   availabilityTo?: string | null;

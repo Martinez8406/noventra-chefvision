@@ -41,6 +41,12 @@ export function hasProFeatures(subscriptionStatus) {
   return subscriptionStatus === 'premium' || subscriptionStatus === 'trial';
 }
 
+/** Hotel Hub — tylko trial (aktywny) i Premium. */
+export function canUseHotelHub(row) {
+  const plan = resolveEffectivePlan(row);
+  return plan === 'premium' || plan === 'trial';
+}
+
 /** Paczki tokenów tylko na Premium (nie w trial, nie w free). */
 export function canPurchaseTokenPacks(subscriptionStatus) {
   return subscriptionStatus === 'premium';

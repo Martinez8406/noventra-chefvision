@@ -29,6 +29,8 @@ create table if not exists public.hotel_hub_sections (
   availability_to time null,
   service_notes text not null default '',
   sort_order int not null default 0,
+  section_type text not null default 'menu' check (section_type in ('menu', 'info')),
+  info_fields jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

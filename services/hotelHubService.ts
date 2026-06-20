@@ -7,6 +7,8 @@ import {
 } from '../types';
 import { HOTEL_HUB_DEFAULT_SECTION_TEMPLATES } from '../utils/hotelHub';
 import { HOTEL_HUB_ICON_SRC } from '../constants';
+import { EMPTY_HOTEL_INFO_FIELDS, HOTEL_INFO_SECTION_DEFAULT_NAME, isHotelInfoSection, normalizeHotelInfoFields } from '../utils/hotelHubInfo';
+import { canUseHotelHub } from '../utils/tokens';
 import { supabase, uploadBackdropImage } from './supabaseService';
 
 const LOCAL_SECTIONS_KEY = 'chefvision_hotel_hub_sections_v1';
@@ -31,11 +33,25 @@ function writeLocal<T>(key: string, rows: T[]): void {
   localStorage.setItem(key, JSON.stringify(rows));
 }
 
+async function ownerCanUseHotelHub(userId: string): Promise<boolean> {
+  if (useLocalOnly(userId)) return true;
+  const { data } = await supabase!
+    .from('profiles')
+    .select('plan, subscription_status, trial_ends_at')
+    .eq('id', userId)
+    .single();
+  return canUseHotelHub(data as Record<string, unknown>);
+}
+
 function mapSectionRow(row: Record<string, unknown>): HotelHubSection {
+  const name = String(row.name ?? '');
+  const rawType = String(row.section_type ?? row.sectionType ?? 'menu');
+  const sectionType: HotelHubSection['sectionType'] =
+    rawType === 'info' || name.trim() === HOTEL_INFO_SECTION_DEFAULT_NAME ? 'info' : 'menu';
   return {
     id: String(row.id),
     userId: String(row.user_id ?? row.userId),
-    name: String(row.name ?? ''),
+    name,
     iconEmoji: String(row.icon_emoji ?? row.iconEmoji ?? HOTEL_HUB_ICON_SRC),
     heroImageUrl: (row.hero_image_url ?? row.heroImageUrl ?? null) as string | null,
     description: String(row.description ?? ''),
@@ -45,6 +61,10 @@ function mapSectionRow(row: Record<string, unknown>): HotelHubSection {
     availabilityTo: (row.availability_to ?? row.availabilityTo ?? null) as string | null,
     serviceNotes: String(row.service_notes ?? row.serviceNotes ?? ''),
     sortOrder: Number(row.sort_order ?? row.sortOrder ?? 0),
+    sectionType,
+    infoFields: normalizeHotelInfoFields(
+      (row.info_fields ?? row.infoFields) as HotelHubSection['infoFields'],
+    ),
   };
 }
 
@@ -56,6 +76,54 @@ function mapCategoryRow(row: Record<string, unknown>): HotelHubCategory {
     name: String(row.name ?? ''),
     sortOrder: Number(row.sort_order ?? row.sortOrder ?? 0),
   };
+}
+
+function isSchemaColumnError(message?: string): boolean {
+  if (!message) return false;
+  const m = message.toLowerCase();
+  return (
+    m.includes('section_type')
+    || m.includes('info_fields')
+    || m.includes('schema cache')
+    || m.includes('could not find')
+    || (m.includes('column') && m.includes('does not exist'))
+  );
+}
+
+function buildSectionDbPayload(userId: string, payload: {
+  id?: string;
+  name: string;
+  iconEmoji: string;
+  heroImageUrl: string | null;
+  description: string;
+  isVisible: boolean;
+  availabilityMode: HotelHubSection['availabilityMode'];
+  availabilityFrom: string | null;
+  availabilityTo: string | null;
+  serviceNotes: string;
+  sortOrder: number;
+  sectionType: HotelHubSection['sectionType'];
+  infoFields: HotelHubSection['infoFields'];
+}, withInfoColumns: boolean): Record<string, unknown> {
+  const dbPayload: Record<string, unknown> = {
+    user_id: userId,
+    name: payload.name,
+    icon_emoji: payload.iconEmoji,
+    hero_image_url: payload.heroImageUrl,
+    description: payload.description,
+    is_visible: payload.isVisible,
+    availability_mode: payload.availabilityMode,
+    availability_from: payload.availabilityFrom,
+    availability_to: payload.availabilityTo,
+    service_notes: payload.serviceNotes,
+    sort_order: payload.sortOrder,
+  };
+  if (payload.id) dbPayload.id = payload.id;
+  if (withInfoColumns) {
+    dbPayload.section_type = payload.sectionType;
+    dbPayload.info_fields = payload.sectionType === 'info' ? payload.infoFields : {};
+  }
+  return dbPayload;
 }
 
 function mapAssignmentRow(row: Record<string, unknown>): ProductSectionAssignment {
@@ -83,6 +151,9 @@ export const hotelHubDb = {
   },
 
   async setHotelHubEnabled(userId: string, enabled: boolean): Promise<boolean> {
+    if (enabled && !(await ownerCanUseHotelHub(userId))) {
+      return false;
+    }
     if (useLocalOnly(userId)) {
       localStorage.setItem(`${LOCAL_ENABLED_KEY}:${userId}`, enabled ? '1' : '0');
       return true;
@@ -123,9 +194,15 @@ export const hotelHubDb = {
     if (!data.enabled) {
       return { enabled: false, sections: [], categories: [], assignments: [] };
     }
+    if (!(await ownerCanUseHotelHub(userId))) {
+      return { enabled: false, sections: [], categories: [], assignments: [] };
+    }
+    await this.ensureHotelInfoSection(userId);
+    const refreshed = await this.getHotelHubData(userId);
     return {
-      ...data,
-      sections: data.sections.filter((s) => s.isVisible),
+      ...refreshed,
+      enabled: true,
+      sections: refreshed.sections.filter((s) => s.isVisible),
     };
   },
 
@@ -140,6 +217,8 @@ export const hotelHubDb = {
         name: tpl.name,
         iconEmoji: tpl.iconEmoji,
         description: tpl.description,
+        sectionType: tpl.sectionType ?? 'menu',
+        infoFields: tpl.sectionType === 'info' ? { ...EMPTY_HOTEL_INFO_FIELDS } : undefined,
         isVisible: true,
         availabilityMode: tpl.availabilityMode,
         availabilityFrom: tpl.availabilityFrom ?? null,
@@ -149,6 +228,7 @@ export const hotelHubDb = {
       });
       if (!section) continue;
       created.push(section);
+      if (tpl.sectionType === 'info' || tpl.categories.length === 0) continue;
       for (let j = 0; j < tpl.categories.length; j++) {
         await this.saveCategory(userId, {
           sectionId: section.id,
@@ -158,6 +238,38 @@ export const hotelHubDb = {
       }
     }
     return created;
+  },
+
+  /** Dodaje sekcję informacyjną, jeśli użytkownik ma już starsze sekcje bez niej. */
+  async ensureHotelInfoSection(userId: string): Promise<HotelHubSection | null> {
+    const data = await this.getHotelHubData(userId);
+    const existing = data.sections.find((s) => isHotelInfoSection(s));
+    if (existing) {
+      if (existing.sectionType !== 'info') {
+        return this.saveSection(userId, {
+          ...existing,
+          sectionType: 'info',
+          infoFields: normalizeHotelInfoFields(existing.infoFields),
+        });
+      }
+      return existing;
+    }
+
+    const tpl = HOTEL_HUB_DEFAULT_SECTION_TEMPLATES.find((t) => t.sectionType === 'info');
+    if (!tpl) return null;
+
+    const minSort = data.sections.reduce((m, s) => Math.min(m, s.sortOrder), 0);
+    return this.saveSection(userId, {
+      name: tpl.name,
+      iconEmoji: tpl.iconEmoji,
+      description: '',
+      sectionType: 'info',
+      infoFields: { ...EMPTY_HOTEL_INFO_FIELDS },
+      isVisible: true,
+      availabilityMode: '24h',
+      serviceNotes: '',
+      sortOrder: minSort > 0 ? 0 : minSort - 1,
+    });
   },
 
   async saveSection(
@@ -177,36 +289,43 @@ export const hotelHubDb = {
       availabilityTo: input.availabilityMode === 'custom' ? input.availabilityTo ?? '22:00' : null,
       serviceNotes: (input.serviceNotes ?? '').trim(),
       sortOrder: input.sortOrder ?? 0,
+      sectionType: input.sectionType ?? 'menu',
+      infoFields:
+        input.sectionType === 'info'
+          ? normalizeHotelInfoFields(input.infoFields)
+          : null,
     };
 
     if (useLocalOnly(userId)) {
       const all = readLocal<HotelHubSection>(LOCAL_SECTIONS_KEY);
       const id = payload.id || uuidv4();
-      const row: HotelHubSection = { ...payload, id, userId };
+      const row: HotelHubSection = {
+        ...payload,
+        id,
+        userId,
+        infoFields: payload.sectionType === 'info' ? payload.infoFields : null,
+      };
       writeLocal(LOCAL_SECTIONS_KEY, [row, ...all.filter((s) => s.id !== id)]);
       return row;
     }
 
-    const dbPayload: Record<string, unknown> = {
-      user_id: userId,
-      name: payload.name,
-      icon_emoji: payload.iconEmoji,
-      hero_image_url: payload.heroImageUrl,
-      description: payload.description,
-      is_visible: payload.isVisible,
-      availability_mode: payload.availabilityMode,
-      availability_from: payload.availabilityFrom,
-      availability_to: payload.availabilityTo,
-      service_notes: payload.serviceNotes,
-      sort_order: payload.sortOrder,
-    };
-    if (payload.id) dbPayload.id = payload.id;
+    const dbPayload: Record<string, unknown> = buildSectionDbPayload(userId, payload, true);
 
-    const { data, error } = await supabase!
+    let { data, error } = await supabase!
       .from('hotel_hub_sections')
       .upsert(dbPayload)
       .select('*')
       .single();
+
+    if (error && isSchemaColumnError(error.message)) {
+      const legacyPayload = buildSectionDbPayload(userId, payload, false);
+      ({ data, error } = await supabase!
+        .from('hotel_hub_sections')
+        .upsert(legacyPayload)
+        .select('*')
+        .single());
+    }
+
     if (error || !data) {
       console.error('[saveSection]', error?.message);
       return null;

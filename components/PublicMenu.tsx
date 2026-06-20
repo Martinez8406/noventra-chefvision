@@ -132,6 +132,13 @@ export const PublicMenu: React.FC<Props> = ({
     };
   }, [userId]);
 
+  useEffect(() => {
+    if (!hotelHubEnabled && menuMode === 'hub') {
+      setMenuMode('restaurant');
+      setActiveHubSectionId(null);
+    }
+  }, [hotelHubEnabled, menuMode]);
+
   // Track in-flight category translation requests to avoid duplicates
   const [inFlightKeys, setInFlightKeys] = useState<Record<string, true>>({});
 
@@ -287,7 +294,6 @@ export const PublicMenu: React.FC<Props> = ({
         if (data?.restaurant_name) setRestaurantName(data.restaurant_name);
         setGooglePlaceId(data?.google_place_id?.trim() || null);
         setFeedbackAvailable((data as { feedback_available?: boolean })?.feedback_available === true);
-        setHotelHubEnabled((data as { hotel_hub_enabled?: boolean })?.hotel_hub_enabled === true);
         if (Array.isArray((data as any)?.menu_categories)) {
           const list = (data as any).menu_categories.map((x: any) => String(x).trim()).filter(Boolean);
           setProfileMenuCategories(list);

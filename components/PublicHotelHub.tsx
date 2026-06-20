@@ -2,12 +2,14 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Dish, DishRecommendation, HotelHubCategory, HotelHubData, PublicMenuLocale } from '../types';
 import { formatHotelHubAvailability, sortHotelHubCategories, sortHotelHubSections } from '../utils/hotelHub';
+import { isHotelInfoSection } from '../utils/hotelHubInfo';
 import {
   getServiceNoteSectionLabel,
   getPublicServiceNotesSync,
   resolvePublicServiceNotes,
 } from '../utils/hotelHubServiceNotes';
 import { PublicDishCard } from './PublicDishCard';
+import { PublicHotelInfoSection } from './PublicHotelInfoSection';
 import { HotelHubSectionCard } from './PublicMenuModeTabs';
 import { HotelHubSectionIcon } from './HotelHubSectionIcon';
 import { getPublicDishCopy } from '../utils/menuTranslations';
@@ -144,6 +146,19 @@ export const PublicHotelHub: React.FC<Props> = ({
             ))}
           </div>
         )}
+      </div>
+    );
+  }
+
+  if (isHotelInfoSection(activeSection)) {
+    return (
+      <div style={{ fontFamily }}>
+        <PublicHotelInfoSection
+          section={activeSection}
+          menuLocale={menuLocale}
+          primaryColor={primaryColor}
+          onBack={() => onSelectSection(null)}
+        />
       </div>
     );
   }

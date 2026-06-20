@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { HotelHubCategory, HotelHubData, HotelHubSection } from '../types';
+import { HotelHubCategory, HotelHubData, HotelHubInfoFields, HotelHubSection } from '../types';
 import { hotelHubDb } from '../services/hotelHubService';
 import { HOTEL_HUB_SERVICE_NOTE_TEMPLATES, sortHotelHubCategories, sortHotelHubSections } from '../utils/hotelHub';
+import { EMPTY_HOTEL_INFO_FIELDS, HOTEL_INFO_SECTION_DEFAULT_NAME, isHotelInfoSection, normalizeHotelInfoFields } from '../utils/hotelHubInfo';
 import { HOTEL_HUB_ICON_SRC } from '../constants';
 import { compressImageForUpload } from '../services/imageService';
 import { HotelHubSectionIcon } from './HotelHubSectionIcon';
+import { HotelInfoFieldsEditor } from './PublicHotelInfoSection';
 import {
   Building2,
   Plus,
@@ -25,6 +27,7 @@ const emptySection = (sortOrder: number): Partial<HotelHubSection> & { name: str
   name: '',
   iconEmoji: HOTEL_HUB_ICON_SRC,
   description: '',
+  sectionType: 'menu',
   isVisible: true,
   availabilityMode: '24h',
   availabilityFrom: '07:00',
@@ -46,6 +49,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
   const [editingSection, setEditingSection] = useState<(Partial<HotelHubSection> & { name: string }) | null>(null);
   const [newCategoryName, setNewCategoryName] = useState<Record<string, string>>({});
   const [uploadingHero, setUploadingHero] = useState(false);
+  const [infoSectionError, setInfoSectionError] = useState<string | null>(null);
   const heroInputRef = useRef<HTMLInputElement>(null);
 
   const reload = useCallback(async () => {
@@ -55,16 +59,24 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
       return;
     }
     setLoading(true);
+    setInfoSectionError(null);
     try {
       const data = await hotelHubDb.getHotelHubData(userId);
+      if (data.enabled) {
+        if (data.sections.length === 0) {
+          await hotelHubDb.seedDefaultSections(userId);
+        } else {
+          const created = await hotelHubDb.ensureHotelInfoSection(userId);
+          if (!created && !data.sections.some((s) => isHotelInfoSection(s))) {
+            setInfoSectionError(
+              'Nie udało się dodać sekcji „Informacje o hotelu”. Uruchom migrację supabase/hotel_hub_info_section.sql w Supabase SQL Editor.',
+            );
+          }
+        }
+      }
       await hotelHubDb.syncAllSectionIcons(userId);
       const synced = await hotelHubDb.getHotelHubData(userId);
       setHubData(synced);
-      if (synced.enabled && synced.sections.length === 0) {
-        await hotelHubDb.seedDefaultSections(userId);
-        const seeded = await hotelHubDb.getHotelHubData(userId);
-        setHubData(seeded);
-      }
     } finally {
       setLoading(false);
     }
@@ -79,9 +91,14 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
     setSaving(true);
     try {
       const next = !hubData.enabled;
-      await hotelHubDb.setHotelHubEnabled(userId, next);
+      const ok = await hotelHubDb.setHotelHubEnabled(userId, next);
+      if (!ok && next) {
+        setInfoSectionError('Hotel Hub wymaga planu Trial lub Premium.');
+        return;
+      }
       if (next) {
         await hotelHubDb.seedDefaultSections(userId);
+        await hotelHubDb.ensureHotelInfoSection(userId);
       }
       await reload();
     } finally {
@@ -93,7 +110,15 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
     if (!userId || !editingSection?.name.trim()) return;
     setSaving(true);
     try {
-      await hotelHubDb.saveSection(userId, { ...editingSection, iconEmoji: HOTEL_HUB_ICON_SRC });
+      await hotelHubDb.saveSection(userId, {
+        ...editingSection,
+        iconEmoji: HOTEL_HUB_ICON_SRC,
+        sectionType: editingSection.sectionType ?? 'menu',
+        infoFields:
+          editingSection.sectionType === 'info'
+            ? normalizeHotelInfoFields(editingSection.infoFields ?? EMPTY_HOTEL_INFO_FIELDS)
+            : undefined,
+      });
       setEditingSection(null);
       await reload();
     } finally {
@@ -159,7 +184,26 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
     }
   };
 
+  const handleAddInfoSection = async () => {
+    if (!userId) return;
+    setSaving(true);
+    setInfoSectionError(null);
+    try {
+      const created = await hotelHubDb.ensureHotelInfoSection(userId);
+      if (!created) {
+        setInfoSectionError(
+          'Nie udało się dodać sekcji. Uruchom migrację supabase/hotel_hub_info_section.sql w Supabase SQL Editor i spróbuj ponownie.',
+        );
+        return;
+      }
+      await reload();
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const sections = sortHotelHubSections(hubData.sections);
+  const hasInfoSection = sections.some((s) => isHotelInfoSection(s));
   const assignedDishCount = (sectionId: string) =>
     new Set(hubData.assignments.filter((a) => a.sectionId === sectionId).map((a) => a.dishId)).size;
 
@@ -213,6 +257,29 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
 
       {hubData.enabled && (
         <>
+          {infoSectionError && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+              {infoSectionError}
+            </div>
+          )}
+
+          {!hasInfoSection && (
+            <div className="rounded-2xl border border-chef-gold/30 bg-chef-cream/40 px-5 py-4 flex flex-wrap items-center justify-between gap-4">
+              <p className="text-sm text-slate-700">
+                Brak sekcji <strong>{HOTEL_INFO_SECTION_DEFAULT_NAME}</strong> — dodaj ją, aby goście widzieli kontakt i godziny hotelu.
+              </p>
+              <button
+                type="button"
+                onClick={() => void handleAddInfoSection()}
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-chef-gold text-white text-sm font-black hover:opacity-90 disabled:opacity-50"
+              >
+                {saving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                Dodaj sekcję informacyjną
+              </button>
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center justify-between gap-4">
             <h3 className="text-lg font-black text-slate-800 italic">Sekcje</h3>
             <button
@@ -277,6 +344,15 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                 </div>
               </div>
 
+              {editingSection.sectionType === 'info' ? (
+                <HotelInfoFieldsEditor
+                  fields={normalizeHotelInfoFields(editingSection.infoFields ?? EMPTY_HOTEL_INFO_FIELDS)}
+                  onChange={(infoFields: HotelHubInfoFields) =>
+                    setEditingSection({ ...editingSection, infoFields })
+                  }
+                />
+              ) : (
+                <>
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Dostępność</label>
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -341,6 +417,8 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-chef-gold/40 outline-none resize-none"
                 />
               </div>
+                </>
+              )}
 
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -397,7 +475,9 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                         )}
                       </div>
                       <p className="text-xs text-slate-400 mt-1">
-                        {sectionCategories.length} kategorii · {assignedDishCount(section.id)} przypisanych dań
+                        {isHotelInfoSection(section)
+                          ? 'Sekcja informacyjna'
+                          : `${sectionCategories.length} kategorii · ${assignedDishCount(section.id)} przypisanych dań`}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -411,6 +491,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                       >
                         Edytuj
                       </button>
+                      {!isHotelInfoSection(section) && (
                       <button
                         type="button"
                         onClick={() => setExpandedSectionId(isExpanded ? null : section.id)}
@@ -419,6 +500,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                       >
                         {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                       </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => void handleDeleteSection(section.id)}
@@ -430,7 +512,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                     </div>
                   </div>
 
-                  {isExpanded && (
+                  {isExpanded && !isHotelInfoSection(section) && (
                     <div className="border-t border-slate-100 p-5 md:p-6 bg-slate-50/50 space-y-4">
                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                         Kategorie sekcji

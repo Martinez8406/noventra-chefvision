@@ -10,6 +10,7 @@ export interface HotelHubSectionTemplate {
   name: string;
   iconEmoji: string;
   description: string;
+  sectionType?: 'menu' | 'info';
   categories: string[];
   availabilityMode: HotelHubAvailabilityMode;
   availabilityFrom?: string;
@@ -18,6 +19,15 @@ export interface HotelHubSectionTemplate {
 }
 
 export const HOTEL_HUB_DEFAULT_SECTION_TEMPLATES: HotelHubSectionTemplate[] = [
+  {
+    name: 'Informacje o hotelu',
+    iconEmoji: HOTEL_HUB_ICON_SRC,
+    description: '',
+    sectionType: 'info',
+    categories: [],
+    availabilityMode: '24h',
+    serviceNotes: '',
+  },
   {
     name: 'Room Service',
     iconEmoji: HOTEL_HUB_ICON_SRC,

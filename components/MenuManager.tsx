@@ -21,6 +21,7 @@ interface Props {
   onUpdatePrice: (id: string, price: string) => void;
   onUpdateCategory: (id: string, category: string | null) => void;
   menuUserId: string | null;
+  hotelHubAvailable?: boolean;
 }
 
 export const MenuManager: React.FC<Props> = ({
@@ -34,6 +35,7 @@ export const MenuManager: React.FC<Props> = ({
   onUpdatePrice,
   onUpdateCategory,
   menuUserId,
+  hotelHubAvailable = false,
 }) => {
   const CUSTOM_CATEGORY_VALUE = '__custom_category__';
   const MENU_CATEGORIES_STORAGE_KEY = (uid: string) => `chefvision_menu_categories:${uid}`;
@@ -142,6 +144,7 @@ export const MenuManager: React.FC<Props> = ({
   }, [menuUserId]);
 
   const hubSections = sortHotelHubSections(hubData?.sections ?? []);
+  const showHotelHub = hotelHubAvailable && hotelHubEnabled;
 
   const persistMenuCategories = (next: string[]) => {
     setMenuCategories(next);
@@ -429,7 +432,7 @@ export const MenuManager: React.FC<Props> = ({
               <th className="px-6 py-4">Produkt</th>
               <th className="px-6 py-4">Kategoria</th>
               <th className="px-6 py-4">Widoczność</th>
-              {hotelHubEnabled && <th className="px-6 py-4">Hotel Hub</th>}
+              {showHotelHub && <th className="px-6 py-4">Hotel Hub</th>}
               <th className="px-6 py-4">Cena</th>
               <th className="px-6 py-4">Social Link</th>
               <th className="px-6 py-4 text-right">Akcje</th>
@@ -640,7 +643,7 @@ export const MenuManager: React.FC<Props> = ({
                       {dish.isOnline ? <Eye size={14} /> : <EyeOff size={14} />}
                       Restauracja
                     </button>
-                    {hotelHubEnabled && onToggleHotelHub && (
+                    {showHotelHub && onToggleHotelHub && (
                       <button
                         onClick={() => onToggleHotelHub(dish.id)}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight transition-all duration-200 w-fit
@@ -656,7 +659,7 @@ export const MenuManager: React.FC<Props> = ({
                   </div>
                 </td>
 
-                {hotelHubEnabled && (
+                {showHotelHub && (
                   <td className="px-6 py-4">
                     <div className="relative">
                       <button
@@ -813,7 +816,7 @@ export const MenuManager: React.FC<Props> = ({
 
             {dishes.length === 0 && (
               <tr>
-                <td colSpan={hotelHubEnabled ? 7 : 6} className="px-8 py-12 text-center text-slate-400 font-medium">
+                <td colSpan={showHotelHub ? 7 : 6} className="px-8 py-12 text-center text-slate-400 font-medium">
                   Brak dań w menu. Przejdź do Chef's Studio, aby stworzyć pierwsze danie.
                 </td>
               </tr>
