@@ -26,6 +26,7 @@ import {
   saveRecommendationTranslations,
   type RecommendationTranslationCache,
 } from '../utils/recommendationTranslations';
+import { MENU_TRANSLATION_LOCALES_FREE } from '../utils/tokens';
 
 interface Props {
   dishes: Dish[];
@@ -139,6 +140,10 @@ export const PublicMenu: React.FC<Props> = ({
     }
   }, [hotelHubEnabled, menuMode]);
 
+  const translationLocales = showWatermark
+    ? (MENU_TRANSLATION_LOCALES_FREE as PublicMenuLocale[])
+    : undefined;
+
   // Track in-flight category translation requests to avoid duplicates
   const [inFlightKeys, setInFlightKeys] = useState<Record<string, true>>({});
 
@@ -146,18 +151,29 @@ export const PublicMenu: React.FC<Props> = ({
     try {
       const raw = localStorage.getItem(MENU_LOCALE_KEY(userId));
       if (raw === 'en-us') {
-        setMenuLocale('he');
+        const nextLocale: PublicMenuLocale = showWatermark ? 'en' : 'he';
+        setMenuLocale(nextLocale);
         try {
-          localStorage.setItem(MENU_LOCALE_KEY(userId), 'he');
+          localStorage.setItem(MENU_LOCALE_KEY(userId), nextLocale);
         } catch {
           /* ignore */
         }
-      } else if (raw && isPublicLocale(raw)) setMenuLocale(raw);
-      else setMenuLocale('pl');
+      } else if (raw && isPublicLocale(raw)) {
+        if (showWatermark && raw !== 'pl' && raw !== 'en') {
+          setMenuLocale('pl');
+          try {
+            localStorage.setItem(MENU_LOCALE_KEY(userId), 'pl');
+          } catch {
+            /* ignore */
+          }
+        } else {
+          setMenuLocale(raw);
+        }
+      } else setMenuLocale('pl');
     } catch {
       setMenuLocale('pl');
     }
-  }, [userId]);
+  }, [userId, showWatermark]);
 
   useEffect(() => {
     if (!userId) return;
@@ -183,13 +199,15 @@ export const PublicMenu: React.FC<Props> = ({
     if (!userId || recommendations.length === 0) return;
 
     const missing = recommendations.filter(
-      (rec) => recommendationNeedsTranslation(rec) && !recommendationCacheReady(rec, recTranslations[rec.id]),
+      (rec) =>
+        recommendationNeedsTranslation(rec) &&
+        !recommendationCacheReady(rec, recTranslations[rec.id], translationLocales),
     );
     if (missing.length === 0) return;
 
     let cancelled = false;
     missing.slice(0, 4).forEach((rec) => {
-      fetchRecommendationTranslation(rec)
+      fetchRecommendationTranslation(rec, translationLocales)
         .then((cache) => {
           if (cancelled) return;
           setRecTranslations((prev) => {
@@ -206,7 +224,7 @@ export const PublicMenu: React.FC<Props> = ({
     return () => {
       cancelled = true;
     };
-  }, [userId, recommendations, recTranslations]);
+  }, [userId, recommendations, recTranslations, translationLocales]);
 
   const recByDish = recommendationsByDishId(recommendations);
 
@@ -463,6 +481,22 @@ export const PublicMenu: React.FC<Props> = ({
   // Pre-translate custom categories (not covered by our static map) and cache in localStorage.
   // This runs even in PL so that switching language later is instant.
   useEffect(() => {
+    const requiredLocales = translationLocales ?? [
+      'en',
+      'he',
+      'ar',
+      'uk',
+      'de',
+      'es',
+      'it',
+      'ko',
+      'ja',
+      'fr',
+      'cs',
+      'nl',
+      'zh',
+    ];
+
     const missing = orderedKeys
       .map((c) => c.trim())
       .filter(Boolean)
@@ -471,20 +505,9 @@ export const PublicMenu: React.FC<Props> = ({
         if (mappedEn !== category) return false; // covered by static map (standard categories)
         const key = normalizeCategoryKey(category);
         const cached = customCategoryTranslations[key];
-        const hasAll =
-          !!cached?.en?.trim() &&
-          !!cached?.he?.trim() &&
-          !!cached?.ar?.trim() &&
-          !!cached?.uk?.trim() &&
-          !!cached?.de?.trim() &&
-          !!cached?.es?.trim() &&
-          !!cached?.it?.trim() &&
-          !!cached?.ko?.trim() &&
-          !!cached?.ja?.trim() &&
-          !!cached?.fr?.trim() &&
-          !!cached?.cs?.trim() &&
-          !!cached?.nl?.trim() &&
-          !!cached?.zh?.trim();
+        const hasAll = requiredLocales.every(
+          (locale) => typeof cached?.[locale] === 'string' && cached[locale]!.trim().length > 0,
+        );
         if (hasAll) return false;
         const inflight = inFlightKeys[key];
         return !inflight;
@@ -499,7 +522,11 @@ export const PublicMenu: React.FC<Props> = ({
       fetch('/api/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target: 'category', text: category }),
+        body: JSON.stringify({
+          target: 'category',
+          text: category,
+          locales: requiredLocales,
+        }),
       })
         .then(async (r) => {
           const data = await r.json().catch(() => null);
@@ -512,22 +539,13 @@ export const PublicMenu: React.FC<Props> = ({
           setCustomCategoryTranslations((prev) => {
             const next = { ...prev };
             const existing = next[key] || {};
-            next[key] = {
-              ...existing,
-              en: tr.en,
-              he: tr.he,
-              ar: tr.ar,
-              uk: tr.uk,
-              de: tr.de,
-              es: tr.es,
-              it: tr.it,
-              ko: tr.ko,
-              ja: tr.ja,
-              fr: tr.fr,
-              cs: tr.cs,
-              nl: tr.nl,
-              zh: tr.zh,
-            };
+            const merged = { ...existing };
+            for (const locale of requiredLocales) {
+              if (typeof tr[locale] === 'string' && tr[locale].trim()) {
+                merged[locale] = tr[locale];
+              }
+            }
+            next[key] = merged;
             try {
               localStorage.setItem(CATEGORY_TRANSLATIONS_KEY(userId), JSON.stringify(next));
             } catch {
@@ -546,7 +564,7 @@ export const PublicMenu: React.FC<Props> = ({
           });
         });
     });
-  }, [orderedKeys.join('|'), userId, customCategoryTranslations, inFlightKeys]);
+  }, [orderedKeys.join('|'), userId, customCategoryTranslations, inFlightKeys, translationLocales]);
 
   const isMenuReady = !loading && profileLoaded;
   if (!isMenuReady) {
@@ -686,7 +704,7 @@ export const PublicMenu: React.FC<Props> = ({
             }
           `}
           </style>
-          <MenuLanguageSwitcher value={menuLocale} onChange={persistMenuLocale} />
+          <MenuLanguageSwitcher value={menuLocale} onChange={persistMenuLocale} englishOnly={showWatermark} />
           <PublicDishDetail
             dish={dish}
             recommendation={recByDish[dish.id] ?? null}
@@ -875,7 +893,7 @@ export const PublicMenu: React.FC<Props> = ({
           }
         `}
       </style>
-      <MenuLanguageSwitcher value={menuLocale} onChange={persistMenuLocale} />
+      <MenuLanguageSwitcher value={menuLocale} onChange={persistMenuLocale} englishOnly={showWatermark} />
       <div className={`fixed top-4 z-[110] ${isRtl ? 'right-4 left-auto' : 'left-4 right-auto'}`}>
         <ShareLinkButton
           url={menuShareUrl}

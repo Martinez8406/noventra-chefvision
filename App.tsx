@@ -353,7 +353,19 @@ const App: React.FC = () => {
       if (saved) {
         setDishes((prev) => prev.map((d) => (d.id === saved.id ? saved : d)));
         setSelectedDishId(null);
-        if (supabase && shouldRequestMenuTranslation(saved)) {
+        if (
+          supabase &&
+          shouldRequestMenuTranslation(
+            saved,
+            currentUser
+              ? {
+                  subscription_status: currentUser.subscriptionStatus,
+                  plan: currentUser.plan,
+                  trial_ends_at: currentUser.trialEndsAt ?? null,
+                }
+              : null
+          )
+        ) {
           void requestMenuTranslations(saved.id).then((patch) => {
             if (patch?.translations) {
               setDishes((prev) =>

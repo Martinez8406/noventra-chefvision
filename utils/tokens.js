@@ -13,6 +13,32 @@
 export const TRIAL_TOKENS_DEFAULT = 50;
 export const SUBSCRIPTION_TOKENS_DEFAULT = 50;
 
+/** Języki tłumaczenia menu (bez PL — oryginał w polu dania). */
+export const MENU_TRANSLATION_LOCALES_FULL = [
+  'en',
+  'he',
+  'ar',
+  'uk',
+  'de',
+  'es',
+  'it',
+  'ko',
+  'ja',
+  'fr',
+  'cs',
+  'nl',
+  'zh',
+];
+
+/** Plan darmowy: tylko angielski w menu cyfrowym. */
+export const MENU_TRANSLATION_LOCALES_FREE = ['en'];
+
+export function getMenuTranslationLocales(row) {
+  return resolveEffectivePlan(row) === 'free'
+    ? MENU_TRANSLATION_LOCALES_FREE
+    : MENU_TRANSLATION_LOCALES_FULL;
+}
+
 export function inferPlan(row) {
   if (row?.plan === 'premium' || row?.plan === 'free' || row?.plan === 'trial') {
     return row.plan;

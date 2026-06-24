@@ -1,5 +1,10 @@
 export const TRIAL_TOKENS_DEFAULT: number;
 export const SUBSCRIPTION_TOKENS_DEFAULT: number;
+export const MENU_TRANSLATION_LOCALES_FULL: readonly string[];
+export const MENU_TRANSLATION_LOCALES_FREE: readonly string[];
+export function getMenuTranslationLocales(
+  row: Record<string, unknown> | null | undefined
+): readonly string[];
 
 export function inferPlan(row: Record<string, unknown> | null | undefined): 'trial' | 'premium' | 'free';
 export function isTrialActive(row: Record<string, unknown> | null | undefined): boolean;

@@ -246,26 +246,31 @@ export function recommendationNeedsTranslation(rec: DishRecommendation): boolean
   return hasCustom || hasItems;
 }
 
-const checkMapAllLocales = (map?: Partial<Record<PublicMenuLocale, string>>) =>
-  !!map && NON_PL_LOCALES.every((l) => typeof map[l] === 'string' && map[l]!.trim().length > 0);
+const checkMapAllLocales = (
+  map?: Partial<Record<PublicMenuLocale, string>>,
+  locales: readonly PublicMenuLocale[] = NON_PL_LOCALES,
+) => !!map && locales.every((l) => typeof map[l] === 'string' && map[l]!.trim().length > 0);
 
 export function recommendationCacheReady(
   rec: DishRecommendation,
   cache: RecommendationTranslationCache | undefined,
+  locales?: readonly PublicMenuLocale[],
 ): boolean {
+  const requiredLocales = locales ?? NON_PL_LOCALES;
   if (!recommendationNeedsTranslation(rec)) return true;
   if (!cache) return false;
-  if (rec.customHeaderText?.trim() && !checkMapAllLocales(cache.customHeaderText)) return false;
+  if (rec.customHeaderText?.trim() && !checkMapAllLocales(cache.customHeaderText, requiredLocales)) return false;
   for (const item of rec.items) {
     if (!item.title?.trim()) continue;
-    if (!checkMapAllLocales(cache.items?.[item.id]?.title)) return false;
-    if (item.subtitle?.trim() && !checkMapAllLocales(cache.items[item.id]?.subtitle)) return false;
+    if (!checkMapAllLocales(cache.items?.[item.id]?.title, requiredLocales)) return false;
+    if (item.subtitle?.trim() && !checkMapAllLocales(cache.items[item.id]?.subtitle, requiredLocales)) return false;
   }
   return true;
 }
 
 export async function fetchRecommendationTranslation(
   rec: DishRecommendation,
+  locales?: readonly PublicMenuLocale[],
 ): Promise<RecommendationTranslationCache> {
   const res = await fetch('/api/translate', {
     method: 'POST',
@@ -279,6 +284,7 @@ export async function fetchRecommendationTranslation(
         title: i.title,
         subtitle: i.subtitle,
       })),
+      ...(locales?.length ? { locales } : {}),
     }),
   });
   const data = await res.json().catch(() => null);

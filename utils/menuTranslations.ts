@@ -1,4 +1,5 @@
 import type { Dish, PublicMenuLocale } from '../types';
+import { getMenuTranslationLocales } from './tokens';
 
 const toStringArray = (value: unknown): string[] => {
   if (Array.isArray(value)) {
@@ -122,10 +123,13 @@ export function resolveMenuTranslationEntry(
 /** Domyślny opis przy zapisie z ChefsStudio – uznajemy za brak własnego opisu (bez tłumaczenia AI). */
 export const DEFAULT_DISH_DESCRIPTION_PLACEHOLDER = 'Krótki opis, który zobaczy gość...';
 
-export function shouldRequestMenuTranslation(dish: Dish): boolean {
+export function shouldRequestMenuTranslation(
+  dish: Dish,
+  planRow?: Record<string, unknown> | null
+): boolean {
+  const locales = getMenuTranslationLocales(planRow ?? null) as PublicMenuLocale[];
   const ingredientsPL = toStringArray(dish.ingredients);
   if (ingredientsPL.length > 0) {
-    const locales: PublicMenuLocale[] = ['en', 'he', 'ar', 'uk', 'de', 'es', 'it', 'ko', 'ja', 'fr', 'cs', 'nl', 'zh'];
     const hasIngredientsTranslationsForAllLocales = locales.every((locale) => {
       /* Dla `he` tylko klucz `he` — nie legacy `en-us`, żeby po zmianie locale wymusić nowe tłumaczenie AI. */
       const tr =

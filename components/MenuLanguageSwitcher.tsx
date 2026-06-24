@@ -18,6 +18,8 @@ const OPTIONS: { locale: PublicMenuLocale; label: string }[] = [
   { locale: 'ar', label: 'العربية' },
 ];
 
+const FREE_PLAN_OPTIONS = OPTIONS.filter((o) => o.locale === 'pl' || o.locale === 'en');
+
 function optionFor(locale: PublicMenuLocale) {
   return OPTIONS.find((o) => o.locale === locale)!;
 }
@@ -179,18 +181,21 @@ function FlagSvg({ locale }: { locale: PublicMenuLocale }) {
 interface Props {
   value: PublicMenuLocale;
   onChange: (locale: PublicMenuLocale) => void;
+  /** Plan darmowy: tylko angielski oprócz polskiego źródła. */
+  englishOnly?: boolean;
 }
 
 /**
  * Przełącznik języka: jedna widoczna flaga (aktualny język, domyślnie PL),
  * po kliknięciu rozwija się lista z trzema pozostałymi językami.
  */
-export const MenuLanguageSwitcher: React.FC<Props> = ({ value, onChange }) => {
+export const MenuLanguageSwitcher: React.FC<Props> = ({ value, onChange, englishOnly = false }) => {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const current = optionFor(value);
-  const others = OPTIONS.filter((o) => o.locale !== value);
+  const availableOptions = englishOnly ? FREE_PLAN_OPTIONS : OPTIONS;
+  const current = availableOptions.find((o) => o.locale === value) ?? optionFor(value);
+  const others = availableOptions.filter((o) => o.locale !== value);
 
   useEffect(() => {
     if (!open) return;
