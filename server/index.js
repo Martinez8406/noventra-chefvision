@@ -1,7 +1,6 @@
 import '../lib/loadEnv.js';
 import { config } from 'dotenv';
 import express from 'express';
-import Stripe from 'stripe';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { handleGenerateImage } from '../api/generate-image.js';
@@ -12,6 +11,7 @@ import { handleGetMenuOpenStats } from '../api/get-menu-open-stats.js';
 import { handleFeedback } from '../api/feedback.js';
 import { handleStripeWebhook, readStripeWebhookBody } from '../lib/stripe/webhook.js';
 import { createBillingPortalSession } from '../lib/stripe/createBillingPortalSession.js';
+import { createCheckoutSession, getStripeClient } from '../lib/stripe/createCheckoutSession.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(__dirname, '..', '.env.local') });
@@ -61,37 +61,36 @@ app.post(
 
 app.use(express.json({ limit: '15mb' }));
 
-const stripeSecret = process.env.STRIPE_SECRET_KEY;
-// W Stripe Dashboard użyj Price ID (price_...), nie Product ID (prod_...)
-const priceId = process.env.STRIPE_PRICE_ID;
+const stripe = getStripeClient();
 
-if (!stripeSecret || !priceId) {
-  console.warn('Brak STRIPE_SECRET_KEY lub STRIPE_PRICE_ID w .env.local – API Stripe nie będzie działać.');
+if (!stripe || !process.env.STRIPE_PRICE_ID) {
+  console.warn(
+    'Brak STRIPE_SECRET_KEY lub STRIPE_PRICE_ID w .env.local – checkout Premium nie będzie działać.'
+  );
 }
-
-const stripe = stripeSecret ? new Stripe(stripeSecret, { apiVersion: '2024-11-20.acacia' }) : null;
+if (!process.env.STRIPE_START_PRICE_ID) {
+  console.warn('[SERVER] Brak STRIPE_START_PRICE_ID — plan Start niedostępny w checkout.');
+}
+if (!process.env.STRIPE_TOKEN_PACK_PRICE_ID) {
+  console.warn('[SERVER] Brak STRIPE_TOKEN_PACK_PRICE_ID — paczka tokenów niedostępna w checkout.');
+}
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 app.post('/api/create-checkout-session', async (req, res) => {
-  if (!stripe || !priceId) {
-    return res.status(503).json({ error: 'Stripe nie jest skonfigurowany.' });
-  }
   try {
-    const { userId, successUrl, cancelUrl } = req.body;
-    const session = await stripe.checkout.sessions.create({
-      // Używamy subskrypcji, bo Price ID jest cykliczny
-      mode: 'subscription',
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: successUrl || `${BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl || BASE_URL,
-      client_reference_id: userId || undefined,
-      metadata: userId ? { userId } : undefined,
-      subscription_data: userId
-        ? { metadata: { userId } }
-        : undefined,
+    const { userId, successUrl, cancelUrl, planType } = req.body || {};
+    const result = await createCheckoutSession({
+      stripe,
+      userId,
+      successUrl,
+      cancelUrl,
+      planType,
     });
-    return res.json({ url: session.url });
+    if (!result.ok) {
+      return res.status(result.status).json({ error: result.error });
+    }
+    return res.json({ url: result.url });
   } catch (e) {
     console.error('Stripe create-checkout-session:', e);
     return res.status(500).json({ error: e.message || 'Błąd tworzenia sesji.' });

@@ -17,8 +17,10 @@ import { SuccessPage } from './components/SuccessPage';
 import { FreePlanUpgradeCard } from './components/FreePlanUpgradeCard';
 import { TrialPlanUpgradeCard } from './components/TrialPlanUpgradeCard';
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
+import { PricingPage, type PricingPlanType } from './components/PricingPage';
+import { StartPlanPromoBar } from './components/StartPlanPromoBar';
 import { BRAND_LOGO_SRC, TRIAL_TOKENS } from './constants';
-import { formatTokenStatus, hasProFeatures } from './utils/tokens';
+import { formatTokenStatus, hasProFeatures, canUseHotelHub } from './utils/tokens';
 import { supabase, db, authService, uploadDishImage } from './services/supabaseService';
 import { hotelHubDb } from './services/hotelHubService';
 import { requestMenuTranslations } from './services/aiService';
@@ -108,6 +110,7 @@ const App: React.FC = () => {
   const [statusToast, setStatusToast] = useState<string | null>(null);
   const [publicHasWatermark, setPublicHasWatermark] = useState<boolean>(false);
   const [publicMenuLoading, setPublicMenuLoading] = useState(false);
+  const [startPromoBarVisible, setStartPromoBarVisible] = useState(false);
   
   useEffect(() => {
     let subscription: any = null;
@@ -238,9 +241,23 @@ const App: React.FC = () => {
 
   const isPremium = currentUser?.subscriptionStatus === 'premium';
   const isTrial = currentUser?.subscriptionStatus === 'trial';
+  const isStart = currentUser?.subscriptionStatus === 'start';
   const isFree = currentUser?.subscriptionStatus === 'free_limited';
   const hasProAccess = hasProFeatures(currentUser?.subscriptionStatus);
+  const hasHotelHubAccess = canUseHotelHub(
+    currentUser
+      ? {
+          plan: currentUser.plan,
+          subscription_status: currentUser.subscriptionStatus,
+          trial_ends_at: currentUser.trialEndsAt ?? null,
+        }
+      : null,
+  );
   const openPremiumUpsell = () => setPremiumUpsellOpen(true);
+  const openPricingPage = () => {
+    window.location.hash = '#/cennik';
+    setHash('#/cennik');
+  };
 
   const handleSaveBackdrop = async (imageUrl: string) => {
     const uid = session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id;
@@ -271,6 +288,7 @@ const App: React.FC = () => {
   const publicMenuMode: 'restaurant' | 'hub' =
     pathname.includes('/hub') || hash.includes('/hub') ? 'hub' : 'restaurant';
   const isSuccessPage = hash.includes('#/success');
+  const isPricingPage = hash.includes('#/cennik') || pathname === '/cennik';
 
   const refreshCurrentProfile = async () => {
     const profile = await authService.getCurrentProfile();
@@ -401,8 +419,8 @@ const App: React.FC = () => {
   };
 
   const toggleHotelHubVisibility = async (id: string) => {
-    if (!hasProAccess) {
-      openPremiumUpsell();
+    if (!hasHotelHubAccess) {
+      openPricingPage();
       return;
     }
     const dish = dishes.find((d) => d.id === id);
@@ -420,8 +438,8 @@ const App: React.FC = () => {
     dishId: string,
     assignments: Array<{ sectionId: string; categoryId: string }>,
   ) => {
-    if (!hasProAccess) {
-      openPremiumUpsell();
+    if (!hasHotelHubAccess) {
+      openPricingPage();
       return;
     }
     const uid = session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id;
@@ -487,14 +505,13 @@ const App: React.FC = () => {
     if (!ok) console.error('Aktualizacja kategorii nie powiodła się');
   };
 
-  const handleBuyPremium = async () => {
+  const handleBuyPlan = async (planType: PricingPlanType) => {
     try {
-      // Upewnij się, że mamy aktualne userId z Supabase
       let userId = currentUser?.id;
       if (!userId) {
         const profile = await authService.getCurrentProfile();
         if (!profile) {
-          alert('Musisz być zalogowany, aby kupić Premium.');
+          alert('Musisz być zalogowany, aby dokonać zakupu.');
           return;
         }
         userId = profile.id;
@@ -503,14 +520,36 @@ const App: React.FC = () => {
 
       await createCheckoutSession({
         userId,
+        planType,
         successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: window.location.origin,
+        cancelUrl: `${window.location.origin}/#/cennik`,
       });
     } catch (err: any) {
       console.error('Stripe Checkout:', err);
+      throw err;
+    }
+  };
+
+  const handleBuyPremium = async () => {
+    try {
+      await handleBuyPlan('premium');
+    } catch (err: any) {
       alert(err.message || 'Nie udało się otworzyć płatności.');
     }
   };
+
+  if (isPricingPage && session) {
+    return (
+      <PricingPage
+        subscriptionStatus={currentUser?.subscriptionStatus}
+        onBack={() => {
+          window.location.hash = '';
+          setHash('');
+        }}
+        onBuy={handleBuyPlan}
+      />
+    );
+  }
 
   if (isSuccessPage) {
     return (
@@ -705,7 +744,7 @@ const App: React.FC = () => {
           </div>
 
           {isFree ? (
-            <FreePlanUpgradeCard onUpgrade={openPremiumUpsell} />
+            <FreePlanUpgradeCard onUpgrade={openPricingPage} />
           ) : isTrial ? (
             <TrialPlanUpgradeCard
               statusLabel={formatTokenStatus(
@@ -714,8 +753,22 @@ const App: React.FC = () => {
                 currentUser?.tokens,
                 currentUser?.trialEndsAt
               )}
-              onUpgrade={openPremiumUpsell}
+              onUpgrade={openPricingPage}
             />
+          ) : isStart ? (
+            <div className="p-3 rounded-2xl border transition-all bg-emerald-500/10 border-emerald-500/20 text-emerald-300">
+              <div className="flex items-center gap-2">
+                <Crown size={16} />
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  {formatTokenStatus(
+                    currentUser?.subscriptionStatus,
+                    currentUser?.credits ?? 0,
+                    currentUser?.tokens,
+                    currentUser?.trialEndsAt
+                  )}
+                </span>
+              </div>
+            </div>
           ) : (
             <div className="p-3 rounded-2xl border transition-all bg-green-500/10 border-green-500/20 text-green-400">
               <div className="flex items-center gap-2">
@@ -736,7 +789,7 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">
+      <main className={`flex-1 overflow-y-auto ${startPromoBarVisible ? 'pb-28 sm:pb-24' : ''}`}>
         <header className="lg:hidden h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 z-[80]">
           <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-600"><MenuIcon size={24} /></button>
           <div className="flex items-center gap-2">
@@ -835,11 +888,11 @@ const App: React.FC = () => {
               onUpdatePrice={handleUpdateDishPrice}
               onUpdateCategory={handleUpdateDishCategory}
               menuUserId={currentUser?.id ?? null}
-              hotelHubAvailable={hasProAccess}
+              hotelHubAvailable={hasHotelHubAccess}
             />
           )}
           {activeTab === 'hotel-hub' && (
-            hasProAccess ? (
+            hasHotelHubAccess ? (
               <HotelHubManager
                 userId={session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id ?? null}
               />
@@ -852,11 +905,11 @@ const App: React.FC = () => {
                 <div className="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm text-center space-y-4">
                   <p className="text-slate-600 text-sm max-w-lg mx-auto">
                     Hotel Hub jest dostępny w planie <strong>Trial</strong> i <strong>Premium</strong>.
-                    W planie darmowym możesz korzystać z menu restauracji.
+                    W planie Start i darmowym możesz korzystać z menu restauracji.
                   </p>
                   <button
                     type="button"
-                    onClick={openPremiumUpsell}
+                    onClick={openPricingPage}
                     className="inline-flex px-6 py-3 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:from-emerald-300 hover:to-green-400 transition-all"
                   >
                     Odblokuj Premium
@@ -926,6 +979,12 @@ const App: React.FC = () => {
         open={premiumUpsellOpen}
         onClose={() => setPremiumUpsellOpen(false)}
         onUpgrade={() => void handleBuyPremium()}
+      />
+
+      <StartPlanPromoBar
+        subscriptionStatus={currentUser?.subscriptionStatus}
+        onViewPlans={openPricingPage}
+        onVisibilityChange={setStartPromoBarVisible}
       />
     </div>
   );

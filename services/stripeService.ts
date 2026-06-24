@@ -1,9 +1,12 @@
 const API_BASE = '';
 
+export type CheckoutPlanType = 'premium' | 'start' | 'tokens';
+
 export interface CreateCheckoutOptions {
   userId?: string;
   successUrl?: string;
   cancelUrl?: string;
+  planType?: CheckoutPlanType;
 }
 
 /**
@@ -21,6 +24,7 @@ export async function createCheckoutSession(options: CreateCheckoutOptions = {})
       userId: options.userId ?? null,
       successUrl,
       cancelUrl,
+      planType: options.planType ?? 'premium',
     }),
   });
 

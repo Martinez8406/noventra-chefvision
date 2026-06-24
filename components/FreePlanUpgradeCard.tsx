@@ -2,10 +2,10 @@ import React from 'react';
 import { Check, Sparkles } from 'lucide-react';
 
 const UNLOCK_FEATURES = [
-  'Profesjonalne zdjęcia AI',
-  'Studio tła AI',
-  'Motywy sezonowe',
-  'Rekomendacje sprzedażowe',
+  'Obsługa zagranicznych gości',
+  'Profesjonalna prezentacja menu',
+  'Funkcje zwiększające sprzedaż',
+  'Narzędzia dla restauracji i hotel',
 ] as const;
 
 interface Props {
@@ -30,7 +30,10 @@ export const FreePlanUpgradeCard: React.FC<Props> = ({ onUpgrade }) => {
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-chef-gold">Plan darmowy</p>
         </div>
 
-        <p className="text-sm font-bold text-white leading-snug">Dodawaj własne zdjęcia do menu.</p>
+        <p className="text-sm font-bold text-white leading-snug">Odblokuj pełny potencjał ChefVision</p>
+        <p className="mt-1.5 text-[11px] leading-relaxed text-zinc-400">
+          Przejdź na plan Start lub Premium i wykorzystaj wszystkie możliwości platformy.
+        </p>
 
         <ul className="mt-3 space-y-1.5">
           {UNLOCK_FEATURES.map((feature) => (
@@ -41,16 +44,12 @@ export const FreePlanUpgradeCard: React.FC<Props> = ({ onUpgrade }) => {
           ))}
         </ul>
 
-        <p className="mt-3 text-[10px] leading-relaxed text-zinc-500">
-          Restauracje z profesjonalnymi zdjęciami sprzedają więcej.
-        </p>
-
         <button
           type="button"
           onClick={onUpgrade}
           className="mt-4 w-full py-3 rounded-xl font-black text-xs uppercase tracking-wide text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_20px_rgba(52,211,153,0.35)] hover:from-emerald-300 hover:to-green-400 transition-all active:scale-[0.98]"
         >
-          Odblokuj Premium
+          Przejdź na wyższy plan
         </button>
       </div>
     </div>

@@ -1,7 +1,7 @@
 
-export type SubscriptionStatus = 'trial' | 'premium' | 'free_limited';
+export type SubscriptionStatus = 'trial' | 'premium' | 'free_limited' | 'start';
 
-export type PlanSlug = 'trial' | 'premium' | 'free';
+export type PlanSlug = 'trial' | 'premium' | 'free' | 'start';
 
 export interface UserTokens {
   trial: number;

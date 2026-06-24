@@ -6,7 +6,7 @@ export function getMenuTranslationLocales(
   row: Record<string, unknown> | null | undefined
 ): readonly string[];
 
-export function inferPlan(row: Record<string, unknown> | null | undefined): 'trial' | 'premium' | 'free';
+export function inferPlan(row: Record<string, unknown> | null | undefined): 'trial' | 'premium' | 'free' | 'start';
 export function isTrialActive(row: Record<string, unknown> | null | undefined): boolean;
 export function resolveEffectivePlan(row: Record<string, unknown> | null | undefined): 'trial' | 'premium' | 'free';
 export function hasProFeatures(subscriptionStatus: string | undefined): boolean;

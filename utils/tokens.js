@@ -12,6 +12,8 @@
 
 export const TRIAL_TOKENS_DEFAULT = 50;
 export const SUBSCRIPTION_TOKENS_DEFAULT = 50;
+export const START_SUBSCRIPTION_TOKENS_DEFAULT = 10;
+export const TOKEN_PACK_AMOUNT_DEFAULT = 50;
 
 /** Języki tłumaczenia menu (bez PL — oryginał w polu dania). */
 export const MENU_TRANSLATION_LOCALES_FULL = [
@@ -40,10 +42,11 @@ export function getMenuTranslationLocales(row) {
 }
 
 export function inferPlan(row) {
-  if (row?.plan === 'premium' || row?.plan === 'free' || row?.plan === 'trial') {
+  if (row?.plan === 'premium' || row?.plan === 'free' || row?.plan === 'trial' || row?.plan === 'start') {
     return row.plan;
   }
   if (row?.subscription_status === 'premium') return 'premium';
+  if (row?.subscription_status === 'start') return 'start';
   if (row?.subscription_status === 'free_limited') return 'free';
   return 'trial';
 }
@@ -62,9 +65,13 @@ export function resolveEffectivePlan(row) {
   return raw;
 }
 
-/** Trial i Premium: pełna jakość, bez znaku wodny, promocje itd. */
+/** Trial, Start i Premium: bez znaku wodnego, promocje, AI (gdy są tokeny). */
 export function hasProFeatures(subscriptionStatus) {
-  return subscriptionStatus === 'premium' || subscriptionStatus === 'trial';
+  return (
+    subscriptionStatus === 'premium' ||
+    subscriptionStatus === 'trial' ||
+    subscriptionStatus === 'start'
+  );
 }
 
 /** Hotel Hub — tylko trial (aktywny) i Premium. */
@@ -73,9 +80,9 @@ export function canUseHotelHub(row) {
   return plan === 'premium' || plan === 'trial';
 }
 
-/** Paczki tokenów tylko na Premium (nie w trial, nie w free). */
+/** Paczki tokenów — aktywny plan Start lub Premium. */
 export function canPurchaseTokenPacks(subscriptionStatus) {
-  return subscriptionStatus === 'premium';
+  return subscriptionStatus === 'premium' || subscriptionStatus === 'start';
 }
 
 function readTrialTokens(row) {
@@ -91,12 +98,15 @@ function readTrialTokens(row) {
 }
 
 function readSubscriptionTokens(row) {
-  if (resolveEffectivePlan(row) !== 'premium') return 0;
+  const plan = resolveEffectivePlan(row);
+  if (plan !== 'premium' && plan !== 'start') return 0;
   const n = row?.subscription_tokens;
   return typeof n === 'number' && !Number.isNaN(n) ? Math.max(0, n) : 0;
 }
 
 function readExtraTokens(row) {
+  const plan = resolveEffectivePlan(row);
+  if (plan !== 'premium' && plan !== 'start') return 0;
   const n = row?.extra_tokens;
   return typeof n === 'number' && !Number.isNaN(n) ? Math.max(0, n) : 0;
 }
@@ -106,8 +116,9 @@ export function getTokenBalances(row) {
   const normalized = normalizeProfileForTokenOps(row);
   const plan = resolveEffectivePlan(normalized);
   const trial = plan === 'trial' ? readTrialTokens(normalized) : 0;
-  const subscription = plan === 'premium' ? readSubscriptionTokens(normalized) : 0;
-  const extra = plan === 'premium' ? readExtraTokens(normalized) : 0;
+  const subscription =
+    plan === 'premium' || plan === 'start' ? readSubscriptionTokens(normalized) : 0;
+  const extra = plan === 'premium' || plan === 'start' ? readExtraTokens(normalized) : 0;
   const total = trial + subscription + extra;
   return { plan, trial, subscription, extra, total };
 }
@@ -164,7 +175,7 @@ export function pickTokenDebit(row) {
 
   if (plan === 'free') return null;
 
-  if (plan === 'premium') {
+  if (plan === 'premium' || plan === 'start') {
     if (subscription > 0) {
       return { column: 'subscription_tokens', value: subscription };
     }
@@ -209,6 +220,10 @@ export function buildRestorePatch(debit) {
 }
 
 export function formatTokenStatus(subscriptionStatus, credits, tokens, trialEndsAt = null) {
+  if (subscriptionStatus === 'start' && tokens) {
+    const extraPart = tokens.extra > 0 ? ` + ${tokens.extra} dodatkowych` : '';
+    return `Start · ${tokens.total} tokenów (${tokens.subscription} z subskrypcji${extraPart})`;
+  }
   if (subscriptionStatus === 'premium' && tokens) {
     const extraPart = tokens.extra > 0 ? ` + ${tokens.extra} dodatkowych` : '';
     return `Premium · ${tokens.total} tokenów (${tokens.subscription} z subskrypcji${extraPart})`;
@@ -240,6 +255,7 @@ export function mapProfileTokens(row, { localPremiumFlag = false } = {}) {
 
   let subscriptionStatus = 'free_limited';
   if (effectivePlan === 'premium') subscriptionStatus = 'premium';
+  else if (effectivePlan === 'start') subscriptionStatus = 'start';
   else if (effectivePlan === 'trial') subscriptionStatus = 'trial';
 
   return {
