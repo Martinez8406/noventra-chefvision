@@ -19,6 +19,13 @@
   "bundlePricePlaceholder": "np 55",
   "savings": "Oszczędzasz {{percent}}% — wyliczone automatycznie",
   "relatedProducts": "Produkty powiązane",
+  "polecaneSlots": {
+    "perfectWith": "Perfect with this",
+    "finishWith": "Finish with",
+    "addA": "Add",
+    "inputPlaceholder": "np. Pinot Grigio",
+    "pricePlaceholder": "Cena (zł)"
+  },
   "productNamePlaceholder": "Nazwa (np. Pinot Grigio)",
   "productDescPlaceholder": "Opis (np. Wytrawne białe wino)",
   "productPricePlaceholder": "Cena (zł)",
@@ -33,7 +40,7 @@
   "types": {
     "polecane": {
       "label": "Szef kuchni poleca",
-      "desc": "Chef's choice — pairing kelnerski",
+      "desc": "3 sugestie: wino, deser, napój/dodatek",
       "badge": "Szef kuchni poleca",
       "defaultHeader": "Polecamy do tego dania"
     },

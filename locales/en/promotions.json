@@ -19,6 +19,13 @@
   "bundlePricePlaceholder": "e.g. 55",
   "savings": "You save {{percent}}% — calculated automatically",
   "relatedProducts": "Related products",
+  "polecaneSlots": {
+    "perfectWith": "Perfect with this",
+    "finishWith": "Finish with",
+    "addA": "Add",
+    "inputPlaceholder": "e.g. Pinot Grigio",
+    "pricePlaceholder": "Price (PLN)"
+  },
   "productNamePlaceholder": "Name (e.g. Pinot Grigio)",
   "productDescPlaceholder": "Description (e.g. Dry white wine)",
   "productPricePlaceholder": "Price (PLN)",
@@ -33,7 +40,7 @@
   "types": {
     "polecane": {
       "label": "Chef recommends",
-      "desc": "Chef's choice — server pairing",
+      "desc": "3 suggestions: wine, dessert, drink/add-on",
       "badge": "Chef recommends",
       "defaultHeader": "We recommend with this dish"
     },

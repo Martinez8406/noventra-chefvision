@@ -1,5 +1,5 @@
 import type { DishRecommendation, DishRecommendationItem, DishRecommendationType, PublicMenuLocale } from '../types';
-import { getRecommendationHeader } from './dishRecommendations';
+import { getRecommendationHeader, normalizePolecaneItems, POLECANE_SLOTS } from './dishRecommendations';
 
 export const REC_TRANSLATIONS_STORAGE_KEY = (userId: string) =>
   `chefvision_public_rec_translations:${userId}`;
@@ -131,6 +131,67 @@ export const RECOMMENDATION_HEADER_I18N: Record<DishRecommendationType, Record<P
     zh: '最受欢迎套餐',
   },
 };
+
+export const POLECANE_SLOT_LABEL_I18N: Record<
+  (typeof POLECANE_SLOTS)[number]['id'],
+  Record<PublicMenuLocale, string>
+> = {
+  'polecane-perfect-with': {
+    pl: 'Perfect with this',
+    en: 'Perfect with this',
+    he: 'מתאים ל',
+    ar: 'يتماشى مع',
+    uk: 'Ідеально до',
+    de: 'Passt perfekt zu',
+    es: 'Perfecto con',
+    it: 'Perfetto con',
+    ko: '이 메뉴와 완벽한',
+    ja: 'この料理にぴったり',
+    fr: 'Parfait avec',
+    cs: 'Ideální k',
+    nl: 'Perfect bij',
+    zh: '完美搭配',
+  },
+  'polecane-finish-with': {
+    pl: 'Finish with',
+    en: 'Finish with',
+    he: 'סיימו עם',
+    ar: 'اختتم بـ',
+    uk: 'Завершіть',
+    de: 'Beenden Sie mit',
+    es: 'Termina con',
+    it: 'Finisci con',
+    ko: '마무리는',
+    ja: '締めくくりは',
+    fr: 'Terminez avec',
+    cs: 'Zakončete',
+    nl: 'Eindig met',
+    zh: '收尾推荐',
+  },
+  'polecane-add-a': {
+    pl: 'Add',
+    en: 'Add',
+    he: 'הוסיפו',
+    ar: 'أضف',
+    uk: 'Додайте',
+    de: 'Fügen Sie hinzu',
+    es: 'Añade',
+    it: 'Aggiungi',
+    ko: '추가로',
+    ja: 'プラスで',
+    fr: 'Ajoutez',
+    cs: 'Přidejte',
+    nl: 'Voeg toe',
+    zh: '加点',
+  },
+};
+
+export function getPublicPolecaneSlotLabel(
+  slotId: (typeof POLECANE_SLOTS)[number]['id'],
+  locale: PublicMenuLocale,
+): string {
+  return POLECANE_SLOT_LABEL_I18N[slotId][locale] || POLECANE_SLOT_LABEL_I18N[slotId].pl;
+}
 
 const SAVINGS_I18N: Record<PublicMenuLocale, (pct: number) => string> = {
   pl: (pct) => `Oszczędzasz ${pct}%`,

@@ -6,6 +6,7 @@ import {
   getPublicDishCopy,
   getPublicIngredientsDisplay,
   getPublicIngredientsMoreLabel,
+  getPublicMoreInfoLabel,
   isRtlMenuLocale,
 } from '../utils/menuTranslations';
 import { Info, UtensilsCrossed } from 'lucide-react';
@@ -146,7 +147,7 @@ export const PublicDishCard: React.FC<Props> = ({
             className="flex items-center justify-center gap-2 bg-amber-50 text-amber-700 py-3 rounded-2xl text-xs font-bold hover:bg-amber-100 transition-colors border border-amber-100"
           >
             <Info size={16} />
-            Więcej info
+            {getPublicMoreInfoLabel(menuLocale)}
           </button>
           {shareUrl && (
             <ShareLinkButton

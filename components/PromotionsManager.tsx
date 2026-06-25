@@ -3,8 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { Dish, DishRecommendation, DishRecommendationItem, DishRecommendationType } from '../types';
 import {
   calcSavingsPercent,
+  createPolecaneItems,
   fetchRecommendationsForOwner,
+  normalizePolecaneItems,
   persistRecommendations,
+  POLECANE_SLOTS,
 } from '../utils/dishRecommendations';
 import { ChevronDown, Gift, Plus, Trash2, Megaphone, ToggleLeft, ToggleRight } from 'lucide-react';
 
@@ -17,7 +20,7 @@ interface Props {
 const TYPE_OPTION_VALUES: DishRecommendationType[] = ['polecane', 'popularne', 'zestaw'];
 
 const TYPE_OPTION_ICONS: Record<DishRecommendationType, string | undefined> = {
-  polecane: '👌',
+  polecane: undefined,
   popularne: '🔥',
   zestaw: 'gift',
 };
@@ -32,7 +35,12 @@ function newRecommendation(dishId: string, type: DishRecommendationType): DishRe
     dishId,
     type,
     isActive: true,
-    items: type === 'zestaw' ? [newItem(), newItem(), newItem()] : [newItem()],
+    items:
+      type === 'zestaw'
+        ? [newItem(), newItem(), newItem()]
+        : type === 'polecane'
+          ? createPolecaneItems()
+          : [newItem()],
     bundlePriceOutside: type === 'zestaw' ? '' : undefined,
     bundlePrice: type === 'zestaw' ? '' : undefined,
   };
@@ -124,12 +132,18 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
 
   const saveEditing = async () => {
     if (!editing) return;
+    const normalizedItems =
+      editing.type === 'polecane' ? normalizePolecaneItems(editing.items) : editing.items.filter((i) => i.title.trim());
     const cleaned: DishRecommendation = {
       ...editing,
-      items: editing.items.filter((i) => i.title.trim()),
+      items: normalizedItems,
       customHeaderText: editing.customHeaderText?.trim() || undefined,
     };
-    if (cleaned.items.length === 0) {
+    const filledCount =
+      editing.type === 'polecane'
+        ? normalizedItems.filter((i) => i.title.trim()).length
+        : cleaned.items.length;
+    if (filledCount === 0) {
       alert(t('errors.minOneProduct'));
       return;
     }
@@ -251,7 +265,9 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                           : [...editing.items, ...Array(Math.max(0, 3 - editing.items.length)).fill(null)].map(
                               (_, i) => editing.items[i] ?? newItem(),
                             )
-                        : editing.items.slice(0, optValue === 'polecane' ? 1 : 5);
+                        : optValue === 'polecane'
+                          ? createPolecaneItems(editing.items)
+                          : editing.items.slice(0, 5);
                     updateEditing({
                       type: optValue,
                       items,
@@ -341,9 +357,50 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
 
           <div className="space-y-3">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              {t('relatedProducts')}
+              {editing.type === 'polecane' ? t('types.polecane.label') : t('relatedProducts')}
             </label>
-            {editing.items.map((item, idx) => (
+            {editing.type === 'polecane' ? (
+              normalizePolecaneItems(editing.items).map((item, idx) => {
+                const slot = POLECANE_SLOTS[idx];
+                const labelKey =
+                  slot.id === 'polecane-perfect-with'
+                    ? 'polecaneSlots.perfectWith'
+                    : slot.id === 'polecane-finish-with'
+                      ? 'polecaneSlots.finishWith'
+                      : 'polecaneSlots.addA';
+                return (
+                  <div key={item.id} className="bg-slate-50 rounded-xl p-3 space-y-2 border border-slate-100">
+                    <p className="text-sm font-bold text-slate-800">
+                      <span aria-hidden>{slot.emoji}</span> {t(labelKey)}
+                    </p>
+                    <input
+                      type="text"
+                      placeholder={t('polecaneSlots.inputPlaceholder')}
+                      value={item.title}
+                      onChange={(e) => {
+                        const items = normalizePolecaneItems(editing.items);
+                        items[idx] = { ...item, title: e.target.value, emoji: slot.emoji };
+                        updateEditing({ items });
+                      }}
+                      className="w-full bg-white border border-slate-100 rounded-lg px-3 py-2 text-sm font-medium"
+                    />
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder={t('polecaneSlots.pricePlaceholder')}
+                      value={item.price ?? ''}
+                      onChange={(e) => {
+                        const items = normalizePolecaneItems(editing.items);
+                        items[idx] = { ...item, price: e.target.value, emoji: slot.emoji };
+                        updateEditing({ items });
+                      }}
+                      className="w-full bg-white border border-slate-100 rounded-lg px-3 py-2 text-sm"
+                    />
+                  </div>
+                );
+              })
+            ) : (
+              editing.items.map((item, idx) => (
               <div key={item.id} className="bg-slate-50 rounded-xl p-3 space-y-2 border border-slate-100">
                 <input
                   type="text"
@@ -381,7 +438,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                     className="w-full bg-white border border-slate-100 rounded-lg px-3 py-2 text-sm"
                   />
                 )}
-                {editing.items.length > (editing.type === 'polecane' ? 1 : editing.type === 'zestaw' ? 3 : 1) && (
+                {editing.items.length > (editing.type === 'zestaw' ? 3 : 1) && (
                   <button
                     type="button"
                     onClick={() => updateEditing({ items: editing.items.filter((_, i) => i !== idx) })}
@@ -391,7 +448,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                   </button>
                 )}
               </div>
-            ))}
+            )))}
             {editing.type === 'popularne' && editing.items.length < 4 && (
               <button
                 type="button"

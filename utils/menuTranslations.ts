@@ -236,6 +236,11 @@ export function getPublicIngredientsMoreLabel(locale: PublicMenuLocale, count: n
   return `+${count} ${INGREDIENTS_MORE_LABEL[locale]}`;
 }
 
+/** Przycisk szczegółów dania — PL lub angielski dla każdego innego języka menu. */
+export function getPublicMoreInfoLabel(locale: PublicMenuLocale): string {
+  return locale === 'pl' ? 'Więcej info' : 'More info';
+}
+
 const MENU_CATEGORY_TITLE: Record<PublicMenuLocale, Record<string, string>> = {
   pl: {
     'Śniadania': 'Śniadania',

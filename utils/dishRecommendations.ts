@@ -16,6 +16,36 @@ export const RECOMMENDATION_DEFAULT_HEADER: Record<DishRecommendationType, strin
   zestaw: 'Najpopularniejszy zestaw',
 };
 
+/** Stałe sloty rekomendacji „Szef kuchni poleca” — zawsze 3 pozycje w tej kolejności. */
+export const POLECANE_SLOT_IDS = ['polecane-perfect-with', 'polecane-finish-with', 'polecane-add-a'] as const;
+export type PolecaneSlotId = (typeof POLECANE_SLOT_IDS)[number];
+
+export const POLECANE_SLOTS: { id: PolecaneSlotId; emoji: string }[] = [
+  { id: 'polecane-perfect-with', emoji: '🍷' },
+  { id: 'polecane-finish-with', emoji: '🍰' },
+  { id: 'polecane-add-a', emoji: '🥤' },
+];
+
+export function createPolecaneItems(existing?: DishRecommendationItem[]): DishRecommendationItem[] {
+  return POLECANE_SLOTS.map((slot, idx) => {
+    const prev =
+      existing?.find((i) => i.id === slot.id) ??
+      (existing?.length === 1 && idx === 0 ? existing[0] : undefined) ??
+      existing?.[idx];
+    return {
+      id: slot.id,
+      title: prev?.title ?? '',
+      price: prev?.price,
+      emoji: slot.emoji,
+    };
+  });
+}
+
+/** Uzupełnia brakujące sloty i migruje stare rekomendacje z jedną pozycją. */
+export function normalizePolecaneItems(items: DishRecommendationItem[]): DishRecommendationItem[] {
+  return createPolecaneItems(items);
+}
+
 export function getRecommendationHeader(rec: DishRecommendation): string {
   return rec.customHeaderText?.trim() || RECOMMENDATION_DEFAULT_HEADER[rec.type];
 }
@@ -98,17 +128,11 @@ export function buildMockRecommendations(dishes: Dish[]): DishRecommendation[] {
       dishId: targets[0].id,
       type: 'polecane',
       isActive: true,
-      items: [
-        {
-          id: 'mock-item-wine',
-          title: 'Pinot Grigio',
-          subtitle: 'Wytrawne białe wino',
-          price: '22',
-          emoji: '🍷',
-          imageUrl:
-            'https://images.unsplash.com/photo-1510812431401-41d2bd2724f3?w=120&h=120&fit=crop',
-        },
-      ],
+      items: createPolecaneItems([
+        { id: 'polecane-perfect-with', title: 'Pinot Grigio', price: '22', emoji: '🍷' },
+        { id: 'polecane-finish-with', title: 'Domowe tiramisu', price: '18', emoji: '🍰' },
+        { id: 'polecane-add-a', title: 'Świeża lemoniada', price: '12', emoji: '🥤' },
+      ]),
     });
   }
 

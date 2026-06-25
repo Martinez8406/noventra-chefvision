@@ -4,12 +4,14 @@ import type { DishRecommendation, PublicMenuLocale } from '../types';
 import { calcSavingsPercent } from '../utils/dishRecommendations';
 import {
   formatZestawDisplayTitlesLocalized,
+  getPublicPolecaneSlotLabel,
   getPublicRecommendationBadge,
   getPublicRecommendationHeader,
   getPublicRecommendationItemCopy,
   getPublicSavingsLabel,
   type RecommendationTranslationCache,
 } from '../utils/recommendationTranslations';
+import { normalizePolecaneItems, POLECANE_SLOTS } from '../utils/dishRecommendations';
 
 interface Props {
   recommendation: DishRecommendation;
@@ -163,21 +165,30 @@ function PolecaneContent({
   menuLocale: PublicMenuLocale;
   translationCache?: RecommendationTranslationCache | null;
 }) {
-  const item = items[0];
-  if (!item) return null;
-  const copy = getPublicRecommendationItemCopy(item, menuLocale, translationCache);
+  const slots = normalizePolecaneItems(items).filter((item) => item.title.trim());
+  if (slots.length === 0) return null;
+
   return (
-    <div className="flex items-center gap-3">
-      <ItemThumb item={item} />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-slate-800 leading-tight truncate">{copy.title}</p>
-        {copy.subtitle && (
-          <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{copy.subtitle}</p>
-        )}
-        {item.price && (
-          <p className="text-xs font-semibold text-slate-700 mt-1 tabular-nums">{item.price} zł</p>
-        )}
-      </div>
+    <div className="space-y-2.5">
+      {slots.map((item) => {
+        const slot = POLECANE_SLOTS.find((s) => s.id === item.id);
+        if (!slot) return null;
+        const copy = getPublicRecommendationItemCopy(item, menuLocale, translationCache);
+        const label = getPublicPolecaneSlotLabel(slot.id, menuLocale);
+        return (
+          <div key={item.id} className="min-w-0">
+            <p className="text-[11px] font-bold text-slate-600 leading-snug">
+              <span aria-hidden>{slot.emoji}</span> {label}
+            </p>
+            <div className="flex items-baseline justify-between gap-2 mt-0.5">
+              <p className="text-sm font-bold text-slate-800 leading-tight truncate">{copy.title}</p>
+              {item.price && (
+                <span className="text-xs font-semibold text-slate-700 tabular-nums shrink-0">{item.price} zł</span>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -276,10 +287,12 @@ export const DishRecommendationBox: React.FC<Props> = ({
       className={`rounded-xl border p-3 shadow-sm ${styles.box} ${className}`}
       onClick={(e: React.MouseEvent) => e.stopPropagation()}
     >
-      <div className={`flex items-center gap-1.5 mb-2.5 ${styles.header}`}>
-        <RecommendationTypeIcon type={type} />
-        <p className="text-[9px] font-black uppercase tracking-[0.12em] leading-tight">{headerText}</p>
-      </div>
+      {type !== 'polecane' && (
+        <div className={`flex items-center gap-1.5 mb-2.5 ${styles.header}`}>
+          <RecommendationTypeIcon type={type} />
+          <p className="text-[9px] font-black uppercase tracking-[0.12em] leading-tight">{headerText}</p>
+        </div>
+      )}
 
       {type === 'zestaw' ? (
         <ZestawContent
