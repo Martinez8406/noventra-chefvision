@@ -91,7 +91,7 @@ export const PublicDishCard: React.FC<Props> = ({
       <div className="w-full min-w-0 p-6">
         {dish.menuPrice ? (
           <div className={`mb-2 flex items-baseline justify-between gap-3 ${isRtl ? 'flex-row-reverse' : ''}`}>
-            <h3 className={`font-serif text-2xl text-slate-900 leading-tight min-w-0 ${isRtl ? 'text-end' : ''}`}>
+            <h3 className={`font-serif font-bold text-2xl text-slate-900 leading-tight min-w-0 ${isRtl ? 'text-end' : ''}`}>
               {copy.name}
             </h3>
             <span className="text-[1.35rem] font-semibold text-slate-900 whitespace-nowrap tabular-nums shrink-0">
@@ -99,7 +99,7 @@ export const PublicDishCard: React.FC<Props> = ({
             </span>
           </div>
         ) : (
-          <h3 className={`font-serif text-2xl text-slate-900 mb-2 leading-tight ${isRtl ? 'text-end' : ''}`}>
+          <h3 className={`font-serif font-bold text-2xl text-slate-900 mb-2 leading-tight ${isRtl ? 'text-end' : ''}`}>
             {copy.name}
           </h3>
         )}
