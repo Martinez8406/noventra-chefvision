@@ -186,7 +186,7 @@ function PolecaneContent({
             <div className="flex items-baseline justify-between gap-2 mt-0.5">
               <p className="text-sm font-bold text-slate-800 leading-tight truncate">{copy.title}</p>
               {item.price && (
-                <span className="text-xs font-semibold text-slate-700 tabular-nums shrink-0">
+                <span className="text-2xl font-semibold text-slate-700 tabular-nums shrink-0">
                   {formatRecommendationPrice(item.price, currency)}
                 </span>
               )}
@@ -223,7 +223,7 @@ function PopularneContent({
               )}
             </div>
             {item.price && (
-              <span className="text-xs font-semibold text-slate-700 tabular-nums shrink-0">
+              <span className="text-2xl font-semibold text-slate-700 tabular-nums shrink-0">
                 {formatRecommendationPrice(item.price, currency)}
               </span>
             )}
@@ -266,12 +266,12 @@ function ZestawContent({
       {(bundlePrice || bundlePriceOutside) && (
         <div className="flex items-center justify-center gap-2 mt-2">
           {bundlePrice && (
-            <span className="text-base font-black text-slate-900 tabular-nums">
+            <span className="text-[2rem] font-black text-slate-900 tabular-nums">
               {formatRecommendationPrice(bundlePrice, currency)}
             </span>
           )}
           {bundlePriceOutside && (
-            <span className="text-sm text-slate-400 line-through tabular-nums">
+            <span className="text-[1.75rem] text-slate-400 line-through tabular-nums">
               {formatRecommendationPrice(bundlePriceOutside, currency)}
             </span>
           )}
