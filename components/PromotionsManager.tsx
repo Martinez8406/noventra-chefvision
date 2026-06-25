@@ -9,6 +9,12 @@ import {
   persistRecommendations,
   POLECANE_SLOTS,
 } from '../utils/dishRecommendations';
+import {
+  DEFAULT_RECOMMENDATION_CURRENCY,
+  RECOMMENDATION_CURRENCY_CODES,
+  resolveRecommendationCurrency,
+} from '../utils/recommendationCurrency';
+import { RecommendationCurrency } from '../types';
 import { ChevronDown, Gift, Plus, Trash2, Megaphone, ToggleLeft, ToggleRight } from 'lucide-react';
 
 interface Props {
@@ -43,6 +49,7 @@ function newRecommendation(dishId: string, type: DishRecommendationType): DishRe
           : [newItem()],
     bundlePriceOutside: type === 'zestaw' ? '' : undefined,
     bundlePrice: type === 'zestaw' ? '' : undefined,
+    currency: DEFAULT_RECOMMENDATION_CURRENCY,
   };
 }
 
@@ -138,6 +145,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
       ...editing,
       items: normalizedItems,
       customHeaderText: editing.customHeaderText?.trim() || undefined,
+      currency: resolveRecommendationCurrency(editing.currency),
     };
     const filledCount =
       editing.type === 'polecane'
@@ -317,6 +325,26 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
               onChange={(e) => updateEditing({ customHeaderText: e.target.value })}
               className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm"
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              {t('currency')}
+            </label>
+            <div className="relative">
+              <select
+                value={resolveRecommendationCurrency(editing.currency)}
+                onChange={(e) => updateEditing({ currency: e.target.value as RecommendationCurrency })}
+                className="w-full appearance-none bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 pr-10 text-sm font-medium text-slate-800"
+              >
+                {RECOMMENDATION_CURRENCY_CODES.map((code) => (
+                  <option key={code} value={code}>
+                    {t(`currencies.${code}`)}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+            </div>
           </div>
 
           {editing.type === 'zestaw' && (

@@ -2,6 +2,7 @@ import React from 'react';
 import { Flame, Gift, Star } from 'lucide-react';
 import type { DishRecommendation, PublicMenuLocale } from '../types';
 import { calcSavingsPercent } from '../utils/dishRecommendations';
+import { formatRecommendationPrice, resolveRecommendationCurrency } from '../utils/recommendationCurrency';
 import {
   formatZestawDisplayTitlesLocalized,
   getPublicPolecaneSlotLabel,
@@ -158,10 +159,12 @@ export const DishRecommendationBadge: React.FC<{
 
 function PolecaneContent({
   items,
+  currency,
   menuLocale,
   translationCache,
 }: {
   items: DishRecommendation['items'];
+  currency: DishRecommendation['currency'];
   menuLocale: PublicMenuLocale;
   translationCache?: RecommendationTranslationCache | null;
 }) {
@@ -183,7 +186,9 @@ function PolecaneContent({
             <div className="flex items-baseline justify-between gap-2 mt-0.5">
               <p className="text-sm font-bold text-slate-800 leading-tight truncate">{copy.title}</p>
               {item.price && (
-                <span className="text-xs font-semibold text-slate-700 tabular-nums shrink-0">{item.price} zł</span>
+                <span className="text-xs font-semibold text-slate-700 tabular-nums shrink-0">
+                  {formatRecommendationPrice(item.price, currency)}
+                </span>
               )}
             </div>
           </div>
@@ -195,10 +200,12 @@ function PolecaneContent({
 
 function PopularneContent({
   items,
+  currency,
   menuLocale,
   translationCache,
 }: {
   items: DishRecommendation['items'];
+  currency: DishRecommendation['currency'];
   menuLocale: PublicMenuLocale;
   translationCache?: RecommendationTranslationCache | null;
 }) {
@@ -216,7 +223,9 @@ function PopularneContent({
               )}
             </div>
             {item.price && (
-              <span className="text-xs font-semibold text-slate-700 tabular-nums shrink-0">{item.price} zł</span>
+              <span className="text-xs font-semibold text-slate-700 tabular-nums shrink-0">
+                {formatRecommendationPrice(item.price, currency)}
+              </span>
             )}
           </div>
         );
@@ -230,6 +239,7 @@ function ZestawContent({
   dishName,
   bundlePrice,
   bundlePriceOutside,
+  currency,
   savingsPercent,
   menuLocale,
   translationCache,
@@ -238,6 +248,7 @@ function ZestawContent({
   dishName?: string;
   bundlePrice?: string;
   bundlePriceOutside?: string;
+  currency: DishRecommendation['currency'];
   savingsPercent: number | null;
   menuLocale: PublicMenuLocale;
   translationCache?: RecommendationTranslationCache | null;
@@ -255,10 +266,14 @@ function ZestawContent({
       {(bundlePrice || bundlePriceOutside) && (
         <div className="flex items-center justify-center gap-2 mt-2">
           {bundlePrice && (
-            <span className="text-base font-black text-slate-900 tabular-nums">{bundlePrice} zł</span>
+            <span className="text-base font-black text-slate-900 tabular-nums">
+              {formatRecommendationPrice(bundlePrice, currency)}
+            </span>
           )}
           {bundlePriceOutside && (
-            <span className="text-sm text-slate-400 line-through tabular-nums">{bundlePriceOutside} zł</span>
+            <span className="text-sm text-slate-400 line-through tabular-nums">
+              {formatRecommendationPrice(bundlePriceOutside, currency)}
+            </span>
           )}
         </div>
       )}
@@ -274,6 +289,7 @@ export const DishRecommendationBox: React.FC<Props> = ({
   className = '',
 }) => {
   const { type, items } = recommendation;
+  const currency = resolveRecommendationCurrency(recommendation.currency);
   const styles = TYPE_STYLES[type];
   const headerText = getPublicRecommendationHeader(recommendation, menuLocale, translationCache);
 
@@ -300,14 +316,25 @@ export const DishRecommendationBox: React.FC<Props> = ({
           dishName={dishName}
           bundlePrice={recommendation.bundlePrice}
           bundlePriceOutside={recommendation.bundlePriceOutside}
+          currency={currency}
           savingsPercent={savingsPercent}
           menuLocale={menuLocale}
           translationCache={translationCache}
         />
       ) : type === 'polecane' ? (
-        <PolecaneContent items={items} menuLocale={menuLocale} translationCache={translationCache} />
+        <PolecaneContent
+          items={items}
+          currency={currency}
+          menuLocale={menuLocale}
+          translationCache={translationCache}
+        />
       ) : (
-        <PopularneContent items={items} menuLocale={menuLocale} translationCache={translationCache} />
+        <PopularneContent
+          items={items}
+          currency={currency}
+          menuLocale={menuLocale}
+          translationCache={translationCache}
+        />
       )}
     </div>
   );

@@ -1,7 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dish, HotelHubData } from '../types';
+import { Dish, HotelHubData, RecommendationCurrency } from '../types';
+import {
+  DEFAULT_RECOMMENDATION_CURRENCY,
+  formatRecommendationPrice,
+  RECOMMENDATION_CURRENCY_CODES,
+  resolveRecommendationCurrency,
+} from '../utils/recommendationCurrency';
 import { Link2, Eye, EyeOff, ExternalLink, QrCode, Trash2, Edit, Settings, Building2 } from 'lucide-react';
 import { supabase } from '../services/supabaseService';
 import { hotelHubDb } from '../services/hotelHubService';
@@ -19,7 +25,7 @@ interface Props {
   onUpdateVideo: (id: string, url: string) => void;
   onDelete: (id: string) => void;
   onSelect: (id: string) => void;
-  onUpdatePrice: (id: string, price: string) => void;
+  onUpdateMenuPrice: (id: string, price: string, currency: RecommendationCurrency) => void;
   onUpdateCategory: (id: string, category: string | null) => void;
   menuUserId: string | null;
   hotelHubAvailable?: boolean;
@@ -33,7 +39,7 @@ export const MenuManager: React.FC<Props> = ({
   onUpdateVideo,
   onDelete,
   onSelect,
-  onUpdatePrice,
+  onUpdateMenuPrice,
   onUpdateCategory,
   menuUserId,
   hotelHubAvailable = false,
@@ -45,6 +51,7 @@ export const MenuManager: React.FC<Props> = ({
   const [justToggledId, setJustToggledId] = useState<string | null>(null);
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [draftPrice, setDraftPrice] = useState<string>('');
+  const [draftCurrency, setDraftCurrency] = useState<RecommendationCurrency>(DEFAULT_RECOMMENDATION_CURRENCY);
   const [customCategoryDrafts, setCustomCategoryDrafts] = useState<Record<string, string>>({});
   const [customCategoryEnabled, setCustomCategoryEnabled] = useState<Record<string, boolean>>({});
   const [menuCategories, setMenuCategories] = useState<string[]>([...MENU_CATEGORIES]);
@@ -66,6 +73,48 @@ export const MenuManager: React.FC<Props> = ({
   const [hotelHubEnabled, setHotelHubEnabled] = useState(false);
   const [hubData, setHubData] = useState<HotelHubData | null>(null);
   const [hubAssignOpenFor, setHubAssignOpenFor] = useState<string | null>(null);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const floatingScrollRef = useRef<HTMLDivElement>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
+  const isSyncingTableScroll = useRef(false);
+  const [tableScrollWidth, setTableScrollWidth] = useState(0);
+  const [showFloatingScroll, setShowFloatingScroll] = useState(false);
+
+  const syncTableScroll = useCallback((source: 'table' | 'float', scrollLeft: number) => {
+    if (isSyncingTableScroll.current) return;
+    isSyncingTableScroll.current = true;
+    if (source === 'table' && floatingScrollRef.current) {
+      floatingScrollRef.current.scrollLeft = scrollLeft;
+    }
+    if (source === 'float' && tableScrollRef.current) {
+      tableScrollRef.current.scrollLeft = scrollLeft;
+    }
+    requestAnimationFrame(() => {
+      isSyncingTableScroll.current = false;
+    });
+  }, []);
+
+  const updateTableScrollMetrics = useCallback(() => {
+    const table = tableRef.current;
+    const container = tableScrollRef.current;
+    if (!table || !container) return;
+    const width = table.scrollWidth;
+    setTableScrollWidth(width);
+    setShowFloatingScroll(width > container.clientWidth + 1);
+  }, []);
+
+  useEffect(() => {
+    updateTableScrollMetrics();
+    const table = tableRef.current;
+    if (!table) return;
+    const observer = new ResizeObserver(updateTableScrollMetrics);
+    observer.observe(table);
+    window.addEventListener('resize', updateTableScrollMetrics);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateTableScrollMetrics);
+    };
+  }, [dishes.length, hotelHubAvailable, hotelHubEnabled, updateTableScrollMetrics]);
 
   useEffect(() => {
     if (!menuUserId || !supabase) return;
@@ -248,12 +297,23 @@ export const MenuManager: React.FC<Props> = ({
   const beginEditPrice = (dish: Dish) => {
     setEditingPriceId(dish.id);
     setDraftPrice(dish.menuPrice || '');
+    setDraftCurrency(resolveRecommendationCurrency(dish.menuPriceCurrency));
   };
 
   const commitPrice = (dishId: string) => {
-    onUpdatePrice(dishId, draftPrice);
+    const currency = draftCurrency;
+    onUpdateMenuPrice(dishId, draftPrice, currency);
     setEditingPriceId(null);
     setDraftPrice('');
+    setDraftCurrency(DEFAULT_RECOMMENDATION_CURRENCY);
+  };
+
+  const handleCurrencyChange = (dish: Dish, currency: RecommendationCurrency) => {
+    if (editingPriceId === dish.id) {
+      setDraftCurrency(currency);
+      return;
+    }
+    onUpdateMenuPrice(dish.id, dish.menuPrice || '', currency);
   };
 
   const isKnownCategory = (category: string) => menuCategories.includes(category);
@@ -319,6 +379,42 @@ export const MenuManager: React.FC<Props> = ({
   const menuUrl = menuUserId ? `${getBaseUrl()}/#/menu/${menuUserId}` : '';
 
   return (
+    <>
+      <style>{`
+        .chefvision-menu-table-x {
+          overflow-x: auto;
+          overflow-y: visible;
+          scrollbar-width: none;
+        }
+        .chefvision-menu-table-x::-webkit-scrollbar {
+          display: none;
+          height: 0;
+        }
+        .chefvision-menu-float-scroll {
+          overflow-x: scroll;
+          overflow-y: hidden;
+          scrollbar-gutter: stable;
+          scrollbar-width: thin;
+          scrollbar-color: #475569 #e2e8f0;
+        }
+        .chefvision-menu-float-scroll::-webkit-scrollbar {
+          height: 16px;
+        }
+        .chefvision-menu-float-scroll::-webkit-scrollbar-track {
+          background: #e2e8f0;
+          border-radius: 999px;
+        }
+        .chefvision-menu-float-scroll::-webkit-scrollbar-thumb {
+          background: #475569;
+          border-radius: 999px;
+          border: 2px solid #e2e8f0;
+          min-width: 64px;
+        }
+        .chefvision-menu-float-scroll::-webkit-scrollbar-thumb:hover {
+          background: #334155;
+        }
+      `}</style>
+
     <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
       <div className="p-8 border-b border-slate-50 flex justify-between items-center">
         <div>
@@ -428,8 +524,12 @@ export const MenuManager: React.FC<Props> = ({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
+      <div
+        ref={tableScrollRef}
+        className="chefvision-menu-table-x"
+        onScroll={(e) => syncTableScroll('table', e.currentTarget.scrollLeft)}
+      >
+        <table ref={tableRef} className="w-full min-w-[1080px] text-left">
           <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
             <tr>
               <th className="px-6 py-4">{t('table.product')}</th>
@@ -742,33 +842,61 @@ export const MenuManager: React.FC<Props> = ({
                   </td>
                 )}
 
-                {/* Cena – inline edit */}
+                {/* Cena – inline edit + waluta */}
                 <td className="px-6 py-4">
-                  {editingPriceId === dish.id ? (
-                    <input
-                      autoFocus
-                      type="text"
-                      value={draftPrice}
-                      onChange={(e) => setDraftPrice(e.target.value)}
-                      onBlur={() => commitPrice(dish.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') commitPrice(dish.id);
-                        else if (e.key === 'Escape') { setEditingPriceId(null); setDraftPrice(''); }
-                      }}
-                      className="w-24 px-2 py-1 text-xs font-medium rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-right"
-                      placeholder={t('price.placeholder')}
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => beginEditPrice(dish)}
-                      className="inline-flex items-center justify-end gap-1 min-w-[3.5rem] text-xs font-semibold text-slate-700 hover:text-slate-900"
+                  <div className="flex items-center justify-end gap-1.5 min-w-[8.5rem]">
+                    {editingPriceId === dish.id ? (
+                      <input
+                        autoFocus
+                        type="text"
+                        value={draftPrice}
+                        onChange={(e) => setDraftPrice(e.target.value)}
+                        onBlur={() => commitPrice(dish.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') commitPrice(dish.id);
+                          else if (e.key === 'Escape') {
+                            setEditingPriceId(null);
+                            setDraftPrice('');
+                            setDraftCurrency(DEFAULT_RECOMMENDATION_CURRENCY);
+                          }
+                        }}
+                        className="w-16 px-2 py-1 text-xs font-medium rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-right"
+                        placeholder={t('price.placeholder')}
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => beginEditPrice(dish)}
+                        className="inline-flex items-center justify-end min-w-[3rem] text-xs font-semibold text-slate-700 hover:text-slate-900"
+                      >
+                        {dish.menuPrice ? (
+                          <span className="tabular-nums">
+                            {formatRecommendationPrice(dish.menuPrice, dish.menuPriceCurrency)}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 italic">{t('price.add')}</span>
+                        )}
+                      </button>
+                    )}
+                    <select
+                      value={
+                        editingPriceId === dish.id
+                          ? draftCurrency
+                          : resolveRecommendationCurrency(dish.menuPriceCurrency)
+                      }
+                      onChange={(e) =>
+                        handleCurrencyChange(dish, e.target.value as RecommendationCurrency)
+                      }
+                      className="max-w-[4.25rem] px-1 py-1 text-[10px] font-bold rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      aria-label={t('price.currencyLabel')}
                     >
-                      {dish.menuPrice
-                        ? <span className="tabular-nums">{dish.menuPrice} {t('price.currency')}</span>
-                        : <span className="text-slate-400 italic">{t('price.add')}</span>}
-                    </button>
-                  )}
+                      {RECOMMENDATION_CURRENCY_CODES.map((code) => (
+                        <option key={code} value={code}>
+                          {code}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </td>
 
                 {/* Social Link */}
@@ -828,5 +956,22 @@ export const MenuManager: React.FC<Props> = ({
         </table>
       </div>
     </div>
+
+      {showFloatingScroll && (
+        <div
+          className="fixed bottom-0 inset-x-0 z-50 px-4 sm:px-8 pb-4 pt-3 pointer-events-none"
+          style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.98) 55%, transparent)' }}
+        >
+          <div
+            ref={floatingScrollRef}
+            className="chefvision-menu-float-scroll pointer-events-auto mx-auto w-full max-w-5xl rounded-full bg-white/90 shadow-lg border border-slate-200 px-2 py-1"
+            onScroll={(e) => syncTableScroll('float', e.currentTarget.scrollLeft)}
+            aria-label={t('table.scrollHint')}
+          >
+            <div style={{ width: tableScrollWidth, height: 1 }} aria-hidden />
+          </div>
+        </div>
+      )}
+    </>
   );
 };

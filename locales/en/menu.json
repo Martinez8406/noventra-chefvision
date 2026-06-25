@@ -25,7 +25,8 @@
     "hotelHub": "Hotel Hub",
     "price": "Price",
     "socialLink": "Social link",
-    "actions": "Actions"
+    "actions": "Actions",
+    "scrollHint": "Scroll the table horizontally"
   },
   "category": {
     "none": "— none —",
@@ -50,6 +51,7 @@
   "price": {
     "placeholder": "e.g. 39",
     "currency": "PLN",
+    "currencyLabel": "Currency",
     "add": "Add price"
   },
   "socialPlaceholder": "YT, TikTok, Instagram...",

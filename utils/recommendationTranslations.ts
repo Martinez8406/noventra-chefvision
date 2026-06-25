@@ -1,5 +1,6 @@
 import type { DishRecommendation, DishRecommendationItem, DishRecommendationType, PublicMenuLocale } from '../types';
 import { getRecommendationHeader, normalizePolecaneItems, POLECANE_SLOTS } from './dishRecommendations';
+import { isCurrencyMetaItem } from './recommendationCurrency';
 
 export const REC_TRANSLATIONS_STORAGE_KEY = (userId: string) =>
   `chefvision_public_rec_translations:${userId}`;
@@ -303,7 +304,9 @@ export function getPublicSavingsLabel(percent: number, locale: PublicMenuLocale)
 
 export function recommendationNeedsTranslation(rec: DishRecommendation): boolean {
   const hasCustom = !!rec.customHeaderText?.trim();
-  const hasItems = rec.items.some((i) => i.title?.trim() || i.subtitle?.trim());
+  const hasItems = rec.items
+    .filter((item) => !isCurrencyMetaItem(item))
+    .some((i) => i.title?.trim() || i.subtitle?.trim());
   return hasCustom || hasItems;
 }
 
@@ -322,6 +325,7 @@ export function recommendationCacheReady(
   if (!cache) return false;
   if (rec.customHeaderText?.trim() && !checkMapAllLocales(cache.customHeaderText, requiredLocales)) return false;
   for (const item of rec.items) {
+    if (isCurrencyMetaItem(item)) continue;
     if (!item.title?.trim()) continue;
     if (!checkMapAllLocales(cache.items?.[item.id]?.title, requiredLocales)) return false;
     if (item.subtitle?.trim() && !checkMapAllLocales(cache.items[item.id]?.subtitle, requiredLocales)) return false;
@@ -340,11 +344,13 @@ export async function fetchRecommendationTranslation(
       target: 'recommendation',
       type: rec.type,
       customHeaderText: rec.customHeaderText?.trim() || null,
-      items: rec.items.map((i) => ({
-        id: i.id,
-        title: i.title,
-        subtitle: i.subtitle,
-      })),
+      items: rec.items
+        .filter((item) => !isCurrencyMetaItem(item))
+        .map((i) => ({
+          id: i.id,
+          title: i.title,
+          subtitle: i.subtitle,
+        })),
       ...(locales?.length ? { locales } : {}),
     }),
   });

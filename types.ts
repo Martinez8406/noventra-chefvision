@@ -70,11 +70,29 @@ export interface MenuTranslationEntry {
 /** Typ rekomendacji sprzedażowej na karcie dania (max. jeden na danie). */
 export type DishRecommendationType = 'polecane' | 'popularne' | 'zestaw';
 
+/** Waluta cen w rekomendacji sprzedażowej. */
+export type RecommendationCurrency =
+  | 'PLN'
+  | 'EUR'
+  | 'USD'
+  | 'GBP'
+  | 'CHF'
+  | 'CZK'
+  | 'SEK'
+  | 'NOK'
+  | 'DKK'
+  | 'HUF'
+  | 'UAH'
+  | 'ILS'
+  | 'AED'
+  | 'CAD'
+  | 'AUD';
+
 export interface DishRecommendationItem {
   id: string;
   title: string;
   subtitle?: string;
-  /** Cena bez sufiksu „zł” */
+  /** Cena liczbowa (bez symbolu waluty) */
   price?: string;
   imageUrl?: string;
   emoji?: string;
@@ -92,6 +110,8 @@ export interface DishRecommendation {
   bundlePriceOutside?: string;
   /** Tylko dla typu „zestaw” — cena zestawu */
   bundlePrice?: string;
+  /** Waluta wszystkich cen w tej rekomendacji */
+  currency?: RecommendationCurrency;
 }
 
 export interface Dish {
@@ -107,8 +127,10 @@ export interface Dish {
   /** Poziom ostrości — null = brak oznaczenia */
   spiceLevel?: SpiceLevel | null;
   videoUrl?: string;
-  /** Cena pozycji w menu cyfrowym (bez sufiksu "zł") */
+  /** Cena pozycji w menu cyfrowym (bez symbolu waluty) */
   menuPrice?: string | null;
+  /** Waluta ceny w menu cyfrowym */
+  menuPriceCurrency?: RecommendationCurrency;
   /** Kategoria w karcie menu */
   category?: string | null;
   /** Tłumaczenia opisu i alergenów (JSONB). Klucze: en, he, ar, uk, de, es, it, ko, ja, fr, cs, nl, zh. Nazwa zawsze z pola `name`. */

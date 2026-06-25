@@ -2,8 +2,15 @@
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import { TRIAL_TOKENS, SUBSCRIPTION_TOKENS, MAX_USER_BACKDROPS } from '../constants';
-import { Dish, DishRecommendation, UserProfile, DishStatus, SubscriptionStatus, Backdrop } from '../types';
+import { Dish, DishRecommendation, UserProfile, DishStatus, SubscriptionStatus, Backdrop, RecommendationCurrency } from '../types';
 import { mapProfileTokens, normalizeProfileForTokenOps } from '../utils/tokens.js';
+import {
+  DEFAULT_RECOMMENDATION_CURRENCY,
+  normalizeRecommendation,
+  resolveRecommendationCurrency,
+  serializeRecommendationItems,
+  stripCurrencyMetaItems,
+} from '../utils/recommendationCurrency';
 
 // Vite exposes env vars via import.meta.env (only keys prefixed with VITE_).
 // We still keep process.env fallback for server-like environments.
@@ -192,34 +199,41 @@ function isUuid(value: string): boolean {
   return UUID_RE.test(value);
 }
 
-const mapRecommendationRow = (row: Record<string, unknown>): DishRecommendation => ({
-  id: String(row.id),
-  dishId: String(row.dish_id ?? row.dishId),
-  type: row.type as DishRecommendation['type'],
-  isActive: row.is_active !== false && row.isActive !== false,
-  customHeaderText:
-    (row.custom_header_text as string | null) ?? (row.customHeaderText as string | undefined) ?? undefined,
-  items: Array.isArray(row.items) ? (row.items as DishRecommendation['items']) : [],
-  bundlePriceOutside:
-    (row.bundle_price_outside as string | null) ??
-    (row.bundlePriceOutside as string | undefined) ??
-    undefined,
-  bundlePrice:
-    (row.bundle_price as string | null) ?? (row.bundlePrice as string | undefined) ?? undefined,
-});
+const mapRecommendationRow = (row: Record<string, unknown>): DishRecommendation => {
+  const rawItems = Array.isArray(row.items) ? (row.items as DishRecommendation['items']) : [];
+  return normalizeRecommendation({
+    id: String(row.id),
+    dishId: String(row.dish_id ?? row.dishId),
+    type: row.type as DishRecommendation['type'],
+    isActive: row.is_active !== false && row.isActive !== false,
+    customHeaderText:
+      (row.custom_header_text as string | null) ?? (row.customHeaderText as string | undefined) ?? undefined,
+    items: rawItems,
+    bundlePriceOutside:
+      (row.bundle_price_outside as string | null) ??
+      (row.bundlePriceOutside as string | undefined) ??
+      undefined,
+    bundlePrice:
+      (row.bundle_price as string | null) ?? (row.bundlePrice as string | undefined) ?? undefined,
+    currency: resolveRecommendationCurrency(
+      (row.currency as string | null) ?? (row.currencyCode as string | undefined),
+    ),
+  });
+};
 
 function recommendationToPayload(userId: string, rec: DishRecommendation): Record<string, unknown> {
+  const normalized = normalizeRecommendation(rec);
   const payload: Record<string, unknown> = {
     user_id: userId,
-    dish_id: rec.dishId,
-    type: rec.type,
-    is_active: rec.isActive,
-    custom_header_text: rec.customHeaderText?.trim() || null,
-    bundle_price_outside: rec.bundlePriceOutside?.trim() || null,
-    bundle_price: rec.bundlePrice?.trim() || null,
-    items: rec.items,
+    dish_id: normalized.dishId,
+    type: normalized.type,
+    is_active: normalized.isActive,
+    custom_header_text: normalized.customHeaderText?.trim() || null,
+    bundle_price_outside: normalized.bundlePriceOutside?.trim() || null,
+    bundle_price: normalized.bundlePrice?.trim() || null,
+    items: serializeRecommendationItems(normalized),
   };
-  if (isUuid(rec.id)) payload.id = rec.id;
+  if (isUuid(normalized.id)) payload.id = normalized.id;
   return payload;
 }
 
@@ -235,6 +249,9 @@ const mapRow = (row: any): Dish => ({
   spiceLevel: (row.spice_level ?? row.spiceLevel ?? null) as Dish['spiceLevel'],
   videoUrl: row.social_link ?? row.video_url ?? row.videoUrl ?? undefined,
   menuPrice: row.menu_price ?? row.menuPrice ?? null,
+  menuPriceCurrency: resolveRecommendationCurrency(
+    row.menu_price_currency ?? row.menuPriceCurrency,
+  ),
   category: row.category ?? null,
   translations: row.translations ?? null,
   visibleInHotelHub: row.visible_in_hotel_hub ?? row.visibleInHotelHub ?? false,
@@ -332,6 +349,9 @@ export const db = {
       // Kolumny dodatkowe (snake_case)
       payload.social_link = (dish as any).videoUrl ?? (dish as any).social_link ?? null;
       payload.menu_price  = (dish as any).menuPrice ?? (dish as any).menu_price ?? null;
+      if ((dish as any).menuPriceCurrency !== undefined) {
+        payload.menu_price_currency = resolveRecommendationCurrency((dish as any).menuPriceCurrency);
+      }
       payload.category    = (dish as any).category ?? null;
       if (dish.translations !== undefined) payload.translations = dish.translations;
 
@@ -464,19 +484,41 @@ export const db = {
     return true;
   },
 
-  /** Aktualizuje wyłącznie cenę pozycji w menu cyfrowym. */
-  async updateDishPrice(id: string, menuPrice: string | null): Promise<boolean> {
+  /** Aktualizuje cenę i walutę pozycji w menu cyfrowym. */
+  async updateDishMenuPrice(
+    id: string,
+    menuPrice: string | null,
+    currency: RecommendationCurrency,
+  ): Promise<boolean> {
     const value = (menuPrice || '').trim() || null;
+    const menuPriceCurrency = resolveRecommendationCurrency(currency);
     if (supabase) {
-      let err = (await supabase.from('dishes').update({ menu_price: value }).eq('id', id)).error;
-      if (err) err = (await supabase.from('dishes').update({ menuPrice: value }).eq('id', id)).error;
+      let err = (
+        await supabase.from('dishes').update({ menu_price: value, menu_price_currency: menuPriceCurrency }).eq('id', id)
+      ).error;
+      if (err?.message?.includes('menu_price_currency')) {
+        err = (await supabase.from('dishes').update({ menu_price: value }).eq('id', id)).error;
+      }
+      if (err) {
+        err = (
+          await supabase.from('dishes').update({ menuPrice: value, menuPriceCurrency: menuPriceCurrency }).eq('id', id)
+        ).error;
+      }
+      if (err?.message?.includes('menuPriceCurrency') || err?.message?.includes('menu_price_currency')) {
+        err = (await supabase.from('dishes').update({ menuPrice: value }).eq('id', id)).error;
+      }
       return !err;
     }
-    const updated = getLocalDishes().map(d =>
-      d.id === id ? { ...d, menuPrice: value } : d
+    const updated = getLocalDishes().map((d) =>
+      d.id === id ? { ...d, menuPrice: value, menuPriceCurrency } : d,
     );
     saveLocalDishes(updated);
     return true;
+  },
+
+  /** @deprecated Użyj updateDishMenuPrice */
+  async updateDishPrice(id: string, menuPrice: string | null): Promise<boolean> {
+    return this.updateDishMenuPrice(id, menuPrice, DEFAULT_RECOMMENDATION_CURRENCY);
   },
 
   /** Aktualizuje wyłącznie kategorię dania w menu cyfrowym. */

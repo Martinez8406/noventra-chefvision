@@ -12,6 +12,14 @@ create table if not exists public.dish_recommendations (
   custom_header_text text null,
   bundle_price_outside text null,
   bundle_price text null,
+  currency text not null default 'PLN'
+    check (
+      currency in (
+        'PLN', 'EUR', 'USD', 'GBP', 'CHF',
+        'CZK', 'SEK', 'NOK', 'DKK', 'HUF',
+        'UAH', 'ILS', 'AED', 'CAD', 'AUD'
+      )
+    ),
   items jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),

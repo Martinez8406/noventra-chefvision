@@ -9,6 +9,7 @@ import {
   getPublicMoreInfoLabel,
   isRtlMenuLocale,
 } from '../utils/menuTranslations';
+import { formatRecommendationPrice, resolveRecommendationCurrency } from '../utils/recommendationCurrency';
 import { Info, UtensilsCrossed } from 'lucide-react';
 import { WatermarkWrapper } from './WatermarkWrapper';
 import { DishRecommendationBadge, DishRecommendationBox } from './DishRecommendationBox';
@@ -95,7 +96,7 @@ export const PublicDishCard: React.FC<Props> = ({
             </h3>
             <div className="flex-1 border-b border-dotted border-slate-200 min-w-[1rem]" />
             <span className="text-lg font-semibold text-slate-900 whitespace-nowrap tabular-nums">
-              {dish.menuPrice} zł
+              {formatRecommendationPrice(dish.menuPrice, resolveRecommendationCurrency(dish.menuPriceCurrency))}
             </span>
           </div>
         ) : (

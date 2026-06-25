@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dish, DishStatus, GeneratorParams, UserProfile, Backdrop } from './types';
+import { Dish, DishStatus, GeneratorParams, UserProfile, Backdrop, RecommendationCurrency } from './types';
 import { ChefsStudio } from './components/ChefsStudio';
 import { SeasonalThemes } from './components/SeasonalThemes';
 import { BackdropLab } from './components/BackdropLab';
@@ -24,6 +24,7 @@ import { BRAND_LOGO_SRC, TRIAL_TOKENS } from './constants';
 import { useTranslation } from 'react-i18next';
 import { hasProFeatures, canUseHotelHub } from './utils/tokens';
 import { formatTokenStatusI18n, formatPremiumTokenShort } from './utils/formatTokenStatusI18n';
+import { resolveRecommendationCurrency } from './utils/recommendationCurrency';
 import { supabase, db, authService, uploadDishImage } from './services/supabaseService';
 import { hotelHubDb } from './services/hotelHubService';
 import { requestMenuTranslations } from './services/aiService';
@@ -508,14 +509,21 @@ const App: React.FC = () => {
     if (!ok) console.error('Aktualizacja Social Link nie powiodła się');
   };
 
-  const handleUpdateDishPrice = async (id: string, price: string) => {
+  const handleUpdateDishMenuPrice = async (
+    id: string,
+    price: string,
+    currency: RecommendationCurrency,
+  ) => {
     const normalized = price.replace(/[^\d.,]/g, '').trim();
-    setDishes(prev =>
-      prev.map(d =>
-        d.id === id ? { ...d, menuPrice: normalized || null } : d
-      )
+    const menuPriceCurrency = resolveRecommendationCurrency(currency);
+    setDishes((prev) =>
+      prev.map((d) =>
+        d.id === id
+          ? { ...d, menuPrice: normalized || null, menuPriceCurrency }
+          : d,
+      ),
     );
-    const ok = await db.updateDishPrice(id, normalized || null);
+    const ok = await db.updateDishMenuPrice(id, normalized || null, menuPriceCurrency);
     if (!ok) {
       console.error('Aktualizacja ceny dania nie powiodła się');
     }
@@ -897,7 +905,7 @@ const App: React.FC = () => {
               onUpdateVideo={handleUpdateSocialLink} 
               onDelete={handleDeleteDish} 
               onSelect={setSelectedDishId}
-              onUpdatePrice={handleUpdateDishPrice}
+              onUpdateMenuPrice={handleUpdateDishMenuPrice}
               onUpdateCategory={handleUpdateDishCategory}
               menuUserId={currentUser?.id ?? null}
               hotelHubAvailable={hasHotelHubAccess}

@@ -1,5 +1,6 @@
 import type { Dish, DishRecommendation, DishRecommendationItem, DishRecommendationType } from '../types';
 import { db, supabase } from '../services/supabaseService';
+import { normalizeRecommendation, stripCurrencyMetaItems } from './recommendationCurrency';
 
 export const RECOMMENDATIONS_STORAGE_KEY = (userId: string) =>
   `chefvision_dish_recommendations:${userId}`;
@@ -27,11 +28,12 @@ export const POLECANE_SLOTS: { id: PolecaneSlotId; emoji: string }[] = [
 ];
 
 export function createPolecaneItems(existing?: DishRecommendationItem[]): DishRecommendationItem[] {
+  const clean = existing ? stripCurrencyMetaItems(existing) : undefined;
   return POLECANE_SLOTS.map((slot, idx) => {
     const prev =
-      existing?.find((i) => i.id === slot.id) ??
-      (existing?.length === 1 && idx === 0 ? existing[0] : undefined) ??
-      existing?.[idx];
+      clean?.find((i) => i.id === slot.id) ??
+      (clean?.length === 1 && idx === 0 ? clean[0] : undefined) ??
+      clean?.[idx];
     return {
       id: slot.id,
       title: prev?.title ?? '',
@@ -43,7 +45,7 @@ export function createPolecaneItems(existing?: DishRecommendationItem[]): DishRe
 
 /** Uzupełnia brakujące sloty i migruje stare rekomendacje z jedną pozycją. */
 export function normalizePolecaneItems(items: DishRecommendationItem[]): DishRecommendationItem[] {
-  return createPolecaneItems(items);
+  return createPolecaneItems(stripCurrencyMetaItems(items));
 }
 
 export function getRecommendationHeader(rec: DishRecommendation): string {
@@ -82,7 +84,9 @@ export function loadStoredRecommendations(userId: string): DishRecommendation[] 
     const raw = localStorage.getItem(RECOMMENDATIONS_STORAGE_KEY(userId));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as DishRecommendation[]) : [];
+    return Array.isArray(parsed)
+      ? (parsed as DishRecommendation[]).map((rec) => normalizeRecommendation(rec))
+      : [];
   } catch {
     return [];
   }
@@ -91,7 +95,10 @@ export function loadStoredRecommendations(userId: string): DishRecommendation[] 
 export function saveStoredRecommendations(userId: string, recommendations: DishRecommendation[]): void {
   if (typeof window === 'undefined' || !userId) return;
   try {
-    localStorage.setItem(RECOMMENDATIONS_STORAGE_KEY(userId), JSON.stringify(recommendations));
+    localStorage.setItem(
+      RECOMMENDATIONS_STORAGE_KEY(userId),
+      JSON.stringify(recommendations.map((rec) => normalizeRecommendation(rec))),
+    );
   } catch {
     /* ignore quota */
   }
