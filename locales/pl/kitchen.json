@@ -1,0 +1,68 @@
+{
+  "title": "Edycja menu",
+  "searchPlaceholder": "Szukaj dania lub składnika...",
+  "filters": {
+    "all": "Wszystkie",
+    "approved": "Standardy",
+    "pending": "Oczekujące"
+  },
+  "status": {
+    "approvedTitle": "Zatwierdzony Standard",
+    "pendingTitle": "Oczekuje na akceptację",
+    "needsApproval": "Wymaga akceptacji",
+    "approved": "ZATWIERDZONE",
+    "approve": "ZATWIERDŹ STANDARD"
+  },
+  "actions": {
+    "downloadImage": "Pobierz zdjęcie na urządzenie",
+    "deleteImage": "Usuń zdjęcie"
+  },
+  "empty": {
+    "title": "Brak wyników",
+    "hint": "Spróbuj zmienić filtry lub wyszukiwaną frazę"
+  },
+  "dishPanel": {
+    "title": "Edycja Standardu",
+    "uploadOwnPhoto": "Wgraj własne zdjęcie",
+    "compressing": "(kompresuję...)",
+    "nameAndDescription": "Nazwa i Opis Marketingowy",
+    "descriptionPlaceholder": "Krótki opis, który zobaczy gość...",
+    "ingredients": "Składniki receptury",
+    "addIngredient": "Dodaj składnik...",
+    "technique": "Technika wykonania (to pole jest niewidoczne w menu online dla gości. Dodaj tu notatki dla pracowników)",
+    "techniquePlaceholder": "Dodaj notatki dotyczące dania...",
+    "allergens": "Alergeny",
+    "dietaryTags": "Oznaczenia dietetyczne",
+    "spiceLevel": "Poziom ostrości",
+    "save": "ZAPISZ ZMIANY W STANDARDZIE",
+    "uploadError": "Nie udało się wgrać zdjęcia."
+  },
+  "allergens": {
+    "Gluten": "Gluten",
+    "Laktoza": "Laktoza",
+    "Orzechy": "Orzechy",
+    "Skorupiaki": "Skorupiaki",
+    "Jaja": "Jaja",
+    "Ryby": "Ryby",
+    "Soja": "Soja",
+    "Gorczyca": "Gorczyca"
+  },
+  "dietary": {
+    "vegetarian": { "label": "Vegetarian", "description": "" },
+    "vegan": { "label": "Vegan", "description": "" },
+    "halal": { "label": "Halal", "description": "Zgodne z zasadami islamu." },
+    "kosher": { "label": "Koszerne", "description": "Zgodne z zasadami judaizmu." },
+    "gluten_free": { "label": "Bezglutenowe", "description": "Danie nie zawiera glutenu (możliwe śladowe ilości)." },
+    "lactose_free": { "label": "Bez laktozy", "description": "Dla osób z nietolerancją mleka." }
+  },
+  "spice": {
+    "mild": { "label": "Łagodne", "description": "Dla dzieci lub osób wrażliwych." },
+    "medium": { "label": "Średnio pikantne", "description": "Umiarkowana ostrość." },
+    "hot": { "label": "Bardzo ostre", "description": "Dla miłośników mocnych smaków." }
+  },
+  "errors": {
+    "deleteFailed": "Nie udało się usunąć dania. Spróbuj ponownie.",
+    "saveFailed": "Nie udało się zapisać dania.",
+    "quotaExceeded": "Obraz jest za duży do zapisania w tej przeglądarce. Zaloguj się (Supabase), aby zapisywać zdjęcia w chmurze."
+  }
+}

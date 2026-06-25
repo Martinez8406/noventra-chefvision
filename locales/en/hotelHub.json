@@ -1,0 +1,78 @@
+{
+  "title": "Hotel Hub",
+  "intro": "Show Room Service, Bar, Spa and custom sections to guests — without duplicating dishes from the restaurant menu.",
+  "loginRequired": "Sign in to manage Hotel Hub.",
+  "enableLabel": "Enable Hotel Hub",
+  "enableHelp": "When disabled — Hotel Hub is hidden in Live Menu. When enabled — guests will see a tab next to the restaurant menu.",
+  "errors": {
+    "infoSectionMigration": "Could not add the “Hotel information” section. Run the supabase/hotel_hub_info_section.sql migration in Supabase SQL Editor.",
+    "planRequired": "Hotel Hub requires a Trial or Premium plan.",
+    "addInfoSectionFailed": "Could not add the section. Run the supabase/hotel_hub_info_section.sql migration in Supabase SQL Editor and try again.",
+    "heroUploadFailed": "Failed to upload image.",
+    "assignmentSaveFailed": "Could not save Hotel Hub assignments. Make sure you ran the supabase/hotel_hub.sql migration in Supabase SQL Editor."
+  },
+  "infoSection": {
+    "defaultName": "Hotel information",
+    "missingBannerBefore": "Missing section",
+    "missingBannerAfter": "— add it so guests can see hotel contact details and hours.",
+    "addButton": "Add information section"
+  },
+  "sections": {
+    "title": "Sections",
+    "addCustom": "Add custom section",
+    "edit": "Edit section",
+    "editShort": "Edit",
+    "new": "New section",
+    "nameLabel": "Section name",
+    "namePlaceholder": "e.g. Pool Bar, Wellness, Mini Bar",
+    "iconLabel": "Section icon",
+    "iconHelp": "Hotel icon — shared across all sections",
+    "heroLabel": "Hero image",
+    "changeHero": "Change image",
+    "addHero": "Add image",
+    "availabilityLabel": "Availability",
+    "available24h": "Available 24/7",
+    "customHours": "Custom hours",
+    "from": "From",
+    "to": "To",
+    "serviceNotesLabel": "Service notes",
+    "templateButton": "Template",
+    "serviceNotesPlaceholder": "Custom text for guests…",
+    "visibleForGuests": "Visible to guests",
+    "save": "Save section",
+    "cancel": "Cancel",
+    "hidden": "Hidden",
+    "infoType": "Information section",
+    "stats": "{{count}} categories · {{dishes}} assigned dishes",
+    "deleteTitle": "Delete section",
+    "deleteConfirm": "Delete this section along with its categories and assignments?",
+    "categoriesTitle": "Section categories",
+    "newCategoryPlaceholder": "New category…",
+    "assignHint": "Assign dishes to this section in Digital Menu — Hotel Hub column.",
+    "empty": "No sections — re-enable Hotel Hub or add a custom section."
+  },
+  "serviceNoteTemplates": {
+    "0": "Usually follows restaurant opening hours.",
+    "1": "Full restaurant menu during the day. Limited menu during late-night hours."
+  },
+  "upsell": {
+    "beforePlans": "Hotel Hub is available on",
+    "plansJoiner": "and",
+    "afterPlans": "plans. On Start and free plans you can use the restaurant menu.",
+    "unlockPremium": "Unlock Premium"
+  },
+  "infoFields": {
+    "contact": "Contact",
+    "hours": "Important hours",
+    "wifi": "Wi-Fi",
+    "transport": "Transport",
+    "attractions": "Nearby attractions",
+    "attractionsHelp": "Add places with a Google Maps link (optional — without a link we search by name).",
+    "nameLabel": "Name",
+    "namePlaceholder": "e.g. Main Market Square",
+    "mapsLabel": "Google Maps link",
+    "mapsPlaceholder": "https://maps.google.com/…",
+    "removeAttraction": "Remove attraction",
+    "addAttraction": "Add attraction"
+  }
+}

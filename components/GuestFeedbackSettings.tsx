@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Loader2, MessageSquareText } from 'lucide-react';
 import { supabase } from '../services/supabaseService';
 
@@ -9,6 +10,7 @@ interface Props {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const GuestFeedbackSettings: React.FC<Props> = ({ userId }) => {
+  const { t } = useTranslation('settings');
   const [enabled, setEnabled] = useState(true);
   const [email, setEmail] = useState('');
   const [isFetching, setIsFetching] = useState(false);
@@ -37,7 +39,7 @@ export const GuestFeedbackSettings: React.FC<Props> = ({ userId }) => {
       if (fetchError) {
         const missingColumn = /feedback_/i.test(fetchError.message || '');
         if (!missingColumn) {
-          setError(fetchError.message || 'Nie udało się pobrać ustawień opinii.');
+          setError(fetchError.message || t('feedback.errors.fetchFailed'));
         }
       } else {
         setEnabled(data?.feedback_enabled !== false);
@@ -48,7 +50,7 @@ export const GuestFeedbackSettings: React.FC<Props> = ({ userId }) => {
     };
 
     fetchSettings();
-  }, [userId]);
+  }, [userId, t]);
 
   const validateEmail = (value: string) => {
     const trimmed = value.trim();
@@ -57,7 +59,7 @@ export const GuestFeedbackSettings: React.FC<Props> = ({ userId }) => {
       return true;
     }
     if (!EMAIL_RE.test(trimmed)) {
-      setEmailError('Podaj prawidłowy adres e-mail.');
+      setEmailError(t('feedback.invalidEmail'));
       return false;
     }
     setEmailError(null);
@@ -88,8 +90,8 @@ export const GuestFeedbackSettings: React.FC<Props> = ({ userId }) => {
     if (updateError) {
       setError(
         updateError.message?.includes('feedback_')
-          ? 'Uruchom migrację SQL: supabase/feedback_settings.sql'
-          : updateError.message || 'Nie udało się zapisać ustawień.'
+          ? t('feedback.errors.migrationRequired')
+          : updateError.message || t('feedback.errors.saveFailed'),
       );
     } else {
       setIsSaved(true);
@@ -106,21 +108,16 @@ export const GuestFeedbackSettings: React.FC<Props> = ({ userId }) => {
           <MessageSquareText size={22} />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-xl font-black text-slate-900">Opinie i sugestie</h3>
-          <p className="mt-2 text-sm text-slate-500 max-w-3xl">
-            Pozwól gościom wysyłać uwagi, skargi i sugestie bezpośrednio z Live Menu. Wiadomości trafią na
-            Twój adres e-mail.
-          </p>
+          <h3 className="text-xl font-black text-slate-900">{t('feedback.title')}</h3>
+          <p className="mt-2 text-sm text-slate-500 max-w-3xl">{t('feedback.intro')}</p>
         </div>
       </div>
 
       <div className="mt-8 space-y-6">
         <label className="flex items-center justify-between gap-4 cursor-pointer">
           <div>
-            <span className="text-sm font-bold text-slate-800 block">Włącz opinie gości</span>
-            <span className="text-xs text-slate-500 mt-0.5 block">
-              Sekcja na dole menu publicznego z formularzem wiadomości
-            </span>
+            <span className="text-sm font-bold text-slate-800 block">{t('feedback.enableLabel')}</span>
+            <span className="text-xs text-slate-500 mt-0.5 block">{t('feedback.enableHelp')}</span>
           </div>
           <button
             type="button"
@@ -142,7 +139,7 @@ export const GuestFeedbackSettings: React.FC<Props> = ({ userId }) => {
 
         <div className="space-y-3">
           <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block">
-            Adres e-mail do otrzymywania opinii
+            {t('feedback.emailLabel')}
           </label>
           <input
             type="email"
@@ -152,15 +149,13 @@ export const GuestFeedbackSettings: React.FC<Props> = ({ userId }) => {
               if (emailError) validateEmail(e.target.value);
             }}
             onBlur={() => validateEmail(email)}
-            placeholder="manager@restauracja.pl"
+            placeholder={t('feedback.emailPlaceholder')}
             disabled={!userId || isFetching || isSaving}
             className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 disabled:opacity-60 disabled:cursor-not-allowed"
           />
           {emailError && <p className="text-xs text-red-500 font-medium">{emailError}</p>}
           {enabled && !email.trim() && (
-            <p className="text-xs text-amber-700 font-medium">
-              Uzupełnij e-mail, aby sekcja opinii była widoczna w Live Menu.
-            </p>
+            <p className="text-xs text-amber-700 font-medium">{t('feedback.emailRequired')}</p>
           )}
         </div>
       </div>
@@ -175,15 +170,15 @@ export const GuestFeedbackSettings: React.FC<Props> = ({ userId }) => {
           {isSaving ? (
             <>
               <Loader2 size={14} className="animate-spin" />
-              Zapisywanie...
+              {t('feedback.saving')}
             </>
           ) : isSaved ? (
-            'Zapisano ✓'
+            t('feedback.saved')
           ) : (
-            'Zapisz'
+            t('feedback.save')
           )}
         </button>
-        {isFetching && <span className="text-xs text-slate-500">Ładowanie ustawień...</span>}
+        {isFetching && <span className="text-xs text-slate-500">{t('feedback.loading')}</span>}
       </div>
 
       {error && <p className="mt-3 text-xs text-red-500 font-medium">{error}</p>}

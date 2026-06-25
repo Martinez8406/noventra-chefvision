@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../services/supabaseService';
 import { Loader2, ImagePlus, CheckCircle, Save } from 'lucide-react';
 import { MenuHeroIdentityPreview } from './MenuHeroIdentityPreview';
@@ -34,6 +35,7 @@ interface Props {
 }
 
 export const UploadLogo: React.FC<Props> = ({ userId, restaurantName: restaurantNameProp }) => {
+  const { t } = useTranslation('settings');
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [frameTarget, setFrameTarget] = useState<FrameTarget>('logo');
@@ -148,7 +150,7 @@ export const UploadLogo: React.FC<Props> = ({ userId, restaurantName: restaurant
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      setError('Plik jest za duży (max 2 MB).');
+      setError(t('branding.errors.logoTooLarge'));
       return;
     }
 
@@ -194,7 +196,7 @@ export const UploadLogo: React.FC<Props> = ({ userId, restaurantName: restaurant
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
-      setError(err.message || 'Błąd przesyłania logo.');
+      setError(err.message || t('branding.errors.logoUploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -227,7 +229,7 @@ export const UploadLogo: React.FC<Props> = ({ userId, restaurantName: restaurant
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setError('Plik cover jest za duży (max 5 MB).');
+      setError(t('branding.errors.coverTooLarge'));
       return;
     }
 
@@ -275,7 +277,7 @@ export const UploadLogo: React.FC<Props> = ({ userId, restaurantName: restaurant
       setCoverSuccess(true);
       setTimeout(() => setCoverSuccess(false), 3000);
     } catch (err: any) {
-      setError(err.message || 'Błąd przesyłania zdjęcia cover.');
+      setError(err.message || t('branding.errors.coverUploadFailed'));
     } finally {
       setCoverUploading(false);
     }
@@ -319,11 +321,9 @@ export const UploadLogo: React.FC<Props> = ({ userId, restaurantName: restaurant
       if (dbError) {
         if (isMissingFrameColumns(dbError)) {
           setFrameColumnsAvailable(false);
-          throw new Error(
-            'Kolumny kadrowania nie są widoczne w API. Uruchom migrację SQL (poniżej), potem w Supabase: Settings → API → Reload schema (lub odczekaj 1–2 min) i odśwież F5.'
-          );
+          throw new Error(t('branding.errors.frameColumnsMissing'));
         }
-        throw new Error(`Nie udało się zapisać kadrowania: ${dbError.message}`);
+        throw new Error(t('branding.errors.frameSaveFailed', { message: dbError.message }));
       }
 
       setFrameColumnsAvailable(true);
@@ -338,7 +338,7 @@ export const UploadLogo: React.FC<Props> = ({ userId, restaurantName: restaurant
       setFrameSaved(true);
       setTimeout(() => setFrameSaved(false), 3000);
     } catch (err: any) {
-      setError(err.message || 'Błąd zapisu kadrowania.');
+      setError(err.message || t('branding.errors.frameSaveGeneric'));
     } finally {
       setSavingFrame(false);
     }
@@ -348,12 +348,9 @@ export const UploadLogo: React.FC<Props> = ({ userId, restaurantName: restaurant
     <div className="space-y-6">
       <div>
         <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block">
-          Logo i zdjęcie cover (widoczne w Live Menu)
+          {t('branding.title')}
         </label>
-        <p className="text-xs text-slate-500 mt-1">
-          Wgraj logo i zdjęcie tła na górze menu. Wybierz element (logo lub cover) i ustaw jego kadrowanie — podgląd
-          poniżej wygląda tak samo jak w menu publicznym.
-        </p>
+        <p className="text-xs text-slate-500 mt-1">{t('branding.intro')}</p>
       </div>
 
       <div className="space-y-3">
@@ -373,11 +370,11 @@ export const UploadLogo: React.FC<Props> = ({ userId, restaurantName: restaurant
           >
             {uploading ? (
               <>
-                <Loader2 size={14} className="animate-spin" /> Przesyłanie…
+                <Loader2 size={14} className="animate-spin" /> {t('branding.uploading')}
               </>
             ) : (
               <>
-                <ImagePlus size={14} /> {logoUrl ? 'Zmień logo' : 'Wgraj logo'}
+                <ImagePlus size={14} /> {logoUrl ? t('branding.changeLogo') : t('branding.uploadLogo')}
               </>
             )}
           </button>
@@ -387,15 +384,15 @@ export const UploadLogo: React.FC<Props> = ({ userId, restaurantName: restaurant
               onClick={() => void handleRemove()}
               className="px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest text-red-600 border border-red-200 hover:bg-red-50 transition-colors"
             >
-              Usuń logo
+              {t('branding.removeLogo')}
             </button>
           )}
           {success && (
             <span className="flex items-center gap-1 text-xs text-green-600 font-semibold">
-              <CheckCircle size={13} /> Logo wgrane!
+              <CheckCircle size={13} /> {t('branding.logoUploaded')}
             </span>
           )}
-          <p className="text-[10px] text-slate-400 w-full sm:w-auto">Logo: PNG, JPG — max 2 MB</p>
+          <p className="text-[10px] text-slate-400 w-full sm:w-auto">{t('branding.logoFormats')}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -414,11 +411,11 @@ export const UploadLogo: React.FC<Props> = ({ userId, restaurantName: restaurant
           >
             {coverUploading ? (
               <>
-                <Loader2 size={14} className="animate-spin" /> Przesyłanie…
+                <Loader2 size={14} className="animate-spin" /> {t('branding.uploading')}
               </>
             ) : (
               <>
-                <ImagePlus size={14} /> {coverUrl ? 'Zmień cover' : 'Wgraj cover'}
+                <ImagePlus size={14} /> {coverUrl ? t('branding.changeCover') : t('branding.uploadCover')}
               </>
             )}
           </button>
@@ -428,24 +425,27 @@ export const UploadLogo: React.FC<Props> = ({ userId, restaurantName: restaurant
               onClick={() => void handleCoverRemove()}
               className="px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest text-red-600 border border-red-200 hover:bg-red-50 transition-colors"
             >
-              Usuń cover
+              {t('branding.removeCover')}
             </button>
           )}
           {coverSuccess && (
             <span className="flex items-center gap-1 text-xs text-green-600 font-semibold">
-              <CheckCircle size={13} /> Cover wgrany!
+              <CheckCircle size={13} /> {t('branding.coverUploaded')}
             </span>
           )}
-          <p className="text-[10px] text-slate-400 w-full sm:w-auto">Cover: JPG, PNG, WebP — max 5 MB</p>
+          <p className="text-[10px] text-slate-400 w-full sm:w-auto">{t('branding.coverFormats')}</p>
         </div>
       </div>
 
       {(logoUrl || coverUrl) && !frameColumnsAvailable && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 space-y-2">
-          <p className="font-bold">Jednorazowa konfiguracja bazy (Supabase)</p>
+          <p className="font-bold">{t('branding.dbSetupTitle')}</p>
           <p className="text-xs leading-relaxed">
-            Aby zapisać kadrowanie, uruchom w <strong>Supabase → SQL Editor</strong> skrypty z folderu{' '}
-            <code className="text-[10px]">supabase/</code> (logo i cover), np.:
+            {t('branding.dbSetupIntroBefore')}
+            <strong>Supabase → SQL Editor</strong>
+            {t('branding.dbSetupIntroAfter')}
+            <code className="text-[10px]">supabase/</code>
+            {t('branding.dbSetupIntroSuffix')}
           </p>
           <pre className="text-[10px] bg-white border border-amber-100 rounded-xl p-3 overflow-x-auto whitespace-pre-wrap font-mono">
 {`-- logo_frame_settings.sql + cover_frame_settings.sql
@@ -456,8 +456,11 @@ alter table public.profiles
   add column if not exists cover_scale numeric not null default 1;`}
           </pre>
           <p className="text-[10px] text-amber-800 leading-relaxed">
-            Po uruchomieniu: Supabase → <strong>Settings → API → Reload schema</strong> (jeśli jest), potem{' '}
-            <strong>F5</strong> w aplikacji. Upewnij się, że SQL uruchomiłeś w tym samym projekcie co w pliku .env.
+            {t('branding.dbSetupAfterBefore')}
+            <strong>{t('branding.dbSetupReloadSchema')}</strong>
+            {t('branding.dbSetupAfterMiddle')}
+            <strong>F5</strong>
+            {t('branding.dbSetupAfterSuffix')}
           </p>
         </div>
       )}
@@ -466,7 +469,7 @@ alter table public.profiles
         <div className="space-y-6 pt-2 border-t border-slate-100">
           <div>
             <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">
-              Podgląd — jak w menu publicznym
+              {t('branding.previewTitle')}
             </p>
             <div className="rounded-[28px] border border-slate-100 bg-chef-cream/50 p-4 sm:p-6 overflow-hidden">
               <MenuHeroIdentityPreview
@@ -487,12 +490,12 @@ alter table public.profiles
             <div className="space-y-6">
               <div className="flex flex-wrap items-center gap-3">
                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                  Kadruj element
+                  {t('branding.frameElement')}
                 </p>
                 <div
                   className="inline-flex rounded-xl border border-slate-200 bg-white p-0.5 shadow-sm"
                   role="tablist"
-                  aria-label="Wybór elementu do kadrowania"
+                  aria-label={t('branding.frameTabAria')}
                 >
                   <button
                     type="button"
@@ -506,7 +509,7 @@ alter table public.profiles
                         : 'text-slate-500 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed'
                     }`}
                   >
-                    Logo
+                    {t('branding.logoTab')}
                   </button>
                   <button
                     type="button"
@@ -520,19 +523,21 @@ alter table public.profiles
                         : 'text-slate-500 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed'
                     }`}
                   >
-                    Cover
+                    {t('branding.coverTab')}
                   </button>
                 </div>
                 {activeFrameDirty && (
                   <span className="text-[10px] text-amber-600 font-semibold uppercase tracking-wide">
-                    Niezapisane zmiany ({frameTarget === 'logo' ? 'logo' : 'cover'})
+                    {t('branding.unsavedChanges', {
+                      target: frameTarget === 'logo' ? t('branding.logoTab') : t('branding.coverTab'),
+                    })}
                   </span>
                 )}
               </div>
 
               {canEditActiveFrame ? (
                 <ImageFrameControls
-                  title={frameTarget === 'logo' ? 'Logo' : 'Cover'}
+                  title={frameTarget === 'logo' ? t('branding.logoTab') : t('branding.coverTab')}
                   position={frameTarget === 'logo' ? logoPosition : coverPosition}
                   scale={frameTarget === 'logo' ? logoScale : coverScale}
                   minScale={MIN_LOGO_SCALE}
@@ -542,14 +547,17 @@ alter table public.profiles
                   }
                   onScaleChange={frameTarget === 'logo' ? setLogoScale : setCoverScale}
                   scaleHelp={
-                    frameTarget === 'logo'
-                      ? 'Kadrowanie logo. Przesuń w lewo, aby pomniejszyć; punkt kadrowania ustawia widoczny fragment przy powiększeniu.'
-                      : 'Kadrowanie zdjęcia cover. Przesuń w lewo, aby pomniejszyć; punkt kadrowania wybiera widoczny fragment banera.'
+                    frameTarget === 'logo' ? t('branding.logoScaleHelp') : t('branding.coverScaleHelp')
                   }
                 />
               ) : (
                 <p className="text-xs text-slate-500">
-                  Wgraj {frameTarget === 'logo' ? 'logo' : 'zdjęcie cover'}, aby ustawić kadrowanie.
+                  {t('branding.uploadToFrame', {
+                    target:
+                      frameTarget === 'logo'
+                        ? t('branding.uploadLogoTarget')
+                        : t('branding.uploadCoverTarget'),
+                  })}
                 </p>
               )}
 
@@ -565,16 +573,16 @@ alter table public.profiles
                   ) : (
                     <Save size={14} />
                   )}
-                  Zapisz kadrowanie
+                  {t('branding.saveFrame')}
                 </button>
                 {frameSaved && (
                   <span className="flex items-center gap-1 text-xs text-green-600 font-semibold">
-                    <CheckCircle size={13} /> Kadrowanie zapisane
+                    <CheckCircle size={13} /> {t('branding.frameSaved')}
                   </span>
                 )}
                 {frameDirty && !savingFrame && !activeFrameDirty && (
                   <span className="text-[10px] text-amber-600 font-semibold uppercase tracking-wide">
-                    Niezapisane zmiany w drugim elemencie
+                    {t('branding.unsavedOtherElement')}
                   </span>
                 )}
               </div>

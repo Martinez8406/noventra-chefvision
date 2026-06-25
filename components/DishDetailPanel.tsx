@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dish, Allergen, DietaryTag, SpiceLevel } from '../types';
 import { ALLERGENS_LIST, DIETARY_TAG_OPTIONS, SPICE_LEVEL_OPTIONS } from '../constants';
 import { compressImageForUpload } from '../services/imageService';
@@ -29,6 +30,8 @@ interface Props {
 const LEGACY_TECHNIQUE_DEFAULTS = [
   'Dodaj notatki dotyczące dania...',
   'Wpisz technologię przygotowania dania...',
+  'Add notes about the dish...',
+  'Enter preparation notes...',
 ];
 
 const normalizeTechnique = (technique?: string) => {
@@ -38,6 +41,7 @@ const normalizeTechnique = (technique?: string) => {
 };
 
 export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId }) => {
+  const { t } = useTranslation('kitchen');
   const [editedDish, setEditedDish] = useState<Dish>({
     ...dish,
     technique: normalizeTechnique(dish.technique),
@@ -69,7 +73,7 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
       setEditedDish((prev) => ({ ...prev, imageUrl }));
     } catch (err) {
       console.error('Błąd wgrywania zdjęcia:', err);
-      alert(err instanceof Error ? err.message : 'Nie udało się wgrać zdjęcia.');
+      alert(err instanceof Error ? err.message : t('dishPanel.uploadError'));
     } finally {
       setIsUploadingImage(false);
     }
@@ -121,7 +125,7 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
             <Utensils size={20} className="text-amber-500" />
           </div>
           <div>
-            <h3 className="font-black text-slate-900 tracking-tight italic">Edycja Standardu</h3>
+            <h3 className="font-black text-slate-900 tracking-tight italic">{t('dishPanel.title')}</h3>
             <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">ID: {dish.id}</p>
           </div>
         </div>
@@ -131,7 +135,6 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
       </div>
 
       <div className="flex-1 overflow-y-auto p-8 space-y-8">
-        {/* Header Preview + Wgraj własne zdjęcie */}
         <div className="space-y-4">
           <div className="relative h-48 rounded-[30px] overflow-hidden border-4 border-slate-50 shadow-inner group">
             <img src={editedDish.imageUrl} alt={editedDish.name} className="w-full h-full object-cover" />
@@ -150,13 +153,12 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
             className="w-full py-3 rounded-2xl border-2 border-dashed border-slate-200 text-slate-600 font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-indigo-300 transition-colors disabled:opacity-50"
           >
             {isUploadingImage ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
-            Wgraj własne zdjęcie {isUploadingImage ? '(kompresuję...)' : ''}
+            {t('dishPanel.uploadOwnPhoto')} {isUploadingImage ? t('dishPanel.compressing') : ''}
           </button>
         </div>
 
-        {/* Basic Info */}
         <div className="space-y-4">
-          <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2">Nazwa i Opis Marketingowy</label>
+          <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2">{t('dishPanel.nameAndDescription')}</label>
           <input 
             type="text" 
             value={editedDish.name}
@@ -166,20 +168,19 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
           <textarea 
             value={editedDish.description}
             onChange={(e) => setEditedDish({ ...editedDish, description: e.target.value })}
-            placeholder="Krótki opis, który zobaczy gość..."
+            placeholder={t('dishPanel.descriptionPlaceholder')}
             className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-amber-500/10 text-sm font-medium h-24 resize-none"
           />
         </div>
 
-        {/* Ingredients */}
         <div className="space-y-4">
           <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2 flex items-center gap-2">
-            <Info size={12}/> Składniki receptury
+            <Info size={12}/> {t('dishPanel.ingredients')}
           </label>
           <div className="flex gap-2">
             <input 
               type="text"
-              placeholder="Dodaj składnik..."
+              placeholder={t('dishPanel.addIngredient')}
               value={newIngredient}
               onChange={(e) => setNewIngredient(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && addIngredient()}
@@ -197,23 +198,21 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
           </div>
         </div>
 
-        {/* Technique */}
         <div className="space-y-4">
           <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2 flex items-center gap-2">
-            <BookOpen size={12}/> Technika wykonania (to pole jest niewidoczne w menu online dla gości. Dodaj tu notatki dla pracowników)
+            <BookOpen size={12}/> {t('dishPanel.technique')}
           </label>
           <textarea 
             value={editedDish.technique}
             onChange={(e) => setEditedDish({ ...editedDish, technique: e.target.value })}
-            placeholder="Dodaj notatki dotyczące dania..."
+            placeholder={t('dishPanel.techniquePlaceholder')}
             className="w-full px-6 py-4 bg-slate-900 text-amber-50 rounded-2xl outline-none focus:ring-4 focus:ring-amber-500/20 text-xs font-medium h-40 font-mono leading-relaxed"
           />
         </div>
 
-        {/* Allergens */}
         <div className="space-y-4">
           <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2 flex items-center gap-2 text-red-500">
-            <AlertTriangle size={12}/> Alergeny
+            <AlertTriangle size={12}/> {t('dishPanel.allergens')}
           </label>
           <div className="grid grid-cols-2 gap-2">
             {ALLERGENS_LIST.map((allergen) => (
@@ -222,21 +221,22 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
                 onClick={() => toggleAllergen(allergen as Allergen)}
                 className={`flex items-center justify-between px-4 py-3 rounded-xl text-[10px] font-black uppercase border-2 transition-all ${editedDish.allergens.includes(allergen as Allergen) ? 'bg-red-50 border-red-500 text-red-600 shadow-sm' : 'bg-white border-slate-50 text-slate-400 hover:border-slate-200'}`}
               >
-                {allergen}
+                {t(`allergens.${allergen}`, { defaultValue: allergen })}
                 {editedDish.allergens.includes(allergen as Allergen) && <CheckCircle2 size={12}/>}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Dietary tags */}
         <div className="space-y-4">
           <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2 flex items-center gap-2 text-emerald-600">
-            <Leaf size={12}/> Oznaczenia dietetyczne
+            <Leaf size={12}/> {t('dishPanel.dietaryTags')}
           </label>
           <div className="space-y-2">
             {DIETARY_TAG_OPTIONS.map((opt) => {
               const selected = (editedDish.dietaryTags ?? []).includes(opt.id);
+              const label = t(`dietary.${opt.id}.label`);
+              const description = t(`dietary.${opt.id}.description`);
               return (
                 <button
                   key={opt.id}
@@ -255,11 +255,11 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className={`block text-xs font-black ${selected ? 'text-emerald-800' : 'text-slate-700'}`}>
-                      {opt.label}
+                      {label}
                     </span>
-                    {opt.description ? (
+                    {description ? (
                       <span className="block text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
-                        {opt.description}
+                        {description}
                       </span>
                     ) : null}
                   </span>
@@ -270,10 +270,9 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
           </div>
         </div>
 
-        {/* Spice level */}
         <div className="space-y-4 pb-10">
           <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest ml-2 flex items-center gap-2 text-orange-600">
-            <Flame size={12}/> Poziom ostrości
+            <Flame size={12}/> {t('dishPanel.spiceLevel')}
           </label>
           <div className="space-y-2">
             {SPICE_LEVEL_OPTIONS.map((opt) => {
@@ -292,10 +291,10 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
                   <span className="text-xl shrink-0" aria-hidden>{opt.peppers}</span>
                   <span className="min-w-0 flex-1">
                     <span className={`block text-xs font-black ${selected ? 'text-orange-800' : 'text-slate-700'}`}>
-                      {opt.label}
+                      {t(`spice.${opt.id}.label`)}
                     </span>
                     <span className="block text-[11px] text-slate-500 font-medium mt-0.5">
-                      {opt.description}
+                      {t(`spice.${opt.id}.description`)}
                     </span>
                   </span>
                   {selected && <CheckCircle2 size={14} className="shrink-0 text-orange-600" />}
@@ -311,7 +310,7 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
           onClick={() => onSave(editedDish)}
           className="w-full bg-amber-500 text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-amber-500/20 hover:bg-amber-600 transition-all flex items-center justify-center gap-3 active:scale-95"
         >
-          <Save size={24} /> ZAPISZ ZMIANY W STANDARDZIE
+          <Save size={24} /> {t('dishPanel.save')}
         </button>
       </div>
     </div>

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Crown, CreditCard, Loader2, ExternalLink } from 'lucide-react';
 import { authService } from '../services/supabaseService';
 import { createBillingPortalSession, createCheckoutSession } from '../services/stripeService';
-import { formatTokenStatus } from '../utils/tokens';
+import { formatTokenStatusI18n } from '../utils/formatTokenStatusI18n';
 import type { UserProfile } from '../types';
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export const SubscriptionSettings: React.FC<Props> = ({ userId }) => {
+  const { t } = useTranslation('settings');
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,7 +42,7 @@ export const SubscriptionSettings: React.FC<Props> = ({ userId }) => {
           }
         }
       } catch (e: any) {
-        if (!cancelled) setError(e.message || 'Nie udało się załadować planu.');
+        if (!cancelled) setError(e.message || t('subscription.errors.loadFailed'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -49,7 +51,7 @@ export const SubscriptionSettings: React.FC<Props> = ({ userId }) => {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, t]);
 
   const isPremium = profile?.subscriptionStatus === 'premium';
   const isTrial = profile?.subscriptionStatus === 'trial';
@@ -58,17 +60,17 @@ export const SubscriptionSettings: React.FC<Props> = ({ userId }) => {
     !!stripeCustomerId && stripeCustomerId !== 'manual';
 
   const statusLabel = profile
-    ? formatTokenStatus(
+    ? formatTokenStatusI18n(
         profile.subscriptionStatus,
         profile.credits ?? 0,
         profile.tokens,
-        profile.trialEndsAt
+        profile.trialEndsAt,
       )
     : '—';
 
   const handleCheckout = async () => {
     if (!userId) {
-      alert('Musisz być zalogowany.');
+      alert(t('subscription.loginRequired'));
       return;
     }
     setBusy('checkout');
@@ -80,7 +82,7 @@ export const SubscriptionSettings: React.FC<Props> = ({ userId }) => {
         cancelUrl: window.location.origin,
       });
     } catch (e: any) {
-      setError(e.message || 'Nie udało się otworzyć płatności.');
+      setError(e.message || t('subscription.errors.checkoutFailed'));
       setBusy(null);
     }
   };
@@ -92,7 +94,7 @@ export const SubscriptionSettings: React.FC<Props> = ({ userId }) => {
     try {
       await createBillingPortalSession({ userId, returnUrl: window.location.origin });
     } catch (e: any) {
-      setError(e.message || 'Nie udało się otworzyć portalu Stripe.');
+      setError(e.message || t('subscription.errors.portalFailed'));
       setBusy(null);
     }
   };
@@ -101,7 +103,7 @@ export const SubscriptionSettings: React.FC<Props> = ({ userId }) => {
     return (
       <div className="flex items-center gap-3 text-slate-500 py-12">
         <Loader2 size={22} className="animate-spin" />
-        <span className="text-sm font-medium">Ładowanie planu…</span>
+        <span className="text-sm font-medium">{t('subscription.loading')}</span>
       </div>
     );
   }
@@ -118,29 +120,18 @@ export const SubscriptionSettings: React.FC<Props> = ({ userId }) => {
             <Crown size={24} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Twój plan</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              {t('subscription.yourPlan')}
+            </p>
             <p className="text-lg font-black text-slate-900 mt-1">{statusLabel}</p>
             {isPremium && hasStripePortal && (
-              <p className="text-xs text-slate-500 mt-2">
-                Subskrypcja jest powiązana ze Stripe — możesz zmienić kartę, pobrać faktury lub anulować plan.
-              </p>
+              <p className="text-xs text-slate-500 mt-2">{t('subscription.premiumStripeHelp')}</p>
             )}
             {isPremium && !hasStripePortal && (
-              <p className="text-xs text-slate-500 mt-2">
-                Konto Premium jest aktywne. Zarządzanie płatnościami odbywa się poza standardowym portalem Stripe
-                (np. indywidualna umowa).
-              </p>
+              <p className="text-xs text-slate-500 mt-2">{t('subscription.premiumManualHelp')}</p>
             )}
-            {isTrial && (
-              <p className="text-xs text-slate-500 mt-2">
-                W okresie trial masz ograniczoną pulę tokenów AI. Przejdź na Premium, aby odblokować pełne funkcje.
-              </p>
-            )}
-            {isFree && (
-              <p className="text-xs text-slate-500 mt-2">
-                Plan darmowy — własne zdjęcia w menu. Premium odblokowuje generowanie AI i rekomendacje.
-              </p>
-            )}
+            {isTrial && <p className="text-xs text-slate-500 mt-2">{t('subscription.trialHelp')}</p>}
+            {isFree && <p className="text-xs text-slate-500 mt-2">{t('subscription.freeHelp')}</p>}
           </div>
         </div>
       </div>
@@ -154,7 +145,7 @@ export const SubscriptionSettings: React.FC<Props> = ({ userId }) => {
             className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:from-emerald-300 hover:to-green-400 transition-all disabled:opacity-50"
           >
             {busy === 'checkout' ? <Loader2 size={16} className="animate-spin" /> : <Crown size={16} />}
-            {isTrial ? 'Przejdź na Premium' : 'Kup Premium'}
+            {isTrial ? t('subscription.upgradeToPremium') : t('subscription.buyPremium')}
           </button>
         )}
 
@@ -170,7 +161,7 @@ export const SubscriptionSettings: React.FC<Props> = ({ userId }) => {
             ) : (
               <CreditCard size={16} />
             )}
-            Zarządzaj w Stripe
+            {t('subscription.manageStripe')}
             <ExternalLink size={14} className="opacity-70" />
           </button>
         )}
@@ -178,10 +169,7 @@ export const SubscriptionSettings: React.FC<Props> = ({ userId }) => {
 
       {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
 
-      <p className="text-[10px] text-slate-400 leading-relaxed max-w-lg">
-        Portal Stripe umożliwia zmianę metody płatności, podgląd faktur i anulowanie subskrypcji. Po anulowaniu konto
-        wraca do planu darmowego po zakończeniu opłaconego okresu.
-      </p>
+      <p className="text-[10px] text-slate-400 leading-relaxed max-w-lg">{t('subscription.stripePortalHelp')}</p>
     </div>
   );
 };

@@ -1,0 +1,43 @@
+{
+  "language": "Language",
+  "defaultRestaurantName": "Your restaurant",
+  "logout": "Sign out",
+  "freePlan": {
+    "badge": "Free plan",
+    "title": "Unlock ChefVision's full potential",
+    "description": "Upgrade to Start or Premium and use every feature on the platform.",
+    "features": [
+      "Serve international guests",
+      "Professional menu presentation",
+      "Features that boost sales",
+      "Tools for restaurants and hotels"
+    ],
+    "cta": "Upgrade plan"
+  },
+  "trialPlan": {
+    "badge": "Trial plan",
+    "title": "Full Premium quality — no watermark.",
+    "features": [
+      "Monthly tokens after trial",
+      "No watermark on the menu",
+      "Full AI access"
+    ],
+    "footer": "When your trial ends, upgrade to Premium to keep all features.",
+    "cta": "Upgrade to Premium"
+  },
+  "tokenStatus": {
+    "start": "Start · {{total}} tokens ({{subscription}} from subscription{{extraPart}})",
+    "startExtra": " + {{extra}} extra",
+    "premium": "Premium · {{total}} tokens ({{subscription}} from subscription{{extraPart}})",
+    "premiumExtra": " + {{extra}} extra",
+    "premiumShort": "Premium · {{total}} tokens",
+    "trial": "Trial · {{trial}}/{{max}} tokens",
+    "trialDays_one": " · {{count}} day",
+    "trialDays_other": " · {{count}} days",
+    "trialLastDay": " · last day",
+    "trialNoAi": " · own photos only (no AI)",
+    "freeLimited": "Free · own photos, no AI",
+    "credits": "Tokens: {{credits}}",
+    "freeNoTokens": "Free · no AI tokens"
+  }
+}

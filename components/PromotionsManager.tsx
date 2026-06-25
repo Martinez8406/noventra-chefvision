@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dish, DishRecommendation, DishRecommendationItem, DishRecommendationType } from '../types';
 import {
   calcSavingsPercent,
   fetchRecommendationsForOwner,
   persistRecommendations,
-  RECOMMENDATION_BADGE,
-  RECOMMENDATION_DEFAULT_HEADER,
 } from '../utils/dishRecommendations';
 import { ChevronDown, Gift, Plus, Trash2, Megaphone, ToggleLeft, ToggleRight } from 'lucide-react';
 
@@ -15,11 +14,13 @@ interface Props {
   onRecommendationsChange?: (recommendations: DishRecommendation[]) => void;
 }
 
-const TYPE_OPTIONS: { value: DishRecommendationType; label: string; desc: string; icon?: string }[] = [
-  { value: 'polecane', label: 'Szef kuchni poleca', desc: "Chef's choice — pairing kelnerski", icon: '👌' },
-  { value: 'popularne', label: 'Najlepiej sprzedawane', desc: 'Bestseller — social proof', icon: '🔥' },
-  { value: 'zestaw', label: 'W zestawie taniej', desc: 'Zestaw promocyjny z oszczędnością', icon: 'gift' },
-];
+const TYPE_OPTION_VALUES: DishRecommendationType[] = ['polecane', 'popularne', 'zestaw'];
+
+const TYPE_OPTION_ICONS: Record<DishRecommendationType, string | undefined> = {
+  polecane: '👌',
+  popularne: '🔥',
+  zestaw: 'gift',
+};
 
 function newItem(): DishRecommendationItem {
   return { id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, title: '' };
@@ -38,6 +39,7 @@ function newRecommendation(dishId: string, type: DishRecommendationType): DishRe
 }
 
 export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommendationsChange }) => {
+  const { t } = useTranslation('promotions');
   const onlineDishes = useMemo(() => dishes.filter((d) => d.isOnline), [dishes]);
 
   const [recommendations, setRecommendations] = useState<DishRecommendation[]>([]);
@@ -81,7 +83,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
       setRecommendations(saved);
       onRecommendationsChange?.(saved);
     } catch {
-      alert('Nie udało się zapisać rekomendacji. Sprawdź połączenie i uruchom migrację SQL w Supabase.');
+      alert(t('errors.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -128,7 +130,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
       customHeaderText: editing.customHeaderText?.trim() || undefined,
     };
     if (cleaned.items.length === 0) {
-      alert('Dodaj co najmniej jeden produkt powiązany.');
+      alert(t('errors.minOneProduct'));
       return;
     }
     const next = recommendations.map((r) => (r.id === editing.id ? cleaned : r));
@@ -138,7 +140,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
   };
 
   const removeRecommendation = async (id: string) => {
-    if (!confirm('Usunąć tę rekomendację?')) return;
+    if (!confirm(t('confirm.delete'))) return;
     await persistToServer(recommendations.filter((r) => r.id !== id));
     if (editingId === id) {
       setEditingId(null);
@@ -153,7 +155,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
 
   if (!userId) {
     return (
-      <p className="text-slate-500 text-sm">Zaloguj się, aby zarządzać rekomendacjami.</p>
+      <p className="text-slate-500 text-sm">{t('loginRequired')}</p>
     );
   }
 
@@ -162,7 +164,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
           <p className="text-sm text-slate-500 max-w-lg leading-relaxed">
-            Subtelne sugestie na kartach menu — bez przycisków zamówienia. Jedno danie = jeden typ rekomendacji.
+            {t('intro')}
           </p>
         </div>
       </div>
@@ -183,10 +185,10 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-slate-900 truncate">{dish?.name ?? 'Nieznane danie'}</p>
+                  <p className="font-bold text-slate-900 truncate">{dish?.name ?? t('unknownDish')}</p>
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-0.5">
-                    {RECOMMENDATION_BADGE[rec.type]}
-                    {!rec.isActive && ' · Wyłączone'}
+                    {t(`types.${rec.type}.badge`)}
+                    {!rec.isActive && ` · ${t('disabled')}`}
                   </p>
                 </div>
                 <button
@@ -194,13 +196,13 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                   onClick={() => startEdit(rec.id)}
                   className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200"
                 >
-                  Edytuj
+                  {t('edit')}
                 </button>
                 <button
                   type="button"
                   onClick={() => removeRecommendation(rec.id)}
                   className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50"
-                  aria-label="Usuń"
+                  aria-label={t('delete')}
                 >
                   <Trash2 size={18} />
                 </button>
@@ -214,7 +216,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
       {formOpen && editing && (
         <div className="bg-white rounded-[24px] border border-slate-100 p-5 sm:p-6 shadow-sm space-y-5">
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Danie</label>
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('dish')}</label>
             <div className="relative">
               <select
                 value={editing.dishId}
@@ -224,7 +226,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                 {onlineDishes.map((d) => (
                   <option key={d.id} value={d.id} disabled={dishesWithRec.has(d.id) && d.id !== editing.dishId}>
                     {d.name}
-                    {dishesWithRec.has(d.id) && d.id !== editing.dishId ? ' (ma rekomendację)' : ''}
+                    {dishesWithRec.has(d.id) && d.id !== editing.dishId ? t('hasRecommendation') : ''}
                   </option>
                 ))}
               </select>
@@ -233,50 +235,52 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Typ rekomendacji</label>
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('recommendationType')}</label>
             <div className="grid grid-cols-1 gap-2">
-              {TYPE_OPTIONS.map((opt) => (
+              {TYPE_OPTION_VALUES.map((optValue) => {
+                const icon = TYPE_OPTION_ICONS[optValue];
+                return (
                 <button
-                  key={opt.value}
+                  key={optValue}
                   type="button"
                   onClick={() => {
                     const items =
-                      opt.value === 'zestaw'
+                      optValue === 'zestaw'
                         ? editing.items.length >= 3
                           ? editing.items.slice(0, 3)
                           : [...editing.items, ...Array(Math.max(0, 3 - editing.items.length)).fill(null)].map(
                               (_, i) => editing.items[i] ?? newItem(),
                             )
-                        : editing.items.slice(0, opt.value === 'polecane' ? 1 : 5);
+                        : editing.items.slice(0, optValue === 'polecane' ? 1 : 5);
                     updateEditing({
-                      type: opt.value,
+                      type: optValue,
                       items,
-                      bundlePriceOutside: opt.value === 'zestaw' ? editing.bundlePriceOutside ?? '' : undefined,
-                      bundlePrice: opt.value === 'zestaw' ? editing.bundlePrice ?? '' : undefined,
+                      bundlePriceOutside: optValue === 'zestaw' ? editing.bundlePriceOutside ?? '' : undefined,
+                      bundlePrice: optValue === 'zestaw' ? editing.bundlePrice ?? '' : undefined,
                     });
                   }}
                   className={`text-left px-4 py-3 rounded-xl border transition-colors ${
-                    editing.type === opt.value
+                    editing.type === optValue
                       ? 'border-chef-gold bg-amber-50/50'
                       : 'border-slate-100 bg-slate-50 hover:border-slate-200'
                   }`}
                 >
                   <span className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    {opt.icon === 'gift' ? (
+                    {icon === 'gift' ? (
                       <Gift size={16} className="text-emerald-700 shrink-0" aria-hidden />
                     ) : (
-                      opt.icon && <span aria-hidden>{opt.icon}</span>
+                      icon && <span aria-hidden>{icon}</span>
                     )}
-                    {opt.label}
+                    {t(`types.${optValue}.label`)}
                   </span>
-                  <span className="block text-xs text-slate-500 mt-0.5">{opt.desc}</span>
+                  <span className="block text-xs text-slate-500 mt-0.5">{t(`types.${optValue}.desc`)}</span>
                 </button>
-              ))}
+              );})}
             </div>
           </div>
 
           <div className="flex items-center justify-between py-2">
-            <span className="text-sm font-medium text-slate-700">Aktywna na menu</span>
+            <span className="text-sm font-medium text-slate-700">{t('activeOnMenu')}</span>
             <button
               type="button"
               onClick={() => updateEditing({ isActive: !editing.isActive })}
@@ -288,11 +292,11 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
 
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Własny tekst nagłówka (opcjonalnie)
+              {t('customHeader')}
             </label>
             <input
               type="text"
-              placeholder={RECOMMENDATION_DEFAULT_HEADER[editing.type]}
+              placeholder={t(`types.${editing.type}.defaultHeader`)}
               value={editing.customHeaderText ?? ''}
               onChange={(e) => updateEditing({ customHeaderText: e.target.value })}
               className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm"
@@ -303,7 +307,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  Cena poza zestawem (zł)
+                  {t('priceOutsideBundle')}
                 </label>
                 <input
                   type="text"
@@ -311,12 +315,12 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                   value={editing.bundlePriceOutside ?? ''}
                   onChange={(e) => updateEditing({ bundlePriceOutside: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm"
-                  placeholder="np 67"
+                  placeholder={t('priceOutsidePlaceholder')}
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  Cena zestawu (zł)
+                  {t('bundlePrice')}
                 </label>
                 <input
                   type="text"
@@ -324,12 +328,12 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                   value={editing.bundlePrice ?? ''}
                   onChange={(e) => updateEditing({ bundlePrice: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm"
-                  placeholder="np 55"
+                  placeholder={t('bundlePricePlaceholder')}
                 />
               </div>
               {savingsPreview != null && savingsPreview > 0 && (
                 <p className="col-span-2 text-sm text-emerald-700 font-medium">
-                  Oszczędzasz {savingsPreview}% — wyliczone automatycznie
+                  {t('savings', { percent: savingsPreview })}
                 </p>
               )}
             </div>
@@ -337,13 +341,13 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
 
           <div className="space-y-3">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Produkty powiązane
+              {t('relatedProducts')}
             </label>
             {editing.items.map((item, idx) => (
               <div key={item.id} className="bg-slate-50 rounded-xl p-3 space-y-2 border border-slate-100">
                 <input
                   type="text"
-                  placeholder="Nazwa (np. Pinot Grigio)"
+                  placeholder={t('productNamePlaceholder')}
                   value={item.title}
                   onChange={(e) => {
                     const items = [...editing.items];
@@ -354,7 +358,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                 />
                 <input
                   type="text"
-                  placeholder="Opis (np. Wytrawne białe wino)"
+                  placeholder={t('productDescPlaceholder')}
                   value={item.subtitle ?? ''}
                   onChange={(e) => {
                     const items = [...editing.items];
@@ -367,7 +371,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                   <input
                     type="text"
                     inputMode="decimal"
-                    placeholder="Cena (zł)"
+                    placeholder={t('productPricePlaceholder')}
                     value={item.price ?? ''}
                     onChange={(e) => {
                       const items = [...editing.items];
@@ -383,7 +387,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                     onClick={() => updateEditing({ items: editing.items.filter((_, i) => i !== idx) })}
                     className="text-xs text-red-500 font-medium"
                   >
-                    Usuń pozycję
+                    {t('removeItem')}
                   </button>
                 )}
               </div>
@@ -394,7 +398,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                 onClick={() => updateEditing({ items: [...editing.items, newItem()] })}
                 className="flex items-center gap-2 text-sm font-bold text-slate-600 px-3 py-2"
               >
-                <Plus size={16} /> Dodaj produkt
+                <Plus size={16} /> {t('addProduct')}
               </button>
             )}
           </div>
@@ -406,14 +410,14 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
               disabled={saving}
               className="flex-1 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold disabled:opacity-50"
             >
-              {saving ? 'Zapisywanie…' : 'Zapisz rekomendację'}
+              {saving ? t('saving') : t('saveRecommendation')}
             </button>
             <button
               type="button"
               onClick={cancelEdit}
               className="py-3 px-6 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold"
             >
-              Anuluj
+              {t('cancel')}
             </button>
           </div>
         </div>
@@ -427,18 +431,18 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
           className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-slate-200 text-slate-600 font-bold text-sm hover:border-chef-gold hover:text-chef-gold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           <Megaphone size={18} />
-          {availableDishes.length === 0 ? 'Wszystkie dania mają rekomendacje' : 'Nowa rekomendacja'}
+          {availableDishes.length === 0 ? t('allDishesHaveRecommendations') : t('newRecommendation')}
         </button>
       )}
 
       {recommendations.length === 0 && !formOpen && (
         <p className="text-xs text-slate-400 text-center">
-          Brak rekomendacji — dodaj pierwszą powyżej. Zapis trafia do bazy Supabase.
+          {t('emptyHint')}
         </p>
       )}
 
       {saving && (
-        <p className="text-xs text-slate-500 text-center">Zapisywanie…</p>
+        <p className="text-xs text-slate-500 text-center">{t('saving')}</p>
       )}
     </div>
   );

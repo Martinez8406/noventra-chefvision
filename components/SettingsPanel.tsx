@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { QRGenerator } from './QRGenerator';
 import { UploadLogo } from './UploadLogo';
 import { GoogleReviewsSettings } from './GoogleReviewsSettings';
@@ -13,38 +14,17 @@ interface Props {
   restaurantName?: string;
 }
 
-const SECTION_TITLES: Record<SettingsSection, { title: string; description: string }> = {
-  qr: {
-    title: 'Kod QR',
-    description: 'Wygeneruj i pobierz kod QR prowadzący do Twojego menu cyfrowego.',
-  },
-  branding: {
-    title: 'Logo / zdjęcie główne',
-    description: 'Logo restauracji i zdjęcie cover widoczne na górze Live Menu.',
-  },
-  google: {
-    title: 'Opinie Google',
-    description: 'Połącz menu z Google, aby goście mogli zostawiać opinie jednym kliknięciem.',
-  },
-  feedback: {
-    title: 'Opinie i sugestie',
-    description: 'Pozwól gościom wysyłać uwagi i sugestie bezpośrednio z Live Menu na Twój e-mail.',
-  },
-  subscription: {
-    title: 'Zarządzaj subskrypcją',
-    description: 'Twój plan, płatności Stripe oraz przejście na Premium.',
-  },
-};
-
 export const SettingsPanel: React.FC<Props> = ({ section, userId, restaurantName }) => {
-  const meta = SECTION_TITLES[section];
+  const { t } = useTranslation('settings');
 
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Ustawienia</p>
-        <h2 className="text-3xl font-black text-slate-900 tracking-tight italic mt-1">{meta.title}</h2>
-        <p className="text-sm text-slate-500 mt-2">{meta.description}</p>
+        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{t('panelLabel')}</p>
+        <h2 className="text-3xl font-black text-slate-900 tracking-tight italic mt-1">
+          {t(`sections.${section}.title`)}
+        </h2>
+        <p className="text-sm text-slate-500 mt-2">{t(`sections.${section}.description`)}</p>
       </div>
 
       {section === 'qr' && <QRGenerator userId={userId} />}
@@ -56,7 +36,7 @@ export const SettingsPanel: React.FC<Props> = ({ section, userId, restaurantName
       )}
 
       {section === 'branding' && !userId && (
-        <p className="text-sm text-slate-500">Zaloguj się, aby edytować logo i zdjęcie główne.</p>
+        <p className="text-sm text-slate-500">{t('loginRequiredBranding')}</p>
       )}
 
       {section === 'google' && (
@@ -65,9 +45,7 @@ export const SettingsPanel: React.FC<Props> = ({ section, userId, restaurantName
         </div>
       )}
 
-      {section === 'feedback' && (
-        <GuestFeedbackSettings userId={userId} />
-      )}
+      {section === 'feedback' && <GuestFeedbackSettings userId={userId} />}
 
       {section === 'subscription' && (
         <div className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100">

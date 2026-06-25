@@ -1,16 +1,20 @@
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { QRCodeCanvas } from 'qrcode.react';
 import { QrCode, Download, Share2, Image } from 'lucide-react';
 import { buildPublicMenuUrl, getShareCopiedLabel, getShareFailedLabel, sharePublicLink } from '../utils/publicMenuShare';
+import type { AppLanguage } from '../i18n';
 
 interface Props {
   userId: string | null;
 }
 
 export const QRGenerator: React.FC<Props> = ({ userId }) => {
+  const { t, i18n } = useTranslation('settings');
   const qrContainerRef = useRef<HTMLDivElement>(null);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
+  const shareLocale: AppLanguage = i18n.language.startsWith('en') ? 'en' : 'pl';
   const menuUrl = userId ? buildPublicMenuUrl(userId) : '';
 
   const handleDownloadPng = () => {
@@ -30,10 +34,10 @@ export const QRGenerator: React.FC<Props> = ({ userId }) => {
     const outcome = await sharePublicLink({
       url: menuUrl,
       title: 'ChefVision — Digital Dining Assistant',
-      text: 'Cyfrowe menu restauracji',
+      text: t('qr.shareText'),
     });
-    if (outcome === 'copied') setShareFeedback(getShareCopiedLabel('pl'));
-    else if (outcome === 'failed') setShareFeedback(getShareFailedLabel('pl'));
+    if (outcome === 'copied') setShareFeedback(getShareCopiedLabel(shareLocale));
+    else if (outcome === 'failed') setShareFeedback(getShareFailedLabel(shareLocale));
     else setShareFeedback(null);
     if (outcome === 'copied' || outcome === 'failed') {
       window.setTimeout(() => setShareFeedback(null), 2600);
@@ -46,7 +50,7 @@ export const QRGenerator: React.FC<Props> = ({ userId }) => {
         <div className="bg-white/20 p-3 rounded-xl">
           <QrCode size={24} />
         </div>
-        <h3 className="text-xl font-bold">Twój Generator QR Menu</h3>
+        <h3 className="text-xl font-bold">{t('qr.title')}</h3>
       </div>
 
       <div className="flex flex-col md:flex-row items-center gap-8">
@@ -63,12 +67,10 @@ export const QRGenerator: React.FC<Props> = ({ userId }) => {
 
         <div className="flex-1 space-y-4">
           <p className="text-white/80 text-sm">
-            {userId
-              ? 'Zeskanuj kod powyżej lub udostępnij ten link swoim gościom, aby mogli przeglądać Twoje menu online.'
-              : 'Zaloguj się, aby wygenerować unikalny link i kod QR do Twojego menu.'}
+            {userId ? t('qr.introLoggedIn') : t('qr.introLoggedOut')}
           </p>
           <div className="bg-black/20 px-4 py-2 rounded-xl text-xs font-mono break-all border border-white/10">
-            {menuUrl || (userId ? 'Ładowanie...' : 'Brak linku – zaloguj się')}
+            {menuUrl || (userId ? t('qr.loading') : t('qr.noLink'))}
           </div>
           <div className="flex flex-wrap gap-2">
             <button
@@ -76,14 +78,14 @@ export const QRGenerator: React.FC<Props> = ({ userId }) => {
               className="flex-1 min-w-[180px] bg-white text-indigo-600 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors"
             >
               <Image size={18} />
-              Pobierz jako obraz PNG
+              {t('qr.downloadPng')}
             </button>
             <button
               onClick={() => void handleShareLink()}
               className="bg-indigo-400 text-white py-3 px-4 rounded-xl hover:bg-indigo-300 transition-colors flex items-center gap-2"
             >
               <Share2 size={18} />
-              {shareFeedback || 'Udostępnij link'}
+              {shareFeedback || t('qr.shareLink')}
             </button>
           </div>
         </div>

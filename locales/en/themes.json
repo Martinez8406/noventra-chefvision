@@ -1,0 +1,96 @@
+{
+  "title": "Seasonal themes",
+  "subtitle": "Pick a theme — AI transforms the scene around your dish while keeping the food unchanged.",
+  "freePlan": {
+    "title": "Free plan",
+    "description": "Seasonal themes (AI) are available on trial and Premium. On the free plan, add your own photos in Add to menu."
+  },
+  "noTokens": {
+    "title": "No tokens left",
+    "description": "Your trial continues — Premium restores theme generation.",
+    "cta": "Premium plan"
+  },
+  "errorTitle": "Error",
+  "errors": {
+    "imageProcessing": "Image processing error.",
+    "uploadDishStep1": "Upload a dish photo (step 1).",
+    "selectThemeStep2": "Choose a seasonal theme or add your own (step 2).",
+    "noTrialTokens": "No trial tokens left. Upgrade to Premium.",
+    "generation": "Generation error.",
+    "shareUnavailable": "File sharing is not available in this browser. Use “Download”, then add the file in your chosen app.",
+    "themeLoad": "Could not load theme from disk.",
+    "studioFetch": "Could not fetch backdrop from Studio.",
+    "studioUse": "Could not use Studio backdrop as theme."
+  },
+  "loadingProfile": "Loading profile...",
+  "steps": {
+    "uploadDish": "Upload dish photo",
+    "selectTheme": "Choose theme"
+  },
+  "upload": {
+    "uploadedAlt": "Uploaded dish",
+    "readyTitle": "Photo ready",
+    "readyHint": "Choose a theme below.",
+    "removePhoto": "Remove photo",
+    "dropzoneTitle": "Drag a photo here or click to choose",
+    "dropzoneHint": "JPG / PNG / WEBP · up to 1 MB"
+  },
+  "themes": {
+    "christmas": "Christmas",
+    "easter": "Easter",
+    "halloween": "Halloween",
+    "summer": "Summer",
+    "valentine": "Valentine's"
+  },
+  "customTheme": {
+    "label": "Custom theme",
+    "alt": "Custom theme",
+    "defaultName": "Custom theme",
+    "fromStudio": "Theme from Backdrop studio",
+    "activeTitle": "Active: custom theme",
+    "manualPick": "Selected manually",
+    "clear": "Clear",
+    "hint": "The theme changes only the scene (props, background, lighting). It does not alter the dish composition or ingredients.",
+    "modalTitle": "Custom theme",
+    "fromDisk": "Upload from disk",
+    "fromStudio": "Pick from Backdrop studio"
+  },
+  "generate": {
+    "creating": "CREATING SCENE...",
+    "unlockPremium": "UNLOCK AI — PREMIUM",
+    "noTokens": "NO TOKENS",
+    "generate": "GENERATE THEME"
+  },
+  "preview": {
+    "title": "Preview ({{count}}/{{max}})",
+    "clear": "Clear",
+    "emptyTitle": "Your photo in the chosen theme will appear here",
+    "emptyHint": "Each click adds another variant (max {{max}}).",
+    "variantAlt": "Variant",
+    "download": "Download",
+    "share": "Share",
+    "saveToMenu": "Save to menu"
+  },
+  "saveModal": {
+    "title": "Save to menu",
+    "close": "Close",
+    "previewAlt": "Preview",
+    "dishName": "Dish name",
+    "dishNamePlaceholder": "e.g. Beef Wellington",
+    "save": "SAVE"
+  },
+  "shareModal": {
+    "title": "Share",
+    "close": "Close",
+    "previewAlt": "Preview",
+    "shareSystem": "Share via system",
+    "downloadFile": "Download file"
+  },
+  "studioPicker": {
+    "title": "Choose backdrop from Studio",
+    "close": "Close",
+    "empty": "No saved backdrops in Backdrop studio. Save one there first, then return here.",
+    "backdropAlt": "Studio backdrop"
+  },
+  "shareDishName": "Dish"
+}

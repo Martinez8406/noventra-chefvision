@@ -1,0 +1,96 @@
+{
+  "title": "Motywy sezonowe",
+  "subtitle": "Wybierz motyw — AI zamieni otoczenie zdjęcia w świąteczną scenę, samo danie zostaje bez zmian.",
+  "freePlan": {
+    "title": "Plan darmowy",
+    "description": "Motywy sezonowe (AI) są w trialu i Premium. W planie darmowym dodawaj własne zdjęcia w Studio zdjęć."
+  },
+  "noTokens": {
+    "title": "Brak tokenów",
+    "description": "Trial trwa dalej — Premium przywraca generowanie motywów.",
+    "cta": "Plan Premium"
+  },
+  "errorTitle": "Błąd",
+  "errors": {
+    "imageProcessing": "Błąd przetwarzania zdjęcia.",
+    "uploadDishStep1": "Wgraj zdjęcie dania (krok 1).",
+    "selectThemeStep2": "Wybierz motyw sezonowy lub dodaj własny motyw (krok 2).",
+    "noTrialTokens": "Brak tokenów trial. Przejdź na Premium.",
+    "generation": "Błąd generacji.",
+    "shareUnavailable": "Udostępnianie pliku nie jest dostępne w tej przeglądarce. Użyj „Pobierz”, a następnie dodaj plik w wybranej aplikacji.",
+    "themeLoad": "Błąd wczytywania motywu z dysku.",
+    "studioFetch": "Nie udało się pobrać tła ze Studio.",
+    "studioUse": "Nie udało się użyć tła ze Studio jako motywu."
+  },
+  "loadingProfile": "Ładowanie profilu...",
+  "steps": {
+    "uploadDish": "Wgraj zdjęcie dania",
+    "selectTheme": "Wybierz motyw"
+  },
+  "upload": {
+    "uploadedAlt": "Wgrane danie",
+    "readyTitle": "Zdjęcie gotowe",
+    "readyHint": "Wybierz motyw poniżej.",
+    "removePhoto": "Usuń zdjęcie",
+    "dropzoneTitle": "Przeciągnij zdjęcie lub kliknij, aby wybrać",
+    "dropzoneHint": "JPG / PNG / WEBP · do 1 MB"
+  },
+  "themes": {
+    "christmas": "Boże Narodzenie",
+    "easter": "Wielkanoc",
+    "halloween": "Halloween",
+    "summer": "Lato",
+    "valentine": "Walentynki"
+  },
+  "customTheme": {
+    "label": "Własny motyw",
+    "alt": "Własny motyw",
+    "defaultName": "Własny motyw",
+    "fromStudio": "Motyw ze Studio tła",
+    "activeTitle": "Aktywny: własny motyw",
+    "manualPick": "Wybrane ręcznie",
+    "clear": "Wyczyść",
+    "hint": "Motyw zmienia wyłącznie scenerię (rekwizyty, tło, oświetlenie). Nie modyfikuje kompozycji dania ani składników.",
+    "modalTitle": "Własny motyw",
+    "fromDisk": "Pobierz z dysku",
+    "fromStudio": "Pobierz ze Studio tła"
+  },
+  "generate": {
+    "creating": "TWORZĘ SCENĘ...",
+    "unlockPremium": "ODBLOKUJ AI — PREMIUM",
+    "noTokens": "BRAK TOKENÓW",
+    "generate": "WYGENERUJ MOTYW"
+  },
+  "preview": {
+    "title": "Podgląd ({{count}}/{{max}})",
+    "clear": "Wyczyść",
+    "emptyTitle": "Tutaj pojawi się zdjęcie w wybranym motywie",
+    "emptyHint": "Każde kolejne kliknięcie doda wariant (max {{max}}).",
+    "variantAlt": "Wariant",
+    "download": "Pobierz",
+    "share": "Udostępnij",
+    "saveToMenu": "Zapisz do menu"
+  },
+  "saveModal": {
+    "title": "Zapisz do menu",
+    "close": "Zamknij",
+    "previewAlt": "Podgląd",
+    "dishName": "Nazwa dania",
+    "dishNamePlaceholder": "np. Polędwica Wellington",
+    "save": "ZAPISZ"
+  },
+  "shareModal": {
+    "title": "Udostępnij",
+    "close": "Zamknij",
+    "previewAlt": "Podgląd",
+    "shareSystem": "Udostępnij przez system",
+    "downloadFile": "Pobierz plik"
+  },
+  "studioPicker": {
+    "title": "Wybierz tło ze Studio",
+    "close": "Zamknij",
+    "empty": "Brak zapisanych teł w Studio tła. Najpierw zapisz tam tło, a potem wróć tutaj.",
+    "backdropAlt": "Tło ze Studio"
+  },
+  "shareDishName": "Danie"
+}

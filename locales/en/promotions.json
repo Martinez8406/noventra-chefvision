@@ -1,0 +1,60 @@
+{
+  "title": "Recommendations & promotions",
+  "premiumRequired": "Sales recommendations require Premium.",
+  "unlockPremium": "Unlock Premium",
+  "intro": "Subtle suggestions on menu cards — no order buttons. One dish = one recommendation type.",
+  "loginRequired": "Sign in to manage recommendations.",
+  "unknownDish": "Unknown dish",
+  "disabled": "Disabled",
+  "edit": "Edit",
+  "delete": "Delete",
+  "dish": "Dish",
+  "hasRecommendation": " (has recommendation)",
+  "recommendationType": "Recommendation type",
+  "activeOnMenu": "Active on menu",
+  "customHeader": "Custom header text (optional)",
+  "priceOutsideBundle": "Price outside bundle (PLN)",
+  "bundlePrice": "Bundle price (PLN)",
+  "priceOutsidePlaceholder": "e.g. 67",
+  "bundlePricePlaceholder": "e.g. 55",
+  "savings": "You save {{percent}}% — calculated automatically",
+  "relatedProducts": "Related products",
+  "productNamePlaceholder": "Name (e.g. Pinot Grigio)",
+  "productDescPlaceholder": "Description (e.g. Dry white wine)",
+  "productPricePlaceholder": "Price (PLN)",
+  "removeItem": "Remove item",
+  "addProduct": "Add product",
+  "saveRecommendation": "Save recommendation",
+  "saving": "Saving…",
+  "cancel": "Cancel",
+  "newRecommendation": "New recommendation",
+  "allDishesHaveRecommendations": "All dishes already have recommendations",
+  "emptyHint": "No recommendations yet — add your first above. Saves to Supabase.",
+  "types": {
+    "polecane": {
+      "label": "Chef recommends",
+      "desc": "Chef's choice — server pairing",
+      "badge": "Chef recommends",
+      "defaultHeader": "We recommend with this dish"
+    },
+    "popularne": {
+      "label": "Best sellers",
+      "desc": "Bestseller — social proof",
+      "badge": "Best sellers",
+      "defaultHeader": "Others often order with"
+    },
+    "zestaw": {
+      "label": "Bundle deal",
+      "desc": "Promotional bundle with savings",
+      "badge": "Bundle deal",
+      "defaultHeader": "Most popular bundle"
+    }
+  },
+  "errors": {
+    "saveFailed": "Could not save recommendations. Check your connection and run the SQL migration in Supabase.",
+    "minOneProduct": "Add at least one related product."
+  },
+  "confirm": {
+    "delete": "Delete this recommendation?"
+  }
+}

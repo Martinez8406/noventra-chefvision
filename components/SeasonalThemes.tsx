@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   MAX_ENHANCE_PREVIEWS,
   SEASONAL_THEMES,
@@ -17,7 +18,7 @@ import {
   shareImageViaSystem,
 } from '../services/imageClient';
 import { GeneratorParams, UserTokens } from '../types';
-import { formatTokenStatus } from '../utils/tokens';
+import { formatTokenStatusI18n } from '../utils/formatTokenStatusI18n';
 import { WatermarkWrapper } from './WatermarkWrapper';
 import {
   AlertCircle,
@@ -77,6 +78,7 @@ export const SeasonalThemes: React.FC<Props> = ({
   onCreditsUpdated,
   onRequestPremium,
 }) => {
+  const { t } = useTranslation('themes');
   const [dishReference, setDishReference] = useState<string | null>(null);
   const [isUploadingRef, setIsUploadingRef] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -101,7 +103,7 @@ export const SeasonalThemes: React.FC<Props> = ({
   const isFree = subscriptionStatus === 'free_limited';
   const canUseAi = !isFree && credits > 0;
   const hasNoCredits = !canUseAi;
-  const tokenLabel = formatTokenStatus(subscriptionStatus, credits, tokens, trialEndsAt);
+  const tokenLabel = formatTokenStatusI18n(subscriptionStatus, credits, tokens, trialEndsAt);
   const hasThemeSelected = !!theme || !!customThemeImage;
   const canGenerate = canUseAi && !!dishReference && hasThemeSelected && !isGenerating;
 
@@ -113,7 +115,7 @@ export const SeasonalThemes: React.FC<Props> = ({
       const dataUrl = await compressImageForUpload(file);
       setDishReference(dataUrl);
     } catch (e: any) {
-      setError(e?.message || 'Błąd przetwarzania zdjęcia.');
+      setError(e?.message || t('errors.imageProcessing'));
     } finally {
       setIsUploadingRef(false);
     }
@@ -134,11 +136,11 @@ export const SeasonalThemes: React.FC<Props> = ({
 
   const handleGenerate = async () => {
     if (!dishReference) {
-      setError('Wgraj zdjęcie dania (krok 1).');
+      setError(t('errors.uploadDishStep1'));
       return;
     }
     if (!theme && !customThemeImage) {
-      setError('Wybierz motyw sezonowy lub dodaj własny motyw (krok 2).');
+      setError(t('errors.selectThemeStep2'));
       return;
     }
     if (isFree) {
@@ -146,7 +148,7 @@ export const SeasonalThemes: React.FC<Props> = ({
       return;
     }
     if (!canUseAi) {
-      setError('Brak tokenów trial. Przejdź na Premium.');
+      setError(t('errors.noTrialTokens'));
       return;
     }
     setError(null);
@@ -164,7 +166,7 @@ export const SeasonalThemes: React.FC<Props> = ({
       }
       onGenerationSuccess?.();
     } catch (err: any) {
-      setError(err?.message || 'Błąd generacji.');
+      setError(err?.message || t('errors.generation'));
     } finally {
       setIsGenerating(false);
     }
@@ -186,14 +188,12 @@ export const SeasonalThemes: React.FC<Props> = ({
 
   const shareImage = async () => {
     if (!shareTargetImage) return;
-    const outcome = await shareImageViaSystem(shareTargetImage, 'Danie');
+    const outcome = await shareImageViaSystem(shareTargetImage, t('shareDishName'));
     if (outcome === 'shared' || outcome === 'cancelled') {
       setShareTargetImage(null);
       return;
     }
-    alert(
-      'Udostępnianie pliku nie jest dostępne w tej przeglądarce. Użyj „Pobierz”, a następnie dodaj plik w wybranej aplikacji.'
-    );
+    alert(t('errors.shareUnavailable'));
   };
 
   const onCustomThemeFile = async (file: File) => {
@@ -203,9 +203,9 @@ export const SeasonalThemes: React.FC<Props> = ({
       const dataUrl = await compressImageForUpload(file);
       setTheme(null);
       setCustomThemeImage(dataUrl);
-      setCustomThemeLabel(file.name || 'Własny motyw');
+      setCustomThemeLabel(file.name || t('customTheme.defaultName'));
     } catch (e: any) {
-      setError(e?.message || 'Błąd wczytywania motywu z dysku.');
+      setError(e?.message || t('errors.themeLoad'));
     }
   };
 
@@ -220,7 +220,7 @@ export const SeasonalThemes: React.FC<Props> = ({
     try {
       // Backdrops from Studio are usually URLs; convert to data URL so API can forward inline image data.
       const response = await fetch(bg.imageUrl);
-      if (!response.ok) throw new Error('Nie udało się pobrać tła ze Studio.');
+      if (!response.ok) throw new Error(t('errors.studioFetch'));
       const blob = await response.blob();
       const ext = blob.type.includes('png') ? 'png' : 'jpg';
       const file = new File([blob], `studio-backdrop.${ext}`, { type: blob.type || 'image/jpeg' });
@@ -228,10 +228,10 @@ export const SeasonalThemes: React.FC<Props> = ({
 
       setTheme(null);
       setCustomThemeImage(dataUrl);
-      setCustomThemeLabel('Motyw ze Studio tła');
+      setCustomThemeLabel(t('customTheme.fromStudio'));
       setIsPickingStudioTheme(false);
     } catch (e: any) {
-      setError(e?.message || 'Nie udało się użyć tła ze Studio jako motywu.');
+      setError(e?.message || t('errors.studioUse'));
     }
   };
 
@@ -244,10 +244,8 @@ export const SeasonalThemes: React.FC<Props> = ({
             <Sparkles size={28} />
           </div>
           <div>
-            <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight italic">Motywy sezonowe</h2>
-            <p className="text-xs text-slate-500 mt-1">
-              Wybierz motyw — AI zamieni otoczenie zdjęcia w świąteczną scenę, samo danie zostaje bez zmian.
-            </p>
+            <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight italic">{t('title')}</h2>
+            <p className="text-xs text-slate-500 mt-1">{t('subtitle')}</p>
           </div>
         </div>
         <div className="text-[10px] font-black uppercase tracking-widest">
@@ -257,10 +255,8 @@ export const SeasonalThemes: React.FC<Props> = ({
 
       {isFree && (
         <div className="bg-slate-100 border border-slate-200 p-6 rounded-[30px] text-slate-800">
-          <p className="font-black">Plan darmowy</p>
-          <p className="text-xs text-slate-600 mt-1">
-            Motywy sezonowe (AI) są w trialu i Premium. W planie darmowym dodawaj własne zdjęcia w Studio zdjęć.
-          </p>
+          <p className="font-black">{t('freePlan.title')}</p>
+          <p className="text-xs text-slate-600 mt-1">{t('freePlan.description')}</p>
         </div>
       )}
 
@@ -269,15 +265,15 @@ export const SeasonalThemes: React.FC<Props> = ({
           <div className="flex items-center gap-4">
             <Crown className="text-amber-500" />
             <div>
-              <p className="font-black">Brak tokenów</p>
-              <p className="text-xs opacity-60">Trial trwa dalej — Premium przywraca generowanie motywów.</p>
+              <p className="font-black">{t('noTokens.title')}</p>
+              <p className="text-xs opacity-60">{t('noTokens.description')}</p>
             </div>
           </div>
           <button
             onClick={onRequestPremium}
             className="bg-amber-500 text-slate-900 px-6 py-3 rounded-2xl font-black text-sm hover:bg-amber-400 transition-colors"
           >
-            Plan Premium
+            {t('noTokens.cta')}
           </button>
         </div>
       )}
@@ -286,7 +282,7 @@ export const SeasonalThemes: React.FC<Props> = ({
         <div className="flex items-start gap-3 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800">
           <AlertCircle className="shrink-0 mt-0.5" size={20} />
           <div className="flex-1 min-w-0">
-            <p className="font-semibold">Błąd</p>
+            <p className="font-semibold">{t('errorTitle')}</p>
             <p className="text-sm mt-1">{error}</p>
           </div>
           <button type="button" onClick={() => setError(null)} className="p-1 rounded-lg hover:bg-red-100 text-red-600">
@@ -303,7 +299,7 @@ export const SeasonalThemes: React.FC<Props> = ({
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black bg-slate-900 text-white">1</div>
               <h4 className="text-sm font-black tracking-tight text-slate-800">
-                Wgraj zdjęcie dania <span className="text-red-500">*</span>
+                {t('steps.uploadDish')} <span className="text-red-500">*</span>
               </h4>
             </div>
             <input
@@ -315,16 +311,16 @@ export const SeasonalThemes: React.FC<Props> = ({
             />
             {dishReference ? (
               <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                <img src={dishReference} alt="Wgrane danie" className="w-20 h-20 object-cover rounded-xl" />
+                <img src={dishReference} alt={t('upload.uploadedAlt')} className="w-20 h-20 object-cover rounded-xl" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-800">Zdjęcie gotowe</p>
-                  <p className="text-xs text-slate-500">Wybierz motyw poniżej.</p>
+                  <p className="text-sm font-bold text-slate-800">{t('upload.readyTitle')}</p>
+                  <p className="text-xs text-slate-500">{t('upload.readyHint')}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setDishReference(null)}
                   className="p-2 rounded-xl text-slate-400 hover:bg-slate-200 hover:text-slate-700"
-                  aria-label="Usuń zdjęcie"
+                  aria-label={t('upload.removePhoto')}
                 >
                   <X size={18} />
                 </button>
@@ -344,8 +340,8 @@ export const SeasonalThemes: React.FC<Props> = ({
                 <input type="file" accept="image/*" className="sr-only" onChange={handleReferenceInput} />
                 <div className="flex flex-col items-center gap-3 text-slate-500">
                   {isUploadingRef ? <Loader2 className="animate-spin" size={28} /> : <Upload size={28} />}
-                  <p className="text-sm font-bold text-slate-700">Przeciągnij zdjęcie lub kliknij, aby wybrać</p>
-                  <p className="text-xs text-slate-400">JPG / PNG / WEBP · do 1 MB</p>
+                  <p className="text-sm font-bold text-slate-700">{t('upload.dropzoneTitle')}</p>
+                  <p className="text-xs text-slate-400">{t('upload.dropzoneHint')}</p>
                 </div>
               </label>
             )}
@@ -356,7 +352,7 @@ export const SeasonalThemes: React.FC<Props> = ({
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black bg-slate-900 text-white">2</div>
               <h4 className="text-sm font-black tracking-tight text-slate-800">
-                Wybierz motyw <span className="text-red-500">*</span>
+                {t('steps.selectTheme')} <span className="text-red-500">*</span>
               </h4>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -372,11 +368,11 @@ export const SeasonalThemes: React.FC<Props> = ({
                     {'cardImage' in opt && opt.cardImage && (
                       <img
                         src={opt.cardImage}
-                        alt={opt.label}
+                        alt={t(`themes.${opt.id}`)}
                         className="absolute inset-0 w-full h-full object-cover"
                       />
                     )}
-                    <span className="relative z-10 drop-shadow-md">{opt.label}</span>
+                    <span className="relative z-10 drop-shadow-md">{t(`themes.${opt.id}`)}</span>
                     {active && (
                       <span className="absolute top-2 right-2 bg-white/90 text-slate-900 rounded-full p-1 z-10">
                         <CheckCircle size={14} />
@@ -398,12 +394,12 @@ export const SeasonalThemes: React.FC<Props> = ({
                 {customThemeImage && (
                   <img
                     src={customThemeImage}
-                    alt="Własny motyw"
+                    alt={t('customTheme.alt')}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                 )}
                 <span className="relative z-10 drop-shadow-md flex items-center gap-2">
-                  <Plus size={14} /> Własny motyw
+                  <Plus size={14} /> {t('customTheme.label')}
                 </span>
                 {customThemeImage && (
                   <span className="absolute top-2 right-2 bg-white/90 text-slate-900 rounded-full p-1 z-10">
@@ -423,10 +419,10 @@ export const SeasonalThemes: React.FC<Props> = ({
             {customThemeImage && (
               <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <div className="flex items-center gap-3 min-w-0">
-                  <img src={customThemeImage} alt="Własny motyw" className="w-12 h-12 rounded-lg object-cover" />
+                  <img src={customThemeImage} alt={t('customTheme.alt')} className="w-12 h-12 rounded-lg object-cover" />
                   <div className="min-w-0">
-                    <p className="text-xs font-black text-slate-800 truncate">Aktywny: własny motyw</p>
-                    <p className="text-[11px] text-slate-500 truncate">{customThemeLabel || 'Wybrane ręcznie'}</p>
+                    <p className="text-xs font-black text-slate-800 truncate">{t('customTheme.activeTitle')}</p>
+                    <p className="text-[11px] text-slate-500 truncate">{customThemeLabel || t('customTheme.manualPick')}</p>
                   </div>
                 </div>
                 <button
@@ -437,13 +433,11 @@ export const SeasonalThemes: React.FC<Props> = ({
                   }}
                   className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-700 shrink-0"
                 >
-                  Wyczyść
+                  {t('customTheme.clear')}
                 </button>
               </div>
             )}
-            <p className="text-[11px] text-slate-400 leading-snug">
-              Motyw zmienia wyłącznie scenerię (rekwizyty, tło, oświetlenie). Nie modyfikuje kompozycji dania ani składników.
-            </p>
+            <p className="text-[11px] text-slate-400 leading-snug">{t('customTheme.hint')}</p>
           </div>
 
           {/* Generate */}
@@ -465,12 +459,12 @@ export const SeasonalThemes: React.FC<Props> = ({
           >
             {isGenerating ? <Loader2 className="animate-spin" size={22} /> : <Wand2 size={22} />}
             {isGenerating
-              ? 'TWORZĘ SCENĘ...'
+              ? t('generate.creating')
               : isFree
-                ? 'ODBLOKUJ AI — PREMIUM'
+                ? t('generate.unlockPremium')
                 : hasNoCredits
-                  ? 'BRAK TOKENÓW'
-                  : 'WYGENERUJ MOTYW'}
+                  ? t('generate.noTokens')
+                  : t('generate.generate')}
           </button>
         </div>
 
@@ -479,7 +473,7 @@ export const SeasonalThemes: React.FC<Props> = ({
           <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-sm sticky top-6 space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-black tracking-tight text-slate-800 flex items-center gap-2">
-                <Sparkles size={16} className="text-rose-500" /> Podgląd ({generatedImages.length}/{MAX_ENHANCE_PREVIEWS})
+                <Sparkles size={16} className="text-rose-500" /> {t('preview.title', { count: generatedImages.length, max: MAX_ENHANCE_PREVIEWS })}
               </h4>
               {generatedImages.length > 0 && (
                 <button
@@ -487,29 +481,29 @@ export const SeasonalThemes: React.FC<Props> = ({
                   onClick={() => setGeneratedImages([])}
                   className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-700"
                 >
-                  Wyczyść
+                  {t('preview.clear')}
                 </button>
               )}
             </div>
             {generatedImages.length === 0 ? (
               <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 min-h-[360px] flex flex-col items-center justify-center text-center p-8 text-slate-400">
                 <ImageIcon size={40} className="mb-3" />
-                <p className="text-sm font-bold text-slate-500">Tutaj pojawi się zdjęcie w wybranym motywie</p>
-                <p className="text-xs mt-1">Każde kolejne kliknięcie doda wariant (max {MAX_ENHANCE_PREVIEWS}).</p>
+                <p className="text-sm font-bold text-slate-500">{t('preview.emptyTitle')}</p>
+                <p className="text-xs mt-1">{t('preview.emptyHint', { max: MAX_ENHANCE_PREVIEWS })}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {generatedImages.map((src, idx) => (
                   <div key={idx} className="group relative rounded-2xl overflow-hidden border border-slate-100">
                     <WatermarkWrapper show={showWatermark} className="">
-                      <img src={src} alt="Wariant" className="w-full h-auto block" />
+                      <img src={src} alt={t('preview.variantAlt')} className="w-full h-auto block" />
                     </WatermarkWrapper>
                     <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-1">
                       <button
                         type="button"
                         onClick={() => downloadDataUrl(src, `${safeImageFileBase('danie')}-${idx + 1}.png`)}
                         className="p-2 rounded-lg bg-white/90 text-slate-800 hover:bg-white"
-                        title="Pobierz"
+                        title={t('preview.download')}
                       >
                         <Download size={16} />
                       </button>
@@ -517,7 +511,7 @@ export const SeasonalThemes: React.FC<Props> = ({
                         type="button"
                         onClick={() => setShareTargetImage(src)}
                         className="p-2 rounded-lg bg-white/90 text-slate-800 hover:bg-white"
-                        title="Udostępnij"
+                        title={t('preview.share')}
                       >
                         <Share2 size={16} />
                       </button>
@@ -528,7 +522,7 @@ export const SeasonalThemes: React.FC<Props> = ({
                           setSaveDishName('');
                         }}
                         className="p-2 rounded-lg bg-chef-gold text-white hover:bg-chef-gold2"
-                        title="Zapisz do menu"
+                        title={t('preview.saveToMenu')}
                       >
                         <Save size={16} />
                       </button>
@@ -546,25 +540,25 @@ export const SeasonalThemes: React.FC<Props> = ({
         <div className="fixed inset-0 z-[400] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-[28px] w-full max-w-md p-6 space-y-5 shadow-2xl">
             <div className="flex justify-between items-start gap-3">
-              <h3 className="text-lg font-black text-slate-900">Zapisz do menu</h3>
+              <h3 className="text-lg font-black text-slate-900">{t('saveModal.title')}</h3>
               <button
                 type="button"
                 onClick={() => setSaveTargetImage(null)}
                 className="p-2 rounded-xl text-slate-400 hover:bg-slate-100"
-                aria-label="Zamknij"
+                aria-label={t('saveModal.close')}
               >
                 <X size={18} />
               </button>
             </div>
-            <img src={saveTargetImage} alt="Podgląd" className="w-full aspect-[4/3] object-cover rounded-2xl" />
+            <img src={saveTargetImage} alt={t('saveModal.previewAlt')} className="w-full aspect-[4/3] object-cover rounded-2xl" />
             <label className="block space-y-2">
-              <span className={STEP_LABEL_CLS}>Nazwa dania</span>
+              <span className={STEP_LABEL_CLS}>{t('saveModal.dishName')}</span>
               <input
                 type="text"
                 autoFocus
                 value={saveDishName}
                 onChange={(e) => setSaveDishName(e.target.value)}
-                placeholder="np. Polędwica Wellington"
+                placeholder={t('saveModal.dishNamePlaceholder')}
                 className="w-full px-4 py-3 border-2 border-slate-100 focus:ring-4 focus:ring-chef-beige/40 rounded-2xl outline-none text-slate-700"
               />
             </label>
@@ -574,7 +568,7 @@ export const SeasonalThemes: React.FC<Props> = ({
               disabled={!saveDishName.trim()}
               className="w-full py-4 bg-chef-gold text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-chef-gold2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <CheckCircle size={18} /> ZAPISZ
+              <CheckCircle size={18} /> {t('saveModal.save')}
             </button>
           </div>
         </div>
@@ -585,23 +579,23 @@ export const SeasonalThemes: React.FC<Props> = ({
         <div className="fixed inset-0 z-[500] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
           <div className="bg-white rounded-[28px] w-full max-w-md p-6 shadow-2xl space-y-4">
             <div className="flex justify-between items-start">
-              <h3 className="text-lg font-black text-slate-900">Udostępnij</h3>
+              <h3 className="text-lg font-black text-slate-900">{t('shareModal.title')}</h3>
               <button
                 type="button"
                 onClick={() => setShareTargetImage(null)}
                 className="p-2 rounded-xl text-slate-400 hover:bg-slate-100"
-                aria-label="Zamknij"
+                aria-label={t('shareModal.close')}
               >
                 <X size={18} />
               </button>
             </div>
-            <img src={shareTargetImage} alt="Podgląd" className="w-full aspect-[4/3] object-cover rounded-2xl" />
+            <img src={shareTargetImage} alt={t('shareModal.previewAlt')} className="w-full aspect-[4/3] object-cover rounded-2xl" />
             <button
               type="button"
               onClick={() => void shareImage()}
               className="w-full py-4 rounded-2xl bg-chef-dark text-white font-black text-sm flex items-center justify-center gap-2 hover:bg-chef-dark2 transition-colors"
             >
-              <Share2 size={18} /> Udostępnij przez system
+              <Share2 size={18} /> {t('shareModal.shareSystem')}
             </button>
             <button
               type="button"
@@ -610,7 +604,7 @@ export const SeasonalThemes: React.FC<Props> = ({
               }}
               className="w-full py-4 rounded-2xl border-2 border-slate-200 text-slate-800 font-black text-sm flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
             >
-              <Download size={18} /> Pobierz plik
+              <Download size={18} /> {t('shareModal.downloadFile')}
             </button>
           </div>
         </div>
@@ -620,19 +614,19 @@ export const SeasonalThemes: React.FC<Props> = ({
         <div className="fixed inset-0 z-[520] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-[28px] w-full max-w-3xl p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-black text-slate-900">Wybierz tło ze Studio</h3>
+              <h3 className="text-lg font-black text-slate-900">{t('studioPicker.title')}</h3>
               <button
                 type="button"
                 onClick={() => setIsPickingStudioTheme(false)}
                 className="p-2 rounded-xl text-slate-400 hover:bg-slate-100"
-                aria-label="Zamknij"
+                aria-label={t('studioPicker.close')}
               >
                 <X size={18} />
               </button>
             </div>
             {savedBackdrops.length === 0 ? (
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
-                Brak zapisanych teł w Studio tła. Najpierw zapisz tam tło, a potem wróć tutaj.
+                {t('studioPicker.empty')}
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[55vh] overflow-auto pr-1">
@@ -643,7 +637,7 @@ export const SeasonalThemes: React.FC<Props> = ({
                     onClick={() => pickStudioBackdrop(bg)}
                     className="group rounded-2xl overflow-hidden border-2 border-slate-200 hover:border-slate-400"
                   >
-                    <img src={bg.imageUrl} alt="Tło ze Studio" className="w-full aspect-[4/3] object-cover group-hover:scale-[1.02] transition-transform" />
+                    <img src={bg.imageUrl} alt={t('studioPicker.backdropAlt')} className="w-full aspect-[4/3] object-cover group-hover:scale-[1.02] transition-transform" />
                   </button>
                 ))}
               </div>
@@ -656,12 +650,12 @@ export const SeasonalThemes: React.FC<Props> = ({
         <div className="fixed inset-0 z-[530] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-[28px] w-full max-w-md p-6 shadow-2xl space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-black text-slate-900">Własny motyw</h3>
+              <h3 className="text-lg font-black text-slate-900">{t('customTheme.modalTitle')}</h3>
               <button
                 type="button"
                 onClick={() => setIsCustomThemeMenuOpen(false)}
                 className="p-2 rounded-xl text-slate-400 hover:bg-slate-100"
-                aria-label="Zamknij"
+                aria-label={t('shareModal.close')}
               >
                 <X size={18} />
               </button>
@@ -674,7 +668,7 @@ export const SeasonalThemes: React.FC<Props> = ({
               }}
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-black text-slate-800 hover:bg-slate-100 flex items-center justify-center gap-2"
             >
-              <Upload size={16} /> Pobierz z dysku
+              <Upload size={16} /> {t('customTheme.fromDisk')}
             </button>
             <button
               type="button"
@@ -684,7 +678,7 @@ export const SeasonalThemes: React.FC<Props> = ({
               }}
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-black text-slate-800 hover:bg-slate-100 flex items-center justify-center gap-2"
             >
-              <Plus size={16} /> Pobierz ze Studio tła
+              <Plus size={16} /> {t('customTheme.fromStudio')}
             </button>
           </div>
         </div>

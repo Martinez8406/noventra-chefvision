@@ -1,0 +1,93 @@
+{
+  "title": "Digital menu management",
+  "subtitle": "Control what your guests see in real time",
+  "previewLive": "Live menu preview",
+  "appearance": {
+    "title": "Menu appearance",
+    "restaurantName": "Restaurant name",
+    "restaurantNamePlaceholder": "e.g. Mamma Mia",
+    "primaryColor": "Primary colour",
+    "backgroundColor": "Background colour",
+    "menuFont": "Menu font",
+    "saving": "Saving…",
+    "saved": "Saved ✓",
+    "saveName": "Save name",
+    "saveColors": "Save colours",
+    "contrastWarning": "⚠️ Choose more contrasting colours",
+    "commitCategories": "Confirm category names",
+    "committingCategories": "Confirming tabs...",
+    "categoriesCommitted": "Tabs saved and translated ✓"
+  },
+  "table": {
+    "product": "Product",
+    "category": "Category",
+    "visibility": "Visibility",
+    "hotelHub": "Hotel Hub",
+    "price": "Price",
+    "socialLink": "Social link",
+    "actions": "Actions"
+  },
+  "category": {
+    "none": "— none —",
+    "newCustom": "New category (type)",
+    "manage": "Manage categories",
+    "editName": "Edit name",
+    "newNamePlaceholder": "New category name",
+    "save": "Save",
+    "delete": "Delete category",
+    "edit": "Edit",
+    "close": "Close",
+    "customPlaceholder": "Enter custom category"
+  },
+  "visibility": {
+    "restaurant": "Restaurant",
+    "restaurantTitle": "Restaurant menu",
+    "hotelHubTitle": "Hotel Hub",
+    "sections": "Sections",
+    "assignSections": "Assign to sections",
+    "autoEnableHotelHub": "After assignment, the dish will be automatically enabled in Hotel Hub."
+  },
+  "price": {
+    "placeholder": "e.g. 39",
+    "currency": "PLN",
+    "add": "Add price"
+  },
+  "socialPlaceholder": "YT, TikTok, Instagram...",
+  "actions": {
+    "editDetails": "Edit details",
+    "previewInMenu": "Preview in menu",
+    "deleteDish": "Delete dish"
+  },
+  "empty": "No dishes in the menu. Go to Add to menu to create your first dish.",
+  "defaultCategories": {
+    "Śniadania": "Breakfast",
+    "Przystawki": "Starters",
+    "Zupy": "Soups",
+    "Sałatki": "Salads",
+    "Dania główne": "Main courses",
+    "Burgery / Sandwicze": "Burgers / Sandwiches",
+    "Menu dla dzieci": "Kids menu",
+    "Dania wegetariańskie / wegańskie": "Vegetarian / vegan dishes",
+    "Desery": "Desserts",
+    "Dodatki (frytki, sosy, pieczywo)": "Sides (fries, sauces, bread)",
+    "Napoje zimne": "Cold drinks",
+    "Napoje gorące": "Hot drinks",
+    "Alkohole": "Alcoholic drinks",
+    "Oferta sezonowa": "Seasonal offer"
+  },
+  "errors": {
+    "saveCategories": "Could not save categories.",
+    "badContrast": "Colours are too similar — the menu will be hard to read. Choose more contrasting colours.",
+    "minOneCategory": "At least one menu category must remain."
+  },
+  "confirm": {
+    "deleteCategory": "Are you sure you want to delete the category “{{name}}”?",
+    "deleteCategoryWithDishes": "Category “{{name}}” is assigned to {{count}} menu items. Delete the category and unassign those dishes?",
+    "deleteDish": "Are you sure you want to delete this dish?"
+  },
+  "toasts": {
+    "dishStatusUpdated": "Dish status updated",
+    "hotelHubVisibilityUpdated": "Hotel Hub visibility updated",
+    "hotelHubAssignmentSaved": "Hotel Hub assignment saved"
+  }
+}

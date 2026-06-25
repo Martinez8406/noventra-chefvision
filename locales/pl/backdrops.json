@@ -1,0 +1,56 @@
+{
+  "title": "Inteligentne Studio Tła",
+  "subtitle": "Wgraj zdjęcie swojej sali i stwórz autentyczną scenerię dla swoich dań. AI automatycznie oddzieli potrawę i nałoży profesjonalną głębię.",
+  "freePlanHint": "Plan darmowy: brak AI. Zapisz własne tło. W menu cyfrowym: Powered by Chefvision.pl.",
+  "sourceTitle": "Źródło obrazu",
+  "uploadFromDisk": "Prześlij z dysku",
+  "blurTitle": "Poziom rozmycia",
+  "blur": {
+    "natural": {
+      "title": "Oryginał",
+      "desc": "Brak efektu rozmycia"
+    },
+    "instagram": {
+      "title": "Instagram Social-Style",
+      "desc": "Delikatne rozmycie, które zachowuje charakter Twojego lokalu w tle. Idealne do szybkich postów i relacji."
+    },
+    "fineDining": {
+      "title": "Efekt Bokeh (Premium)",
+      "desc": "Rozmyte, miękkie tło, które stanowi estetyczne dopełnienie obiektu na pierwszym planie. Nie dominuje i nie przytłacza kompozycji, nadając zdjęciu luksusowy, magazynowy wygląd."
+    }
+  },
+  "process": {
+    "processing": "PRZETWARZANIE...",
+    "prepare": "PRZYGOTUJ TŁO",
+    "unavailable": "AI NIEDOSTĘPNE"
+  },
+  "previewTitle": "Podgląd Studio",
+  "preview": {
+    "clickToStart": "KLIKNIJ \"PRZYGOTUJ TŁO\", ABY ROZPOCZĄĆ",
+    "choosePhoto": "Wybierz zdjęcie, aby zobaczyć podgląd",
+    "processedAlt": "Przetworzone tło",
+    "sourceAlt": "Źródło",
+    "readyBadge": "Tło gotowe do użycia"
+  },
+  "actions": {
+    "title": "Akcje",
+    "saving": "ZAPISYWANIE...",
+    "saved": "TŁO ZAPISANE W STUDIO",
+    "save": "ZAPISZ JAKO BAZĘ DO STUDIO",
+    "saveHint": "Będziesz mógł/mogła użyć tego tła w Chef's Studio. Na koncie zapisujemy do {{max}} teł w chmurze (przy kolejnym zapisie najstarsze jest zastępowane)."
+  },
+  "status": {
+    "label": "Status",
+    "ready": "Zdjęcie profesjonalnie przygotowane",
+    "waiting": "Oczekiwanie na akcję"
+  },
+  "tip": {
+    "label": "Porada Chefvision",
+    "text": "Użyj tego tła w Studio, aby uzyskać efekt 100% realizmu."
+  },
+  "errors": {
+    "noTokens": "Brak tokenów — Studio Tła AI wymaga trialu z tokenami lub Premium.",
+    "processing": "Błąd przetwarzania AI",
+    "saveFailed": "Nie udało się zapisać tła."
+  }
+}

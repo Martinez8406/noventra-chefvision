@@ -1,0 +1,78 @@
+{
+  "title": "Hotel Hub",
+  "intro": "Prezentuj Room Service, Bar, Spa i własne sekcje gościom — bez duplikowania dań z menu restauracji.",
+  "loginRequired": "Zaloguj się, aby zarządzać Hotel Hub.",
+  "enableLabel": "Włącz Hotel Hub",
+  "enableHelp": "Gdy wyłączone — Hotel Hub jest ukryty w Live Menu. Gdy włączone — goście zobaczą zakładkę obok menu restauracji.",
+  "errors": {
+    "infoSectionMigration": "Nie udało się dodać sekcji „Informacje o hotelu”. Uruchom migrację supabase/hotel_hub_info_section.sql w Supabase SQL Editor.",
+    "planRequired": "Hotel Hub wymaga planu Trial lub Premium.",
+    "addInfoSectionFailed": "Nie udało się dodać sekcji. Uruchom migrację supabase/hotel_hub_info_section.sql w Supabase SQL Editor i spróbuj ponownie.",
+    "heroUploadFailed": "Nie udało się wgrać zdjęcia.",
+    "assignmentSaveFailed": "Nie udało się zapisać przypisań Hotel Hub. Upewnij się, że uruchomiłeś migrację supabase/hotel_hub.sql w Supabase SQL Editor."
+  },
+  "infoSection": {
+    "defaultName": "Informacje o hotelu",
+    "missingBannerBefore": "Brak sekcji",
+    "missingBannerAfter": "— dodaj ją, aby goście widzieli kontakt i godziny hotelu.",
+    "addButton": "Dodaj sekcję informacyjną"
+  },
+  "sections": {
+    "title": "Sekcje",
+    "addCustom": "Dodaj własną sekcję",
+    "edit": "Edytuj sekcję",
+    "editShort": "Edytuj",
+    "new": "Nowa sekcja",
+    "nameLabel": "Nazwa sekcji",
+    "namePlaceholder": "np. Pool Bar, Wellness, Mini Bar",
+    "iconLabel": "Ikona sekcji",
+    "iconHelp": "Ikona hotelu — wspólna dla wszystkich sekcji",
+    "heroLabel": "Zdjęcie hero",
+    "changeHero": "Zmień zdjęcie",
+    "addHero": "Dodaj zdjęcie",
+    "availabilityLabel": "Dostępność",
+    "available24h": "Dostępne 24h",
+    "customHours": "Własne godziny",
+    "from": "Od",
+    "to": "Do",
+    "serviceNotesLabel": "Notatki serwisowe",
+    "templateButton": "Szablon",
+    "serviceNotesPlaceholder": "Własny tekst dla gości…",
+    "visibleForGuests": "Widoczna dla gości",
+    "save": "Zapisz sekcję",
+    "cancel": "Anuluj",
+    "hidden": "Ukryta",
+    "infoType": "Sekcja informacyjna",
+    "stats": "{{count}} kategorii · {{dishes}} przypisanych dań",
+    "deleteTitle": "Usuń sekcję",
+    "deleteConfirm": "Usunąć sekcję wraz z kategoriami i przypisaniami?",
+    "categoriesTitle": "Kategorie sekcji",
+    "newCategoryPlaceholder": "Nowa kategoria…",
+    "assignHint": "Przypisz dania do tej sekcji w zakładce Menu Cyfrowe — kolumna Hotel Hub.",
+    "empty": "Brak sekcji — włącz Hotel Hub ponownie lub dodaj własną sekcję."
+  },
+  "serviceNoteTemplates": {
+    "0": "Zwykle zgodnie z godzinami otwarcia restauracji.",
+    "1": "Pełne menu restauracji w ciągu dnia. Ograniczone menu w godzinach nocnych."
+  },
+  "upsell": {
+    "beforePlans": "Hotel Hub jest dostępny w planie",
+    "plansJoiner": "i",
+    "afterPlans": "W planie Start i darmowym możesz korzystać z menu restauracji.",
+    "unlockPremium": "Odblokuj Premium"
+  },
+  "infoFields": {
+    "contact": "Kontakt",
+    "hours": "Ważne godziny",
+    "wifi": "Wi-Fi",
+    "transport": "Transport",
+    "attractions": "Atrakcje w okolicy",
+    "attractionsHelp": "Dodaj miejsca z linkiem do Google Maps (opcjonalnie — bez linku wyszukamy miejsce po nazwie).",
+    "nameLabel": "Nazwa",
+    "namePlaceholder": "np. Rynek Główny",
+    "mapsLabel": "Link Google Maps",
+    "mapsPlaceholder": "https://maps.google.com/…",
+    "removeAttraction": "Usuń atrakcję",
+    "addAttraction": "Dodaj atrakcję"
+  }
+}

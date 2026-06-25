@@ -1,0 +1,21 @@
+{
+  "title": "Statistics",
+  "subtitle": "Digital menu opens — today and this month.",
+  "refresh": "Refresh",
+  "loading": "Loading statistics...",
+  "errors": {
+    "loadFailed": "Could not load menu statistics."
+  },
+  "cards": {
+    "today": "Today",
+    "todayHint": "Menu opens on {{date}}",
+    "month": "Month",
+    "monthHint": "Menu opens in {{month}}"
+  },
+  "chart": {
+    "title": "30-day trend",
+    "empty": "No data for the chart.",
+    "ariaLabel": "Line chart of menu opens over the last 30 days"
+  },
+  "footnote": "Statistics count visits to the public menu URL (`/menu/[userId]`) and refresh when you click “Refresh”."
+}

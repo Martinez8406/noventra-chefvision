@@ -1,0 +1,151 @@
+{
+  "panelLabel": "Settings",
+  "loginRequiredBranding": "Sign in to edit logo and cover image.",
+  "sections": {
+    "qr": {
+      "title": "QR code",
+      "description": "Generate and download a QR code linking to your digital menu."
+    },
+    "branding": {
+      "title": "Logo / cover image",
+      "description": "Restaurant logo and cover photo shown at the top of Live Menu."
+    },
+    "google": {
+      "title": "Google reviews",
+      "description": "Connect your menu with Google so guests can leave reviews in one click."
+    },
+    "feedback": {
+      "title": "Feedback & suggestions",
+      "description": "Let guests send comments and suggestions from Live Menu directly to your email."
+    },
+    "subscription": {
+      "title": "Manage subscription",
+      "description": "Your plan, Stripe billing, and upgrading to Premium."
+    }
+  },
+  "qr": {
+    "title": "Your Menu QR Generator",
+    "introLoggedIn": "Scan the code above or share this link with guests so they can browse your menu online.",
+    "introLoggedOut": "Sign in to generate a unique link and QR code for your menu.",
+    "loading": "Loading...",
+    "noLink": "No link — sign in",
+    "downloadPng": "Download as PNG",
+    "shareLink": "Share link",
+    "shareText": "Restaurant digital menu"
+  },
+  "google": {
+    "title": "Google reviews",
+    "intro": "Paste your Google Place ID so guests can quickly leave ratings directly from your menu.",
+    "placeIdLabel": "Google Place ID",
+    "placeIdPlaceholder": "e.g. ChIJN1t_tDeuEmsRUsoyG83frY4",
+    "saving": "Saving...",
+    "saved": "Saved ✓",
+    "save": "Save",
+    "loadingPlaceId": "Loading current Place ID...",
+    "findPlaceId": "Find your Place ID",
+    "errors": {
+      "fetchFailed": "Could not fetch Google Place ID.",
+      "saveFailed": "Could not save Google Place ID."
+    }
+  },
+  "feedback": {
+    "title": "Feedback & suggestions",
+    "intro": "Let guests send comments, complaints and suggestions directly from Live Menu. Messages will go to your email address.",
+    "enableLabel": "Enable guest feedback",
+    "enableHelp": "Section at the bottom of the public menu with a message form",
+    "emailLabel": "Email address for receiving feedback",
+    "emailPlaceholder": "manager@restaurant.com",
+    "emailRequired": "Add an email so the feedback section is visible in Live Menu.",
+    "invalidEmail": "Enter a valid email address.",
+    "saving": "Saving...",
+    "saved": "Saved ✓",
+    "save": "Save",
+    "loading": "Loading settings...",
+    "errors": {
+      "fetchFailed": "Could not fetch feedback settings.",
+      "migrationRequired": "Run SQL migration: supabase/feedback_settings.sql",
+      "saveFailed": "Could not save settings."
+    }
+  },
+  "subscription": {
+    "yourPlan": "Your plan",
+    "loading": "Loading plan…",
+    "premiumStripeHelp": "Subscription is linked to Stripe — you can change card, download invoices or cancel the plan.",
+    "premiumManualHelp": "Premium account is active. Billing is managed outside the standard Stripe portal (e.g. custom agreement).",
+    "trialHelp": "During trial you have a limited pool of AI tokens. Upgrade to Premium to unlock full features.",
+    "freeHelp": "Free plan — your own photos in the menu. Premium unlocks AI generation and recommendations.",
+    "upgradeToPremium": "Upgrade to Premium",
+    "buyPremium": "Buy Premium",
+    "manageStripe": "Manage in Stripe",
+    "stripePortalHelp": "Stripe portal lets you change payment method, view invoices and cancel subscription. After cancellation your account returns to the free plan when the paid period ends.",
+    "loginRequired": "You must be signed in.",
+    "errors": {
+      "loadFailed": "Could not load plan.",
+      "checkoutFailed": "Could not open checkout.",
+      "portalFailed": "Could not open Stripe portal."
+    }
+  },
+  "branding": {
+    "title": "Logo and cover image (visible in Live Menu)",
+    "intro": "Upload logo and header background image. Choose element (logo or cover) and set framing — preview below looks the same as in the public menu.",
+    "uploading": "Uploading…",
+    "changeLogo": "Change logo",
+    "uploadLogo": "Upload logo",
+    "removeLogo": "Remove logo",
+    "logoUploaded": "Logo uploaded!",
+    "logoFormats": "Logo: PNG, JPG — max 2 MB",
+    "changeCover": "Change cover",
+    "uploadCover": "Upload cover",
+    "removeCover": "Remove cover",
+    "coverUploaded": "Cover uploaded!",
+    "coverFormats": "Cover: JPG, PNG, WebP — max 5 MB",
+    "dbSetupTitle": "One-time database setup (Supabase)",
+    "dbSetupIntroBefore": "To save framing, run in ",
+    "dbSetupIntroAfter": " scripts from the ",
+    "dbSetupIntroSuffix": " folder (logo and cover), e.g.:",
+    "dbSetupAfterBefore": "After running: Supabase → ",
+    "dbSetupAfterMiddle": " (if available), then ",
+    "dbSetupAfterSuffix": " in the app. Make sure you ran SQL in the same project as in your .env file.",
+    "dbSetupReloadSchema": "Settings → API → Reload schema",
+    "previewTitle": "Preview — as in public menu",
+    "frameElement": "Frame element",
+    "frameTabAria": "Choose element to frame",
+    "logoTab": "Logo",
+    "coverTab": "Cover",
+    "unsavedChanges": "Unsaved changes ({{target}})",
+    "logoScaleHelp": "Logo framing. Move left to shrink; framing point sets the visible area when zoomed in.",
+    "coverScaleHelp": "Cover image framing. Move left to shrink; framing point selects the visible banner area.",
+    "uploadToFrame": "Upload {{target}} to set framing.",
+    "uploadLogoTarget": "logo",
+    "uploadCoverTarget": "cover image",
+    "saveFrame": "Save framing",
+    "frameSaved": "Framing saved",
+    "unsavedOtherElement": "Unsaved changes in the other element",
+    "errors": {
+      "logoTooLarge": "File is too large (max 2 MB).",
+      "logoUploadFailed": "Logo upload failed.",
+      "coverTooLarge": "Cover file is too large (max 5 MB).",
+      "coverUploadFailed": "Cover image upload failed.",
+      "frameColumnsMissing": "Framing columns are not visible in the API. Run the SQL migration (below), then in Supabase: Settings → API → Reload schema (or wait 1–2 min) and refresh F5.",
+      "frameSaveFailed": "Could not save framing: {{message}}",
+      "frameSaveGeneric": "Framing save failed."
+    }
+  },
+  "frame": {
+    "framingPoint": "{{title}} — framing point",
+    "scale": "{{title}} — zoom ({{percent}}%)",
+    "smaller": "Smaller",
+    "larger": "Larger",
+    "position": {
+      "top_left": "Top left",
+      "top": "Top",
+      "top_right": "Top right",
+      "left": "Left",
+      "center": "Center",
+      "right": "Right",
+      "bottom_left": "Bottom left",
+      "bottom": "Bottom",
+      "bottom_right": "Bottom right"
+    }
+  }
+}

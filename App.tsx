@@ -16,11 +16,14 @@ import { Auth } from './components/Auth';
 import { SuccessPage } from './components/SuccessPage';
 import { FreePlanUpgradeCard } from './components/FreePlanUpgradeCard';
 import { TrialPlanUpgradeCard } from './components/TrialPlanUpgradeCard';
+import { AppLanguageSwitcher } from './components/AppLanguageSwitcher';
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import { PricingPage, type PricingPlanType } from './components/PricingPage';
 import { StartPlanPromoBar } from './components/StartPlanPromoBar';
 import { BRAND_LOGO_SRC, TRIAL_TOKENS } from './constants';
-import { formatTokenStatus, hasProFeatures, canUseHotelHub } from './utils/tokens';
+import { useTranslation } from 'react-i18next';
+import { hasProFeatures, canUseHotelHub } from './utils/tokens';
+import { formatTokenStatusI18n, formatPremiumTokenShort } from './utils/formatTokenStatusI18n';
 import { supabase, db, authService, uploadDishImage } from './services/supabaseService';
 import { hotelHubDb } from './services/hotelHubService';
 import { requestMenuTranslations } from './services/aiService';
@@ -63,12 +66,28 @@ type AppTab =
   | 'settings-feedback'
   | 'settings-subscription';
 
-const SETTINGS_SUB_NAV: { id: AppTab; label: string }[] = [
-  { id: 'settings-qr', label: 'Kod QR' },
-  { id: 'settings-branding', label: 'Logo / zdjęcie główne' },
-  { id: 'settings-google', label: 'Opinie Google' },
-  { id: 'settings-feedback', label: 'Opinie i sugestie' },
-  { id: 'settings-subscription', label: 'Zarządzaj subskrypcją' },
+const SETTINGS_SUB_NAV: { id: AppTab; labelKey: string }[] = [
+  { id: 'settings-qr', labelKey: 'settingsQr' },
+  { id: 'settings-branding', labelKey: 'settingsBranding' },
+  { id: 'settings-google', labelKey: 'settingsGoogle' },
+  { id: 'settings-feedback', labelKey: 'settingsFeedback' },
+  { id: 'settings-subscription', labelKey: 'settingsSubscription' },
+];
+
+const NAV_ITEM_DEFS: {
+  id: AppTab;
+  labelKey: string;
+  icon: typeof LayoutDashboard;
+  premiumLocked?: boolean;
+}[] = [
+  { id: 'kuchnia', labelKey: 'kuchnia', icon: LayoutDashboard },
+  { id: 'studio', labelKey: 'studio', icon: Camera },
+  { id: 'themes', labelKey: 'themes', icon: Sparkles, premiumLocked: true },
+  { id: 'backdrops', labelKey: 'backdrops', icon: Layers, premiumLocked: true },
+  { id: 'menu', labelKey: 'menu', icon: BookOpen },
+  { id: 'hotel-hub', labelKey: 'hotelHub', icon: Building2, premiumLocked: true },
+  { id: 'stats', labelKey: 'stats', icon: BarChart3 },
+  { id: 'promotions', labelKey: 'promotions', icon: Megaphone, premiumLocked: true },
 ];
 
 function settingsSectionFromTab(tab: AppTab): SettingsSection | null {
@@ -111,6 +130,14 @@ const App: React.FC = () => {
   const [publicHasWatermark, setPublicHasWatermark] = useState<boolean>(false);
   const [publicMenuLoading, setPublicMenuLoading] = useState(false);
   const [startPromoBarVisible, setStartPromoBarVisible] = useState(false);
+  const { t: tNav } = useTranslation('nav');
+  const { t: tSidebar } = useTranslation('sidebar');
+  const { t: tKitchen } = useTranslation('kitchen');
+  const { t: tStudio } = useTranslation('studio');
+  const { t: tMenu } = useTranslation('menu');
+  const { t: tThemes } = useTranslation('themes');
+  const { t: tPromotions } = useTranslation('promotions');
+  const { t: tHotelHub } = useTranslation('hotelHub');
   
   useEffect(() => {
     let subscription: any = null;
@@ -333,7 +360,7 @@ const App: React.FC = () => {
       const newDish: Partial<Dish> = {
         name: params.dishName,
         imageUrl: finalImageUrl,
-        description: 'Krótki opis, który zobaczy gość...',
+        description: tKitchen('dishPanel.descriptionPlaceholder'),
         technique: '',
         ingredients: [],
         allergens: [],
@@ -353,9 +380,9 @@ const App: React.FC = () => {
       }
     } catch (e) {
       console.error('Zapisywanie dania:', e);
-      const msg = e instanceof Error ? e.message : 'Nie udało się zapisać dania.';
+      const msg = e instanceof Error ? e.message : tKitchen('errors.saveFailed');
       if (msg.includes('QuotaExceeded') || msg.includes('quota')) {
-        alert('Obraz jest za duży do zapisania w tej przeglądarce. Zaloguj się (Supabase), aby zapisywać zdjęcia w chmurze.');
+        alert(tKitchen('errors.quotaExceeded'));
       } else {
         alert(msg);
       }
@@ -413,7 +440,7 @@ const App: React.FC = () => {
     const success = await db.toggleDishOnline(id, !dish.isOnline);
     if (success) {
       setDishes(prev => prev.map(d => d.id === id ? { ...d, isOnline: !d.isOnline } : d));
-      setStatusToast('Status dania zaktualizowany');
+      setStatusToast(tMenu('toasts.dishStatusUpdated'));
       setTimeout(() => setStatusToast(null), 3000);
     }
   };
@@ -429,7 +456,7 @@ const App: React.FC = () => {
     const success = await db.toggleDishHotelHubVisibility(id, next);
     if (success) {
       setDishes((prev) => prev.map((d) => (d.id === id ? { ...d, visibleInHotelHub: next } : d)));
-      setStatusToast('Widoczność Hotel Hub zaktualizowana');
+      setStatusToast(tMenu('toasts.hotelHubVisibilityUpdated'));
       setTimeout(() => setStatusToast(null), 3000);
     }
   };
@@ -446,9 +473,7 @@ const App: React.FC = () => {
     if (!uid) return;
     const ok = await hotelHubDb.setDishAssignments(uid, dishId, assignments);
     if (!ok) {
-      alert(
-        'Nie udało się zapisać przypisań Hotel Hub. Upewnij się, że uruchomiłeś migrację supabase/hotel_hub.sql w Supabase SQL Editor.',
-      );
+      alert(tHotelHub('errors.assignmentSaveFailed'));
       return;
     }
 
@@ -462,7 +487,7 @@ const App: React.FC = () => {
       }
     }
 
-    setStatusToast('Przypisanie Hotel Hub zapisane');
+    setStatusToast(tMenu('toasts.hotelHubAssignmentSaved'));
     setTimeout(() => setStatusToast(null), 3000);
   };
 
@@ -473,7 +498,7 @@ const App: React.FC = () => {
     if (ok) {
       setDishes(prev => prev.filter(d => d.id !== id));
     } else {
-      alert('Nie udało się usunąć dania. Spróbuj ponownie.');
+      alert(tKitchen('errors.deleteFailed'));
     }
   };
 
@@ -592,22 +617,6 @@ const App: React.FC = () => {
     return <Auth onDemoLogin={() => setSession({ user: { id: 'demo' } })} />;
   }
 
-  const navItems: {
-    id: AppTab;
-    label: string;
-    icon: typeof LayoutDashboard;
-    premiumLocked?: boolean;
-  }[] = [
-    { id: 'kuchnia', label: 'Edycja menu', icon: LayoutDashboard },
-    { id: 'studio', label: 'Dodaj do menu', icon: Camera },
-    { id: 'themes', label: 'Motywy sezonowe', icon: Sparkles, premiumLocked: true },
-    { id: 'backdrops', label: 'Studio Tła', icon: Layers, premiumLocked: true },
-    { id: 'menu', label: 'Menu Cyfrowe', icon: BookOpen },
-    { id: 'hotel-hub', label: 'Hotel Hub', icon: Building2, premiumLocked: true },
-    { id: 'stats', label: 'Statystyki', icon: BarChart3 },
-    { id: 'promotions', label: 'Rekomendacje i promocje', icon: Megaphone, premiumLocked: true },
-  ];
-
   const settingsSectionActive = settingsSectionFromTab(activeTab);
   const settingsMenuOpen = settingsExpanded || settingsSectionActive !== null;
 
@@ -657,7 +666,7 @@ const App: React.FC = () => {
           </div>
 
           <nav className="space-y-2">
-            {navItems.map((tab) => {
+            {NAV_ITEM_DEFS.map((tab) => {
               const locked = isFree && tab.premiumLocked;
               return (
                 <button
@@ -672,7 +681,7 @@ const App: React.FC = () => {
                     <span className="w-5 shrink-0 flex justify-center">
                       <tab.icon size={20} className={locked ? 'opacity-70' : undefined} />
                     </span>
-                    <span className="leading-tight">{tab.label}</span>
+                    <span className="leading-tight">{tNav(tab.labelKey)}</span>
                   </div>
                   {locked && (
                     <Lock size={14} className="shrink-0 text-zinc-500 group-hover:text-emerald-400/80 transition-colors" aria-hidden />
@@ -694,7 +703,7 @@ const App: React.FC = () => {
                   <span className="w-5 shrink-0 flex justify-center">
                     <Settings size={20} />
                   </span>
-                  <span className="leading-tight">Ustawienia</span>
+                  <span className="leading-tight">{tNav('settings')}</span>
                 </div>
                 {settingsMenuOpen ? (
                   <ChevronDown size={18} className="shrink-0 text-zinc-400" aria-hidden />
@@ -718,7 +727,7 @@ const App: React.FC = () => {
                             : 'text-zinc-500 hover:text-white hover:bg-white/[0.04]'
                         }`}
                       >
-                        {sub.label}
+                        {tNav(sub.labelKey)}
                       </button>
                     );
                   })}
@@ -735,7 +744,7 @@ const App: React.FC = () => {
             </div>
             <div className="overflow-hidden flex-1 min-w-0">
               <p className="text-sm font-black truncate text-white">
-                {currentUser?.name || 'Twoja Restauracja'}
+                {currentUser?.name || tSidebar('defaultRestaurantName')}
               </p>
               <p className="text-[11px] font-medium truncate text-zinc-400 mt-0.5">
                 {currentUser?.email || '—'}
@@ -747,7 +756,7 @@ const App: React.FC = () => {
             <FreePlanUpgradeCard onUpgrade={openPricingPage} />
           ) : isTrial ? (
             <TrialPlanUpgradeCard
-              statusLabel={formatTokenStatus(
+              statusLabel={formatTokenStatusI18n(
                 currentUser?.subscriptionStatus,
                 currentUser?.credits ?? 0,
                 currentUser?.tokens,
@@ -760,7 +769,7 @@ const App: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Crown size={16} />
                 <span className="text-[10px] font-black uppercase tracking-widest">
-                  {formatTokenStatus(
+                  {formatTokenStatusI18n(
                     currentUser?.subscriptionStatus,
                     currentUser?.credits ?? 0,
                     currentUser?.tokens,
@@ -774,17 +783,17 @@ const App: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Crown size={16} />
                 <span className="text-[10px] font-black uppercase tracking-widest">
-                  {`Premium · ${currentUser?.tokens?.total ?? currentUser?.credits ?? 0} tokenów`}
+                  {formatPremiumTokenShort(currentUser?.tokens?.total ?? currentUser?.credits ?? 0)}
                 </span>
               </div>
             </div>
           )}
-          {/* Duży, widoczny przycisk Wyloguj tuż pod statusem konta */}
+          <AppLanguageSwitcher />
           <button
             onClick={() => { authService.signOut(); setSession(null); }}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-white/10 text-white border border-white/10 hover:bg-red-500 hover:border-red-500 hover:text-white transition-colors"
           >
-            <LogOut size={16} /> Wyloguj
+            <LogOut size={16} /> {tSidebar('logout')}
           </button>
         </div>
       </aside>
@@ -803,8 +812,8 @@ const App: React.FC = () => {
             type="button"
             onClick={() => { authService.signOut(); setSession(null); }}
             className="p-2 text-slate-500 hover:text-red-600"
-            title="Wyloguj"
-            aria-label="Wyloguj"
+            title={tSidebar('logout')}
+            aria-label={tSidebar('logout')}
           >
             <LogOut size={22} />
           </button>
@@ -813,7 +822,7 @@ const App: React.FC = () => {
         <div className="p-6 md:p-10 max-w-5xl mx-auto min-h-0 w-full">
           {activeTab === 'kuchnia' && (
             <div className="space-y-8">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">Edycja menu</h2>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">{tNav('kuchnia')}</h2>
               <KitchenWall 
                 dishes={dishes} 
                 onApprove={handleApprove} 
@@ -826,7 +835,9 @@ const App: React.FC = () => {
           )}
           {activeTab === 'studio' && (
             currentUser ? (
-              <ChefsStudio 
+              <div className="space-y-8">
+                <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">{tNav('studio')}</h2>
+                <ChefsStudio 
                 onSaveStandard={handleSaveStandard} 
                 hasProFeatures={hasProAccess}
                 subscriptionStatus={currentUser.subscriptionStatus}
@@ -838,11 +849,12 @@ const App: React.FC = () => {
                 onCreditsUpdated={handleCreditsUpdated}
                 onRequestPremium={openPremiumUpsell}
               />
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-24 text-center text-slate-500 min-h-[50vh]">
                 <Loader2 className="animate-spin text-chef-gold mb-4" size={40} />
-                <p className="font-medium">Ładowanie profilu...</p>
-                <p className="text-sm mt-1">Za chwilę Chef’s Studio będzie dostępne.</p>
+                <p className="font-medium">{tStudio('loadingProfile')}</p>
+                <p className="text-sm mt-1">{tStudio('loadingHint')}</p>
               </div>
             )
           )}
@@ -864,7 +876,7 @@ const App: React.FC = () => {
             ) : (
               <div className="flex flex-col items-center justify-center py-24 text-center text-slate-500 min-h-[50vh]">
                 <Loader2 className="animate-spin text-chef-gold mb-4" size={40} />
-                <p className="font-medium">Ładowanie profilu...</p>
+                <p className="font-medium">{tThemes('loadingProfile')}</p>
               </div>
             )
           )}
@@ -900,19 +912,20 @@ const App: React.FC = () => {
               <div className="space-y-6">
                 <h2 className="text-3xl font-black text-slate-900 tracking-tight italic flex items-center gap-3">
                   <Building2 className="text-chef-gold" size={32} />
-                  Hotel Hub
+                  {tHotelHub('title')}
                 </h2>
                 <div className="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm text-center space-y-4">
                   <p className="text-slate-600 text-sm max-w-lg mx-auto">
-                    Hotel Hub jest dostępny w planie <strong>Trial</strong> i <strong>Premium</strong>.
-                    W planie Start i darmowym możesz korzystać z menu restauracji.
+                    {tHotelHub('upsell.beforePlans')}{' '}
+                    <strong>Trial</strong> {tHotelHub('upsell.plansJoiner')} <strong>Premium</strong>.{' '}
+                    {tHotelHub('upsell.afterPlans')}
                   </p>
                   <button
                     type="button"
                     onClick={openPricingPage}
                     className="inline-flex px-6 py-3 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:from-emerald-300 hover:to-green-400 transition-all"
                   >
-                    Odblokuj Premium
+                    {tHotelHub('upsell.unlockPremium')}
                   </button>
                 </div>
               </div>
@@ -923,7 +936,7 @@ const App: React.FC = () => {
           )}
           {activeTab === 'promotions' && (
             <div className="space-y-6">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">Rekomendacje i promocje</h2>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">{tPromotions('title')}</h2>
               {hasProAccess ? (
                 <PromotionsManager
                   dishes={dishes}
@@ -931,13 +944,13 @@ const App: React.FC = () => {
                 />
               ) : (
                 <div className="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm text-center space-y-4">
-                  <p className="text-slate-600 text-sm">Rekomendacje sprzedażowe wymagają Premium.</p>
+                  <p className="text-slate-600 text-sm">{tPromotions('premiumRequired')}</p>
                   <button
                     type="button"
                     onClick={openPremiumUpsell}
                     className="inline-flex px-6 py-3 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:from-emerald-300 hover:to-green-400 transition-all"
                   >
-                    Odblokuj Premium
+                    {tPromotions('unlockPremium')}
                   </button>
                 </div>
               )}

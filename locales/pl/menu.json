@@ -1,0 +1,93 @@
+{
+  "title": "Zarządzanie Menu Cyfrowym",
+  "subtitle": "Decyduj co widzą Twoi goście w czasie rzeczywistym",
+  "previewLive": "Podgląd Menu Live",
+  "appearance": {
+    "title": "Wygląd menu",
+    "restaurantName": "Nazwa restauracji",
+    "restaurantNamePlaceholder": "Np. Mamma Mia",
+    "primaryColor": "Kolor główny",
+    "backgroundColor": "Kolor tła",
+    "menuFont": "Font menu",
+    "saving": "Zapisywanie…",
+    "saved": "Zapisano ✓",
+    "saveName": "Zapisz nazwę",
+    "saveColors": "Zapisz kolory",
+    "contrastWarning": "⚠️ Wybierz kontrastowe kolory",
+    "commitCategories": "Zatwierdź nazwy kategorii",
+    "committingCategories": "Zatwierdzanie zakładek...",
+    "categoriesCommitted": "Zakładki zapisane i przetłumaczone ✓"
+  },
+  "table": {
+    "product": "Produkt",
+    "category": "Kategoria",
+    "visibility": "Widoczność",
+    "hotelHub": "Hotel Hub",
+    "price": "Cena",
+    "socialLink": "Social Link",
+    "actions": "Akcje"
+  },
+  "category": {
+    "none": "— brak —",
+    "newCustom": "Nowa kategoria (wpisz)",
+    "manage": "Zarządzaj kategoriami",
+    "editName": "Edytuj nazwę",
+    "newNamePlaceholder": "Nowa nazwa kategorii",
+    "save": "Zapisz",
+    "delete": "Usuń kategorię",
+    "edit": "Edycja",
+    "close": "Zamknij",
+    "customPlaceholder": "Wpisz własną kategorię"
+  },
+  "visibility": {
+    "restaurant": "Restauracja",
+    "restaurantTitle": "Menu restauracji",
+    "hotelHubTitle": "Hotel Hub",
+    "sections": "Sekcje",
+    "assignSections": "Przypisz do sekcji",
+    "autoEnableHotelHub": "Po przypisaniu danie zostanie automatycznie włączone w Hotel Hub."
+  },
+  "price": {
+    "placeholder": "np. 39",
+    "currency": "zł",
+    "add": "Dodaj cenę"
+  },
+  "socialPlaceholder": "YT, TikTok, Instagram...",
+  "actions": {
+    "editDetails": "Edytuj szczegóły",
+    "previewInMenu": "Podgląd w menu",
+    "deleteDish": "Usuń danie"
+  },
+  "empty": "Brak dań w menu. Przejdź do Chef's Studio, aby stworzyć pierwsze danie.",
+  "defaultCategories": {
+    "Śniadania": "Śniadania",
+    "Przystawki": "Przystawki",
+    "Zupy": "Zupy",
+    "Sałatki": "Sałatki",
+    "Dania główne": "Dania główne",
+    "Burgery / Sandwicze": "Burgery / Sandwicze",
+    "Menu dla dzieci": "Menu dla dzieci",
+    "Dania wegetariańskie / wegańskie": "Dania wegetariańskie / wegańskie",
+    "Desery": "Desery",
+    "Dodatki (frytki, sosy, pieczywo)": "Dodatki (frytki, sosy, pieczywo)",
+    "Napoje zimne": "Napoje zimne",
+    "Napoje gorące": "Napoje gorące",
+    "Alkohole": "Alkohole",
+    "Oferta sezonowa": "Oferta sezonowa"
+  },
+  "errors": {
+    "saveCategories": "Nie udało się zapisać kategorii.",
+    "badContrast": "Kolory są zbyt podobne – menu będzie nieczytelne. Wybierz bardziej kontrastowe kolory.",
+    "minOneCategory": "Musi pozostać co najmniej jedna kategoria w menu."
+  },
+  "confirm": {
+    "deleteCategory": "Czy na pewno chcesz usunąć kategorię „{{name}}”?",
+    "deleteCategoryWithDishes": "Kategoria „{{name}}” jest przypisana do {{count}} pozycji w menu. Usunąć kategorię i odpiąć te dania?",
+    "deleteDish": "Czy na pewno chcesz usunąć to danie?"
+  },
+  "toasts": {
+    "dishStatusUpdated": "Status dania zaktualizowany",
+    "hotelHubVisibilityUpdated": "Widoczność Hotel Hub zaktualizowana",
+    "hotelHubAssignmentSaved": "Przypisanie Hotel Hub zapisane"
+  }
+}

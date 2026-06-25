@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../services/supabaseService';
 import { BarChart3, CalendarDays, RefreshCw, Users } from 'lucide-react';
 
@@ -15,6 +16,7 @@ interface MenuOpenStats {
 }
 
 export const MenuStatsPanel: React.FC<Props> = ({ userId }) => {
+  const { t } = useTranslation('stats');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +62,7 @@ export const MenuStatsPanel: React.FC<Props> = ({ userId }) => {
           : [],
       });
     } catch (err: any) {
-      setError(err?.message || 'Nie udało się pobrać statystyk menu.');
+      setError(err?.message || t('errors.loadFailed'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -90,8 +92,8 @@ export const MenuStatsPanel: React.FC<Props> = ({ userId }) => {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">Statystyki</h2>
-          <p className="text-slate-500 text-sm mt-1">Otwarcia menu cyfrowego — dzisiaj i w tym miesiącu.</p>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">{t('title')}</h2>
+          <p className="text-slate-500 text-sm mt-1">{t('subtitle')}</p>
         </div>
         <button
           type="button"
@@ -100,13 +102,13 @@ export const MenuStatsPanel: React.FC<Props> = ({ userId }) => {
           className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
         >
           <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
-          Odśwież
+          {t('refresh')}
         </button>
       </div>
 
       {loading ? (
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 text-slate-500 font-medium">
-          Ładowanie statystyk...
+          {t('loading')}
         </div>
       ) : error ? (
         <div className="bg-white rounded-3xl border border-red-100 shadow-sm p-8 text-red-600 font-semibold">
@@ -117,30 +119,30 @@ export const MenuStatsPanel: React.FC<Props> = ({ userId }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-7">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Dzisiaj</span>
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">{t('cards.today')}</span>
                 <CalendarDays size={18} className="text-indigo-500" />
               </div>
               <p className="text-4xl font-black text-slate-900 tabular-nums">{stats?.daily ?? 0}</p>
-              <p className="text-sm text-slate-500 mt-2">Liczba otwarć menu w dniu {stats?.today || '—'}</p>
+              <p className="text-sm text-slate-500 mt-2">{t('cards.todayHint', { date: stats?.today || '—' })}</p>
             </div>
 
             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-7">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Miesiąc</span>
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">{t('cards.month')}</span>
                 <Users size={18} className="text-emerald-500" />
               </div>
               <p className="text-4xl font-black text-slate-900 tabular-nums">{stats?.monthly ?? 0}</p>
-              <p className="text-sm text-slate-500 mt-2">Liczba otwarć menu w miesiącu {stats?.month || '—'}</p>
+              <p className="text-sm text-slate-500 mt-2">{t('cards.monthHint', { month: stats?.month || '—' })}</p>
             </div>
           </div>
 
           <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-7">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Trend 30 dni</span>
+              <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">{t('chart.title')}</span>
               <BarChart3 size={18} className="text-indigo-500" />
             </div>
             {points.length === 0 ? (
-              <p className="text-sm text-slate-500">Brak danych do wykresu.</p>
+              <p className="text-sm text-slate-500">{t('chart.empty')}</p>
             ) : (
               <>
                 <div className="w-full overflow-x-auto">
@@ -148,11 +150,11 @@ export const MenuStatsPanel: React.FC<Props> = ({ userId }) => {
                     viewBox={`0 0 ${chartWidth} ${chartHeight}`}
                     className="w-full min-w-[620px] h-[220px]"
                     role="img"
-                    aria-label="Wykres liniowy otwarć menu z ostatnich 30 dni"
+                    aria-label={t('chart.ariaLabel')}
                   >
                     <rect x="0" y="0" width={chartWidth} height={chartHeight} fill="white" />
-                    {[0, 0.25, 0.5, 0.75, 1].map((t, idx) => {
-                      const y = padY + t * innerH;
+                    {[0, 0.25, 0.5, 0.75, 1].map((tVal, idx) => {
+                      const y = padY + tVal * innerH;
                       return (
                         <line
                           key={`grid-${idx}`}
@@ -201,12 +203,8 @@ export const MenuStatsPanel: React.FC<Props> = ({ userId }) => {
 
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 text-sm text-slate-500 flex items-start gap-3">
         <BarChart3 size={18} className="text-slate-400 mt-0.5 shrink-0" />
-        <p>
-          Statystyki liczą wejścia do publicznego adresu menu (`/menu/[userId]`) i odświeżają się po kliknięciu
-          „Odśwież”.
-        </p>
+        <p>{t('footnote')}</p>
       </div>
     </div>
   );
 };
-

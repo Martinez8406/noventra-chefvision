@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dish, HotelHubData } from '../types';
 import { Link2, Eye, EyeOff, ExternalLink, QrCode, Trash2, Edit, Settings, Building2 } from 'lucide-react';
 import { supabase } from '../services/supabaseService';
@@ -37,6 +38,8 @@ export const MenuManager: React.FC<Props> = ({
   menuUserId,
   hotelHubAvailable = false,
 }) => {
+  const { t } = useTranslation('menu');
+  const getCategoryLabel = (cat: string) => t(`defaultCategories.${cat}`, { defaultValue: cat });
   const CUSTOM_CATEGORY_VALUE = '__custom_category__';
   const MENU_CATEGORIES_STORAGE_KEY = (uid: string) => `chefvision_menu_categories:${uid}`;
   const [justToggledId, setJustToggledId] = useState<string | null>(null);
@@ -190,7 +193,7 @@ export const MenuManager: React.FC<Props> = ({
       setCategoriesSaved(true);
       setTimeout(() => setCategoriesSaved(false), 2500);
     } catch (e: any) {
-      setCategoriesError(e?.message || 'Nie udało się zapisać kategorii.');
+      setCategoriesError(e?.message || t('errors.saveCategories'));
     } finally {
       setCategoriesSaving(false);
     }
@@ -211,7 +214,7 @@ export const MenuManager: React.FC<Props> = ({
   const handleSaveColors = async () => {
     if (!menuUserId || !supabase) return;
     if (isBadContrast(primaryColor, secondaryColor)) {
-      alert('Kolory są zbyt podobne – menu będzie nieczytelne. Wybierz bardziej kontrastowe kolory.');
+      alert(t('errors.badContrast'));
       return;
     }
     setColorSaving(true);
@@ -287,15 +290,15 @@ export const MenuManager: React.FC<Props> = ({
     if (!name) return;
 
     if (menuCategories.length <= 1) {
-      alert('Musi pozostać co najmniej jedna kategoria w menu.');
+      alert(t('errors.minOneCategory'));
       return;
     }
 
     const dishCount = countDishesInCategory(name);
     const confirmMsg =
       dishCount > 0
-        ? `Kategoria „${name}” jest przypisana do ${dishCount} pozycji w menu. Usunąć kategorię i odpiąć te dania?`
-        : `Czy na pewno chcesz usunąć kategorię „${name}"?`;
+        ? t('confirm.deleteCategoryWithDishes', { name, count: dishCount })
+        : t('confirm.deleteCategory', { name });
 
     if (!confirm(confirmMsg)) return;
 
@@ -319,27 +322,27 @@ export const MenuManager: React.FC<Props> = ({
     <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
       <div className="p-8 border-b border-slate-50 flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-black text-slate-800">Zarządzanie Menu Cyfrowym</h2>
-          <p className="text-slate-500 text-sm">Decyduj co widzą Twoi goście w czasie rzeczywistym</p>
+          <h2 className="text-2xl font-black text-slate-800">{t('title')}</h2>
+          <p className="text-slate-500 text-sm">{t('subtitle')}</p>
         </div>
         <button
           onClick={() => window.open(menuUrl, '_blank')}
           disabled={!menuUserId}
           className="bg-slate-900 text-white px-5 py-2.5 rounded-2xl text-sm font-bold flex items-center gap-2 hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <QrCode size={18} /> Podgląd Menu Live
+          <QrCode size={18} /> {t('previewLive')}
         </button>
       </div>
 
       {/* Wygląd menu */}
       <div className="mx-8 my-6 p-6 bg-slate-50 rounded-2xl shadow-sm border border-slate-100">
-        <h3 className="text-base font-bold text-slate-800 mb-4">Wygląd menu</h3>
+        <h3 className="text-base font-bold text-slate-800 mb-4">{t('appearance.title')}</h3>
         <div className="mb-5">
-          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Nazwa restauracji</label>
+          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">{t('appearance.restaurantName')}</label>
           <div className="flex items-center gap-3">
             <input
               type="text"
-              placeholder="Np. Mamma Mia"
+              placeholder={t('appearance.restaurantNamePlaceholder')}
               value={restaurantName}
               onChange={(e) => setRestaurantName(e.target.value)}
               className="w-full max-w-sm px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -349,13 +352,13 @@ export const MenuManager: React.FC<Props> = ({
               disabled={nameSaving || !menuUserId}
               className="px-4 py-2.5 rounded-lg text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 whitespace-nowrap"
             >
-              {nameSaving ? 'Zapisywanie…' : nameSaved ? 'Zapisano ✓' : 'Zapisz nazwę'}
+              {nameSaving ? t('appearance.saving') : nameSaved ? t('appearance.saved') : t('appearance.saveName')}
             </button>
           </div>
         </div>
         <div className="flex flex-wrap items-end gap-6">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Kolor główny</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('appearance.primaryColor')}</label>
             <div className="flex items-center gap-2">
               <input
                 type="color"
@@ -367,7 +370,7 @@ export const MenuManager: React.FC<Props> = ({
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Kolor tła</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('appearance.backgroundColor')}</label>
             <div className="flex items-center gap-2">
               <input
                 type="color"
@@ -379,7 +382,7 @@ export const MenuManager: React.FC<Props> = ({
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Font menu</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('appearance.menuFont')}</label>
             <select
               value={fontFamily}
               onChange={(e) => setFontFamily(e.target.value)}
@@ -398,10 +401,10 @@ export const MenuManager: React.FC<Props> = ({
               className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed
                 bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95"
             >
-              {colorSaving ? 'Zapisywanie…' : colorSaved ? 'Zapisano ✓' : 'Zapisz kolory'}
+              {colorSaving ? t('appearance.saving') : colorSaved ? t('appearance.saved') : t('appearance.saveColors')}
             </button>
             {isBadContrast(primaryColor, secondaryColor) && (
-              <p className="text-xs text-amber-600 font-semibold">⚠️ Wybierz kontrastowe kolory</p>
+              <p className="text-xs text-amber-600 font-semibold">{t('appearance.contrastWarning')}</p>
             )}
           </div>
         </div>
@@ -414,10 +417,10 @@ export const MenuManager: React.FC<Props> = ({
             className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-slate-900 text-white hover:bg-slate-800"
           >
             {categoriesSaving
-              ? 'Zatwierdzanie zakładek...'
+              ? t('appearance.committingCategories')
               : categoriesSaved
-                ? 'Zakładki zapisane i przetłumaczone ✓'
-                : 'Zatwierdź nazwy kategorii'}
+                ? t('appearance.categoriesCommitted')
+                : t('appearance.commitCategories')}
           </button>
           {categoriesError && (
             <p className="text-xs font-semibold text-red-600">{categoriesError}</p>
@@ -429,13 +432,13 @@ export const MenuManager: React.FC<Props> = ({
         <table className="w-full text-left">
           <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
             <tr>
-              <th className="px-6 py-4">Produkt</th>
-              <th className="px-6 py-4">Kategoria</th>
-              <th className="px-6 py-4">Widoczność</th>
-              {showHotelHub && <th className="px-6 py-4">Hotel Hub</th>}
-              <th className="px-6 py-4">Cena</th>
-              <th className="px-6 py-4">Social Link</th>
-              <th className="px-6 py-4 text-right">Akcje</th>
+              <th className="px-6 py-4">{t('table.product')}</th>
+              <th className="px-6 py-4">{t('table.category')}</th>
+              <th className="px-6 py-4">{t('table.visibility')}</th>
+              {showHotelHub && <th className="px-6 py-4">{t('table.hotelHub')}</th>}
+              <th className="px-6 py-4">{t('table.price')}</th>
+              <th className="px-6 py-4">{t('table.socialLink')}</th>
+              <th className="px-6 py-4 text-right">{t('table.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -483,12 +486,12 @@ export const MenuManager: React.FC<Props> = ({
                             }}
                             className="w-44 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
                           >
-                            <option value="">— brak —</option>
+                            <option value="">{t('category.none')}</option>
                             {menuCategories.map((cat) => (
-                              <option key={cat} value={cat}>{cat}</option>
+                              <option key={cat} value={cat}>{getCategoryLabel(cat)}</option>
                             ))}
                             <option value={CUSTOM_CATEGORY_VALUE} className="font-bold italic">
-                              Nowa kategoria (wpisz)
+                              {t('category.newCustom')}
                             </option>
                           </select>
 
@@ -496,7 +499,7 @@ export const MenuManager: React.FC<Props> = ({
                             type="button"
                             onClick={() => setCategoryManagerOpenForDishId((prev) => (prev === dish.id ? null : dish.id))}
                             className="p-2 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors"
-                            title="Zarządzaj kategoriami"
+                            title={t('category.manage')}
                           >
                             <Settings size={16} />
                           </button>
@@ -505,7 +508,7 @@ export const MenuManager: React.FC<Props> = ({
                         {categoryManagerOpenForDishId === dish.id && (
                           <div className="w-[18.5rem] rounded-xl border border-slate-200 bg-white shadow-lg p-3">
                             <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
-                              Edytuj nazwę
+                              {t('category.editName')}
                             </div>
                             <div className="space-y-1 max-h-48 overflow-auto pr-1">
                               {menuCategories.map((cat) => {
@@ -530,7 +533,7 @@ export const MenuManager: React.FC<Props> = ({
                                             }
                                           }}
                                           className="flex-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                          placeholder="Nowa nazwa kategorii"
+                                          placeholder={t('category.newNamePlaceholder')}
                                         />
                                         <button
                                           type="button"
@@ -541,13 +544,13 @@ export const MenuManager: React.FC<Props> = ({
                                           }}
                                           className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wide rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
                                         >
-                                          Zapisz
+                                          {t('category.save')}
                                         </button>
                                         <button
                                           type="button"
                                           onClick={() => deleteCategory(cat)}
                                           className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                          title="Usuń kategorię"
+                                          title={t('category.delete')}
                                         >
                                           <Trash2 size={14} />
                                         </button>
@@ -555,7 +558,7 @@ export const MenuManager: React.FC<Props> = ({
                                     ) : (
                                       <>
                                         <div className="flex-1 text-xs font-semibold text-slate-700 truncate" title={cat}>
-                                          {cat}
+                                          {getCategoryLabel(cat)}
                                         </div>
                                         <div className="flex items-center gap-0.5 shrink-0">
                                           <button
@@ -566,7 +569,7 @@ export const MenuManager: React.FC<Props> = ({
                                               setCategoryEditDraft(cat);
                                             }}
                                             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors"
-                                            title="Edycja"
+                                            title={t('category.edit')}
                                           >
                                             <Settings size={14} />
                                           </button>
@@ -574,7 +577,7 @@ export const MenuManager: React.FC<Props> = ({
                                             type="button"
                                             onClick={() => deleteCategory(cat)}
                                             className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                            title="Usuń kategorię"
+                                            title={t('category.delete')}
                                           >
                                             <Trash2 size={14} />
                                           </button>
@@ -595,7 +598,7 @@ export const MenuManager: React.FC<Props> = ({
                                 }}
                                 className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wide rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200"
                               >
-                                Zamknij
+                                {t('category.close')}
                               </button>
                             </div>
                           </div>
@@ -619,7 +622,7 @@ export const MenuManager: React.FC<Props> = ({
                               onUpdateCategory(dish.id, trimmed ? trimmed : null);
                               if (trimmed) ensureCategoryExists(trimmed);
                             }}
-                            placeholder="Wpisz własną kategorię"
+                            placeholder={t('category.customPlaceholder')}
                             className="w-44 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           />
                         )}
@@ -638,10 +641,10 @@ export const MenuManager: React.FC<Props> = ({
                         ${dish.isOnline
                           ? 'bg-green-100 text-green-700 hover:bg-green-200'
                           : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}
-                      title="Menu restauracji"
+                      title={t('visibility.restaurantTitle')}
                     >
                       {dish.isOnline ? <Eye size={14} /> : <EyeOff size={14} />}
-                      Restauracja
+                      {t('visibility.restaurant')}
                     </button>
                     {showHotelHub && onToggleHotelHub && (
                       <button
@@ -650,7 +653,7 @@ export const MenuManager: React.FC<Props> = ({
                           ${dish.visibleInHotelHub
                             ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
                             : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}
-                        title="Hotel Hub"
+                        title={t('visibility.hotelHubTitle')}
                       >
                         {dish.visibleInHotelHub ? <Eye size={14} /> : <EyeOff size={14} />}
                         Hotel Hub
@@ -668,12 +671,12 @@ export const MenuManager: React.FC<Props> = ({
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
                       >
                         <Building2 size={14} />
-                        Sekcje
+                        {t('visibility.sections')}
                       </button>
                       {hubAssignOpenFor === dish.id && hubData && onUpdateHubAssignments && (
                         <div className="absolute left-0 top-full mt-2 z-20 w-72 rounded-xl border border-slate-200 bg-white shadow-xl p-4 space-y-3">
                           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                            Przypisz do sekcji
+                            {t('visibility.assignSections')}
                           </p>
                           {hubSections.map((section) => {
                             const cats = sortHotelHubCategories(
@@ -713,7 +716,7 @@ export const MenuManager: React.FC<Props> = ({
                                   }}
                                   className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-200"
                                 >
-                                  <option value="">— brak —</option>
+                                  <option value="">{t('category.none')}</option>
                                   {cats.map((c) => (
                                     <option key={c.id} value={c.id}>{c.name}</option>
                                   ))}
@@ -726,11 +729,11 @@ export const MenuManager: React.FC<Props> = ({
                             onClick={() => setHubAssignOpenFor(null)}
                             className="w-full py-1.5 text-[10px] font-black uppercase text-slate-500"
                           >
-                            Zamknij
+                            {t('category.close')}
                           </button>
                           {!dish.visibleInHotelHub && (
                             <p className="text-[11px] text-amber-700 bg-amber-50 rounded-lg px-3 py-2 leading-snug">
-                              Po przypisaniu danie zostanie automatycznie włączone w Hotel Hub.
+                              {t('visibility.autoEnableHotelHub')}
                             </p>
                           )}
                         </div>
@@ -753,7 +756,7 @@ export const MenuManager: React.FC<Props> = ({
                         else if (e.key === 'Escape') { setEditingPriceId(null); setDraftPrice(''); }
                       }}
                       className="w-24 px-2 py-1 text-xs font-medium rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-right"
-                      placeholder="np. 39"
+                      placeholder={t('price.placeholder')}
                     />
                   ) : (
                     <button
@@ -762,8 +765,8 @@ export const MenuManager: React.FC<Props> = ({
                       className="inline-flex items-center justify-end gap-1 min-w-[3.5rem] text-xs font-semibold text-slate-700 hover:text-slate-900"
                     >
                       {dish.menuPrice
-                        ? <span className="tabular-nums">{dish.menuPrice} zł</span>
-                        : <span className="text-slate-400 italic">Dodaj cenę</span>}
+                        ? <span className="tabular-nums">{dish.menuPrice} {t('price.currency')}</span>
+                        : <span className="text-slate-400 italic">{t('price.add')}</span>}
                     </button>
                   )}
                 </td>
@@ -776,7 +779,7 @@ export const MenuManager: React.FC<Props> = ({
                       type="text"
                       value={dish.videoUrl || ''}
                       onChange={(e) => onUpdateVideo(dish.id, e.target.value)}
-                      placeholder="YT, TikTok, Instagram..."
+                      placeholder={t('socialPlaceholder')}
                       className="w-full pl-7 pr-2 py-1.5 bg-slate-100 border-none rounded-lg text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
                     />
                   </div>
@@ -788,7 +791,7 @@ export const MenuManager: React.FC<Props> = ({
                     <button
                       onClick={() => onSelect(dish.id)}
                       className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
-                      title="Edytuj szczegóły"
+                      title={t('actions.editDetails')}
                     >
                       <Edit size={18} />
                     </button>
@@ -796,16 +799,16 @@ export const MenuManager: React.FC<Props> = ({
                       onClick={() => menuUrl && window.open(`${menuUrl}/dish/${dish.id}`, '_blank')}
                       disabled={!menuUserId}
                       className="p-2 text-slate-400 hover:text-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Podgląd w menu"
+                      title={t('actions.previewInMenu')}
                     >
                       <ExternalLink size={18} />
                     </button>
                     <button
                       onClick={() => {
-                        if (confirm('Czy na pewno chcesz usunąć to danie?')) onDelete(dish.id);
+                        if (confirm(t('confirm.deleteDish'))) onDelete(dish.id);
                       }}
                       className="p-2 text-slate-400 hover:text-red-500 transition-colors"
-                      title="Usuń danie"
+                      title={t('actions.deleteDish')}
                     >
                       <Trash2 size={18} />
                     </button>
@@ -817,7 +820,7 @@ export const MenuManager: React.FC<Props> = ({
             {dishes.length === 0 && (
               <tr>
                 <td colSpan={showHotelHub ? 7 : 6} className="px-8 py-12 text-center text-slate-400 font-medium">
-                  Brak dań w menu. Przejdź do Chef's Studio, aby stworzyć pierwsze danie.
+                  {t('empty')}
                 </td>
               </tr>
             )}

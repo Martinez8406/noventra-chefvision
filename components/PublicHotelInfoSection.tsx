@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ExternalLink, MapPin, Plus, Trash2 } from 'lucide-react';
 import { HotelHubInfoAttraction, HotelHubInfoFields, HotelHubSection, PublicMenuLocale } from '../types';
 import {
@@ -167,7 +168,9 @@ export const HotelInfoFieldsEditor: React.FC<{
   fields: HotelHubInfoFields;
   onChange: (fields: HotelHubInfoFields) => void;
 }> = ({ fields, onChange }) => {
-  const defs = getHotelInfoFieldDefs('pl');
+  const { t, i18n } = useTranslation('hotelHub');
+  const locale: PublicMenuLocale = i18n.language.startsWith('en') ? 'en' : 'pl';
+  const defs = getHotelInfoFieldDefs(locale);
   const contactDefs = defs.filter((d) => d.group === 'contact');
   const hoursDefs = defs.filter((d) => d.group === 'hours');
   const wifiDefs = defs.filter((d) => d.group === 'wifi');
@@ -216,19 +219,17 @@ export const HotelInfoFieldsEditor: React.FC<{
 
   return (
     <div className="space-y-6 pt-2 border-t border-slate-100">
-      {renderFields(contactDefs, 'Kontakt')}
-      {renderFields(hoursDefs, 'Ważne godziny')}
-      {renderFields(wifiDefs, 'Wi-Fi')}
-      {renderFields(transportDefs, 'Transport', '🚕')}
+      {renderFields(contactDefs, t('infoFields.contact'))}
+      {renderFields(hoursDefs, t('infoFields.hours'))}
+      {renderFields(wifiDefs, t('infoFields.wifi'))}
+      {renderFields(transportDefs, t('infoFields.transport'), '🚕')}
 
       <div className="space-y-4">
         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
           <span>🏛</span>
-          Atrakcje w okolicy
+          {t('infoFields.attractions')}
         </p>
-        <p className="text-xs text-slate-500">
-          Dodaj miejsca z linkiem do Google Maps (opcjonalnie — bez linku wyszukamy miejsce po nazwie).
-        </p>
+        <p className="text-xs text-slate-500">{t('infoFields.attractionsHelp')}</p>
         <div className="space-y-3">
           {attractions.map((item, index) => (
             <div
@@ -236,22 +237,22 @@ export const HotelInfoFieldsEditor: React.FC<{
               className="grid gap-3 p-4 rounded-2xl border border-slate-200 bg-slate-50/60 md:grid-cols-[1fr_1fr_auto]"
             >
               <label className="block space-y-1.5">
-                <span className="text-xs font-bold text-slate-700">Nazwa</span>
+                <span className="text-xs font-bold text-slate-700">{t('infoFields.nameLabel')}</span>
                 <input
                   type="text"
                   value={item.name}
                   onChange={(e) => updateAttraction(index, { name: e.target.value })}
-                  placeholder="np. Rynek Główny"
+                  placeholder={t('infoFields.namePlaceholder')}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-chef-gold/40 outline-none"
                 />
               </label>
               <label className="block space-y-1.5">
-                <span className="text-xs font-bold text-slate-700">Link Google Maps</span>
+                <span className="text-xs font-bold text-slate-700">{t('infoFields.mapsLabel')}</span>
                 <input
                   type="url"
                   value={item.mapsUrl || ''}
                   onChange={(e) => updateAttraction(index, { mapsUrl: e.target.value })}
-                  placeholder="https://maps.google.com/…"
+                  placeholder={t('infoFields.mapsPlaceholder')}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-chef-gold/40 outline-none"
                 />
               </label>
@@ -259,7 +260,7 @@ export const HotelInfoFieldsEditor: React.FC<{
                 type="button"
                 onClick={() => removeAttraction(index)}
                 className="self-end p-3 rounded-xl border border-slate-200 text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-100"
-                title="Usuń atrakcję"
+                title={t('infoFields.removeAttraction')}
               >
                 <Trash2 size={16} />
               </button>
@@ -272,7 +273,7 @@ export const HotelInfoFieldsEditor: React.FC<{
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-slate-300 text-sm font-bold text-slate-600 hover:border-chef-gold hover:text-chef-gold"
         >
           <Plus size={16} />
-          Dodaj atrakcję
+          {t('infoFields.addAttraction')}
         </button>
       </div>
     </div>

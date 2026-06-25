@@ -1,0 +1,89 @@
+{
+  "loadingProfile": "Loading profile...",
+  "loadingHint": "Chef’s Studio will be available in a moment.",
+  "freePlan": {
+    "title": "Free plan",
+    "description": "No AI. Upload a photo and use “Add without enhancement”. On the digital menu: Powered by Chefvision.pl.",
+    "unlockPremium": "Unlock Premium"
+  },
+  "trial": {
+    "noTokensTitle": "Trial tokens used up",
+    "noTokensDescription": "Trial runs for 14 days — own photos without AI. Premium restores generation.",
+    "activeTitle": "Trial mode (14 days)",
+    "activeDescription": "Full Premium quality — no watermark, 50 tokens. After trial: Premium or free plan."
+  },
+  "errorTitle": "Error",
+  "errors": {
+    "imageProcessing": "Image processing error.",
+    "uploadDishStep1": "Upload a dish photo (step 1).",
+    "selectStyleStep2": "Choose a photo style (step 2).",
+    "noTrialTokens": "No trial tokens left. You can add your own photos or upgrade to Premium.",
+    "visualization": "Visualisation error.",
+    "uploadFirstStep1": "Upload a dish photo first (step 1).",
+    "shareUnavailable": "File sharing is not available in this browser. Use “Download”, then add the file in your chosen app."
+  },
+  "steps": {
+    "uploadDish": "Upload dish photo",
+    "selectStyle": "Choose photo style"
+  },
+  "upload": {
+    "uploadedAlt": "Uploaded dish",
+    "readyTitle": "Photo ready",
+    "readyFreeHint": "Use “Add without enhancement” or upgrade to Premium.",
+    "readyNextStep": "Go to step 2 — choose a style.",
+    "removePhoto": "Remove photo",
+    "dropzoneTitle": "Drag a photo here or click to choose",
+    "dropzoneHint": "JPG / PNG / WEBP · up to 1 MB (we compress automatically)"
+  },
+  "quickAdd": {
+    "noAi": "No AI",
+    "titleLine1": "Add photo",
+    "titleLine2": "without enhancement",
+    "disabledTitle": "Upload a photo in step 1 first",
+    "enabledTitle": "Add photo without enhancement"
+  },
+  "styles": {
+    "fine_dining": "Fine Dining",
+    "rustic": "Rustic",
+    "street_food": "Street Food",
+    "lifestyle": "Lifestyle",
+    "scrollAria": "Scroll photo styles"
+  },
+  "generate": {
+    "enhancing": "ENHANCING...",
+    "unlockPremium": "UNLOCK AI — PREMIUM",
+    "noTrialTokens": "NO TRIAL TOKENS",
+    "enhance": "ENHANCE PHOTO"
+  },
+  "preview": {
+    "title": "Preview ({{count}}/{{max}})",
+    "clear": "Clear",
+    "emptyTitle": "Your enhanced photo will appear here",
+    "emptyHint": "Each “Enhance photo” click adds a variant (max {{max}}).",
+    "variantAlt": "Variant",
+    "removeImage": "Remove image",
+    "download": "Download",
+    "share": "Share",
+    "saveToMenu": "Save to menu"
+  },
+  "stickyBar": {
+    "saveToMenu": "Save to menu",
+    "tryAgain": "Try again"
+  },
+  "saveModal": {
+    "title": "Save to menu",
+    "close": "Close",
+    "previewAlt": "Preview",
+    "dishName": "Dish name",
+    "dishNamePlaceholder": "e.g. Beef Wellington",
+    "save": "SAVE"
+  },
+  "shareModal": {
+    "title": "Share",
+    "close": "Close",
+    "previewAlt": "Preview",
+    "shareSystem": "Share via system",
+    "downloadFile": "Download file"
+  },
+  "shareDishName": "Dish"
+}

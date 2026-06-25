@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { HotelHubCategory, HotelHubData, HotelHubInfoFields, HotelHubSection } from '../types';
 import { hotelHubDb } from '../services/hotelHubService';
-import { HOTEL_HUB_SERVICE_NOTE_TEMPLATES, sortHotelHubCategories, sortHotelHubSections } from '../utils/hotelHub';
-import { EMPTY_HOTEL_INFO_FIELDS, HOTEL_INFO_SECTION_DEFAULT_NAME, isHotelInfoSection, normalizeHotelInfoFields } from '../utils/hotelHubInfo';
+import { sortHotelHubCategories, sortHotelHubSections } from '../utils/hotelHub';
+import { EMPTY_HOTEL_INFO_FIELDS, isHotelInfoSection, normalizeHotelInfoFields } from '../utils/hotelHubInfo';
 import { HOTEL_HUB_ICON_SRC } from '../constants';
 import { compressImageForUpload } from '../services/imageService';
 import { HotelHubSectionIcon } from './HotelHubSectionIcon';
@@ -36,7 +37,12 @@ const emptySection = (sortOrder: number): Partial<HotelHubSection> & { name: str
   sortOrder,
 });
 
+const SERVICE_NOTE_TEMPLATE_KEYS = ['0', '1'] as const;
+
+type HubErrorKey = 'infoSectionMigration' | 'planRequired' | 'addInfoSectionFailed';
+
 export const HotelHubManager: React.FC<Props> = ({ userId }) => {
+  const { t } = useTranslation('hotelHub');
   const [hubData, setHubData] = useState<HotelHubData>({
     enabled: false,
     sections: [],
@@ -49,7 +55,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
   const [editingSection, setEditingSection] = useState<(Partial<HotelHubSection> & { name: string }) | null>(null);
   const [newCategoryName, setNewCategoryName] = useState<Record<string, string>>({});
   const [uploadingHero, setUploadingHero] = useState(false);
-  const [infoSectionError, setInfoSectionError] = useState<string | null>(null);
+  const [infoSectionErrorKey, setInfoSectionErrorKey] = useState<HubErrorKey | null>(null);
   const heroInputRef = useRef<HTMLInputElement>(null);
 
   const reload = useCallback(async () => {
@@ -59,7 +65,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
       return;
     }
     setLoading(true);
-    setInfoSectionError(null);
+    setInfoSectionErrorKey(null);
     try {
       const data = await hotelHubDb.getHotelHubData(userId);
       if (data.enabled) {
@@ -68,9 +74,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
         } else {
           const created = await hotelHubDb.ensureHotelInfoSection(userId);
           if (!created && !data.sections.some((s) => isHotelInfoSection(s))) {
-            setInfoSectionError(
-              'Nie udało się dodać sekcji „Informacje o hotelu”. Uruchom migrację supabase/hotel_hub_info_section.sql w Supabase SQL Editor.',
-            );
+            setInfoSectionErrorKey('infoSectionMigration');
           }
         }
       }
@@ -93,7 +97,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
       const next = !hubData.enabled;
       const ok = await hotelHubDb.setHotelHubEnabled(userId, next);
       if (!ok && next) {
-        setInfoSectionError('Hotel Hub wymaga planu Trial lub Premium.');
+        setInfoSectionErrorKey('planRequired');
         return;
       }
       if (next) {
@@ -127,7 +131,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
   };
 
   const handleDeleteSection = async (sectionId: string) => {
-    if (!userId || !confirm('Usunąć sekcję wraz z kategoriami i przypisaniami?')) return;
+    if (!userId || !confirm(t('sections.deleteConfirm'))) return;
     setSaving(true);
     try {
       await hotelHubDb.deleteSection(userId, sectionId);
@@ -178,7 +182,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
       const url = await hotelHubDb.uploadSectionHeroImage(userId, dataUrl);
       setEditingSection((prev) => (prev ? { ...prev, heroImageUrl: url } : prev));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Nie udało się wgrać zdjęcia.');
+      alert(err instanceof Error ? err.message : t('errors.heroUploadFailed'));
     } finally {
       setUploadingHero(false);
     }
@@ -187,13 +191,11 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
   const handleAddInfoSection = async () => {
     if (!userId) return;
     setSaving(true);
-    setInfoSectionError(null);
+    setInfoSectionErrorKey(null);
     try {
       const created = await hotelHubDb.ensureHotelInfoSection(userId);
       if (!created) {
-        setInfoSectionError(
-          'Nie udało się dodać sekcji. Uruchom migrację supabase/hotel_hub_info_section.sql w Supabase SQL Editor i spróbuj ponownie.',
-        );
+        setInfoSectionErrorKey('addInfoSectionFailed');
         return;
       }
       await reload();
@@ -210,7 +212,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
   if (!userId) {
     return (
       <div className="bg-white rounded-[32px] border border-slate-100 p-8 text-center text-slate-500">
-        Zaloguj się, aby zarządzać Hotel Hub.
+        {t('loginRequired')}
       </div>
     );
   }
@@ -229,11 +231,9 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
         <div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight italic flex items-center gap-3">
             <Building2 className="text-chef-gold" size={32} />
-            Hotel Hub
+            {t('title')}
           </h2>
-          <p className="text-slate-500 text-sm mt-2 max-w-xl">
-            Prezentuj Room Service, Bar, Spa i własne sekcje gościom — bez duplikowania dań z menu restauracji.
-          </p>
+          <p className="text-slate-500 text-sm mt-2 max-w-xl">{t('intro')}</p>
         </div>
       </div>
 
@@ -247,26 +247,26 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
             className="mt-1 w-5 h-5 rounded border-slate-300 text-chef-gold focus:ring-chef-gold"
           />
           <div>
-            <span className="font-black text-slate-900">Włącz Hotel Hub</span>
-            <p className="text-sm text-slate-500 mt-1">
-              Gdy wyłączone — Hotel Hub jest ukryty w Live Menu. Gdy włączone — goście zobaczą zakładkę obok menu restauracji.
-            </p>
+            <span className="font-black text-slate-900">{t('enableLabel')}</span>
+            <p className="text-sm text-slate-500 mt-1">{t('enableHelp')}</p>
           </div>
         </label>
       </div>
 
       {hubData.enabled && (
         <>
-          {infoSectionError && (
+          {infoSectionErrorKey && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
-              {infoSectionError}
+              {t(`errors.${infoSectionErrorKey}`)}
             </div>
           )}
 
           {!hasInfoSection && (
             <div className="rounded-2xl border border-chef-gold/30 bg-chef-cream/40 px-5 py-4 flex flex-wrap items-center justify-between gap-4">
               <p className="text-sm text-slate-700">
-                Brak sekcji <strong>{HOTEL_INFO_SECTION_DEFAULT_NAME}</strong> — dodaj ją, aby goście widzieli kontakt i godziny hotelu.
+                {t('infoSection.missingBannerBefore')}{' '}
+                <strong>{t('infoSection.defaultName')}</strong>{' '}
+                {t('infoSection.missingBannerAfter')}
               </p>
               <button
                 type="button"
@@ -275,13 +275,13 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-chef-gold text-white text-sm font-black hover:opacity-90 disabled:opacity-50"
               >
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                Dodaj sekcję informacyjną
+                {t('infoSection.addButton')}
               </button>
             </div>
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <h3 className="text-lg font-black text-slate-800 italic">Sekcje</h3>
+            <h3 className="text-lg font-black text-slate-800 italic">{t('sections.title')}</h3>
             <button
               type="button"
               onClick={() => {
@@ -291,38 +291,38 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-chef-dark text-white text-sm font-black hover:bg-chef-dark2 transition-colors"
             >
               <Plus size={18} />
-              Dodaj własną sekcję
+              {t('sections.addCustom')}
             </button>
           </div>
 
           {editingSection && (
             <div className="bg-white rounded-[32px] border-2 border-chef-gold/30 shadow-lg p-6 md:p-8 space-y-6">
               <h4 className="font-black text-slate-900 text-lg">
-                {editingSection.id ? 'Edytuj sekcję' : 'Nowa sekcja'}
+                {editingSection.id ? t('sections.edit') : t('sections.new')}
               </h4>
 
               <div className="grid md:grid-cols-2 gap-5">
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nazwa sekcji</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('sections.nameLabel')}</label>
                   <input
                     type="text"
                     value={editingSection.name}
                     onChange={(e) => setEditingSection({ ...editingSection, name: e.target.value })}
-                    placeholder="np. Pool Bar, Wellness, Mini Bar"
+                    placeholder={t('sections.namePlaceholder')}
                     className="mt-1.5 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-chef-gold/40 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ikona sekcji</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('sections.iconLabel')}</label>
                   <div className="mt-2 flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50">
                     <HotelHubSectionIcon icon={editingSection.iconEmoji || HOTEL_HUB_ICON_SRC} size="lg" />
-                    <span className="text-xs text-slate-500">Ikona hotelu — wspólna dla wszystkich sekcji</span>
+                    <span className="text-xs text-slate-500">{t('sections.iconHelp')}</span>
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Zdjęcie hero</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('sections.heroLabel')}</label>
                 <div className="mt-2 flex flex-wrap items-center gap-4">
                   {editingSection.heroImageUrl && (
                     <img
@@ -338,7 +338,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50"
                   >
                     {uploadingHero ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}
-                    {editingSection.heroImageUrl ? 'Zmień zdjęcie' : 'Dodaj zdjęcie'}
+                    {editingSection.heroImageUrl ? t('sections.changeHero') : t('sections.addHero')}
                   </button>
                   <input ref={heroInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => void handleHeroUpload(e)} />
                 </div>
@@ -354,7 +354,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
               ) : (
                 <>
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Dostępność</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">{t('sections.availabilityLabel')}</label>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -363,7 +363,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                       checked={editingSection.availabilityMode === '24h'}
                       onChange={() => setEditingSection({ ...editingSection, availabilityMode: '24h' })}
                     />
-                    <span className="text-sm font-medium text-slate-700">Dostępne 24h</span>
+                    <span className="text-sm font-medium text-slate-700">{t('sections.available24h')}</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -372,19 +372,19 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                       checked={editingSection.availabilityMode === 'custom'}
                       onChange={() => setEditingSection({ ...editingSection, availabilityMode: 'custom' })}
                     />
-                    <span className="text-sm font-medium text-slate-700">Własne godziny</span>
+                    <span className="text-sm font-medium text-slate-700">{t('sections.customHours')}</span>
                   </label>
                 </div>
                 {editingSection.availabilityMode === 'custom' && (
                   <div className="flex flex-wrap items-center gap-3 mt-3">
-                    <span className="text-sm text-slate-500">Od</span>
+                    <span className="text-sm text-slate-500">{t('sections.from')}</span>
                     <input
                       type="time"
                       value={editingSection.availabilityFrom || '07:00'}
                       onChange={(e) => setEditingSection({ ...editingSection, availabilityFrom: e.target.value })}
                       className="px-3 py-2 rounded-xl border border-slate-200 text-sm"
                     />
-                    <span className="text-sm text-slate-500">Do</span>
+                    <span className="text-sm text-slate-500">{t('sections.to')}</span>
                     <input
                       type="time"
                       value={editingSection.availabilityTo || '22:00'}
@@ -396,16 +396,21 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Notatki serwisowe</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('sections.serviceNotesLabel')}</label>
                 <div className="flex flex-wrap gap-2 mt-2 mb-2">
-                  {HOTEL_HUB_SERVICE_NOTE_TEMPLATES.map((tpl) => (
+                  {SERVICE_NOTE_TEMPLATE_KEYS.map((key) => (
                     <button
-                      key={tpl}
+                      key={key}
                       type="button"
-                      onClick={() => setEditingSection({ ...editingSection, serviceNotes: tpl })}
+                      onClick={() =>
+                        setEditingSection({
+                          ...editingSection,
+                          serviceNotes: t(`serviceNoteTemplates.${key}`),
+                        })
+                      }
                       className="px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-chef-cream border border-slate-200"
                     >
-                      Szablon
+                      {t('sections.templateButton')}
                     </button>
                   ))}
                 </div>
@@ -413,7 +418,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                   value={editingSection.serviceNotes || ''}
                   onChange={(e) => setEditingSection({ ...editingSection, serviceNotes: e.target.value })}
                   rows={2}
-                  placeholder="Własny tekst dla gości…"
+                  placeholder={t('sections.serviceNotesPlaceholder')}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-chef-gold/40 outline-none resize-none"
                 />
               </div>
@@ -427,7 +432,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                   onChange={(e) => setEditingSection({ ...editingSection, isVisible: e.target.checked })}
                   className="w-4 h-4 rounded border-slate-300 text-chef-gold"
                 />
-                <span className="text-sm font-bold text-slate-700">Widoczna dla gości</span>
+                <span className="text-sm font-bold text-slate-700">{t('sections.visibleForGuests')}</span>
               </label>
 
               <div className="flex flex-wrap gap-3 pt-2">
@@ -438,14 +443,14 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-chef-gold text-white font-black text-sm hover:opacity-90 disabled:opacity-50"
                 >
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                  Zapisz sekcję
+                  {t('sections.save')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditingSection(null)}
                   className="px-6 py-3 rounded-2xl bg-slate-100 text-slate-600 font-bold text-sm"
                 >
-                  Anuluj
+                  {t('sections.cancel')}
                 </button>
               </div>
             </div>
@@ -470,14 +475,17 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                         <h4 className="font-black text-slate-900">{section.name}</h4>
                         {!section.isVisible && (
                           <span className="text-[10px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
-                            Ukryta
+                            {t('sections.hidden')}
                           </span>
                         )}
                       </div>
                       <p className="text-xs text-slate-400 mt-1">
                         {isHotelInfoSection(section)
-                          ? 'Sekcja informacyjna'
-                          : `${sectionCategories.length} kategorii · ${assignedDishCount(section.id)} przypisanych dań`}
+                          ? t('sections.infoType')
+                          : t('sections.stats', {
+                              count: sectionCategories.length,
+                              dishes: assignedDishCount(section.id),
+                            })}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -489,7 +497,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                         }}
                         className="px-4 py-2 rounded-xl text-xs font-black bg-slate-100 text-slate-700 hover:bg-slate-200"
                       >
-                        Edytuj
+                        {t('sections.editShort')}
                       </button>
                       {!isHotelInfoSection(section) && (
                       <button
@@ -505,7 +513,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                         type="button"
                         onClick={() => void handleDeleteSection(section.id)}
                         className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50"
-                        title="Usuń sekcję"
+                        title={t('sections.deleteTitle')}
                       >
                         <Trash2 size={18} />
                       </button>
@@ -515,7 +523,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                   {isExpanded && !isHotelInfoSection(section) && (
                     <div className="border-t border-slate-100 p-5 md:p-6 bg-slate-50/50 space-y-4">
                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                        Kategorie sekcji
+                        {t('sections.categoriesTitle')}
                       </span>
                       <div className="flex flex-wrap gap-2">
                         {sectionCategories.map((cat: HotelHubCategory) => (
@@ -543,7 +551,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') void handleAddCategory(section.id);
                           }}
-                          placeholder="Nowa kategoria…"
+                          placeholder={t('sections.newCategoryPlaceholder')}
                           className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm"
                         />
                         <button
@@ -554,9 +562,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                           <Plus size={16} />
                         </button>
                       </div>
-                      <p className="text-xs text-slate-400">
-                        Przypisz dania do tej sekcji w zakładce Menu Cyfrowe — kolumna Hotel Hub.
-                      </p>
+                      <p className="text-xs text-slate-400">{t('sections.assignHint')}</p>
                     </div>
                   )}
                 </div>
@@ -565,9 +571,7 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
           </div>
 
           {sections.length === 0 && !editingSection && (
-            <p className="text-center text-slate-400 py-8">
-              Brak sekcji — włącz Hotel Hub ponownie lub dodaj własną sekcję.
-            </p>
+            <p className="text-center text-slate-400 py-8">{t('sections.empty')}</p>
           )}
         </>
       )}

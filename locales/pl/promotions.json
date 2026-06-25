@@ -1,0 +1,60 @@
+{
+  "title": "Recommendations & promotions",
+  "premiumRequired": "Sales recommendations require Premium.",
+  "unlockPremium": "Unlock Premium",
+  "intro": "Subtelne sugestie na kartach menu — bez przycisków zamówienia. Jedno danie = jeden typ rekomendacji.",
+  "loginRequired": "Zaloguj się, aby zarządzać rekomendacjami.",
+  "unknownDish": "Nieznane danie",
+  "disabled": "Wyłączone",
+  "edit": "Edytuj",
+  "delete": "Usuń",
+  "dish": "Danie",
+  "hasRecommendation": " (ma rekomendację)",
+  "recommendationType": "Typ rekomendacji",
+  "activeOnMenu": "Aktywna na menu",
+  "customHeader": "Własny tekst nagłówka (opcjonalnie)",
+  "priceOutsideBundle": "Cena poza zestawem (zł)",
+  "bundlePrice": "Cena zestawu (zł)",
+  "priceOutsidePlaceholder": "np 67",
+  "bundlePricePlaceholder": "np 55",
+  "savings": "Oszczędzasz {{percent}}% — wyliczone automatycznie",
+  "relatedProducts": "Produkty powiązane",
+  "productNamePlaceholder": "Nazwa (np. Pinot Grigio)",
+  "productDescPlaceholder": "Opis (np. Wytrawne białe wino)",
+  "productPricePlaceholder": "Cena (zł)",
+  "removeItem": "Usuń pozycję",
+  "addProduct": "Dodaj produkt",
+  "saveRecommendation": "Zapisz rekomendację",
+  "saving": "Zapisywanie…",
+  "cancel": "Anuluj",
+  "newRecommendation": "Nowa rekomendacja",
+  "allDishesHaveRecommendations": "Wszystkie dania mają rekomendacje",
+  "emptyHint": "Brak rekomendacji — dodaj pierwszą powyżej. Zapis trafia do bazy Supabase.",
+  "types": {
+    "polecane": {
+      "label": "Szef kuchni poleca",
+      "desc": "Chef's choice — pairing kelnerski",
+      "badge": "Szef kuchni poleca",
+      "defaultHeader": "Polecamy do tego dania"
+    },
+    "popularne": {
+      "label": "Najlepiej sprzedawane",
+      "desc": "Bestseller — social proof",
+      "badge": "Najlepiej sprzedawane",
+      "defaultHeader": "Inni często zamawiają z"
+    },
+    "zestaw": {
+      "label": "W zestawie taniej",
+      "desc": "Zestaw promocyjny z oszczędnością",
+      "badge": "W zestawie taniej",
+      "defaultHeader": "Najpopularniejszy zestaw"
+    }
+  },
+  "errors": {
+    "saveFailed": "Nie udało się zapisać rekomendacji. Sprawdź połączenie i uruchom migrację SQL w Supabase.",
+    "minOneProduct": "Dodaj co najmniej jeden produkt powiązany."
+  },
+  "confirm": {
+    "delete": "Usunąć tę rekomendację?"
+  }
+}

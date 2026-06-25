@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '../services/supabaseService';
 
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export const GoogleReviewsSettings: React.FC<Props> = ({ userId }) => {
+  const { t } = useTranslation('settings');
   const [placeId, setPlaceId] = useState('');
   const [isFetching, setIsFetching] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -30,7 +32,7 @@ export const GoogleReviewsSettings: React.FC<Props> = ({ userId }) => {
         .single();
 
       if (fetchError) {
-        setError(fetchError.message || 'Nie udało się pobrać Google Place ID.');
+        setError(fetchError.message || t('google.errors.fetchFailed'));
       } else {
         setPlaceId(data?.google_place_id || '');
       }
@@ -39,7 +41,7 @@ export const GoogleReviewsSettings: React.FC<Props> = ({ userId }) => {
     };
 
     fetchGooglePlaceId();
-  }, [userId]);
+  }, [userId, t]);
 
   const handleSave = async () => {
     if (!userId || !supabase) return;
@@ -56,7 +58,7 @@ export const GoogleReviewsSettings: React.FC<Props> = ({ userId }) => {
       .eq('id', userId);
 
     if (updateError) {
-      setError(updateError.message || 'Nie udało się zapisać Google Place ID.');
+      setError(updateError.message || t('google.errors.saveFailed'));
     } else {
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 2500);
@@ -67,20 +69,18 @@ export const GoogleReviewsSettings: React.FC<Props> = ({ userId }) => {
 
   return (
     <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100">
-      <h3 className="text-xl font-black text-slate-900">Opinie Google</h3>
-      <p className="mt-2 text-sm text-slate-500 max-w-3xl">
-        Wklej swój Google Place ID, aby umożliwić gościom szybkie wystawianie ocen bezpośrednio z Twojego menu.
-      </p>
+      <h3 className="text-xl font-black text-slate-900">{t('google.title')}</h3>
+      <p className="mt-2 text-sm text-slate-500 max-w-3xl">{t('google.intro')}</p>
 
       <div className="mt-6 space-y-3">
         <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block">
-          Google Place ID
+          {t('google.placeIdLabel')}
         </label>
         <input
           type="text"
           value={placeId}
           onChange={(e) => setPlaceId(e.target.value)}
-          placeholder="Np. ChIJN1t_tDeuEmsRUsoyG83frY4"
+          placeholder={t('google.placeIdPlaceholder')}
           disabled={!userId || isFetching || isSaving}
           className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 disabled:opacity-60 disabled:cursor-not-allowed"
         />
@@ -96,23 +96,19 @@ export const GoogleReviewsSettings: React.FC<Props> = ({ userId }) => {
           {isSaving ? (
             <>
               <Loader2 size={14} className="animate-spin" />
-              Zapisywanie...
+              {t('google.saving')}
             </>
           ) : isSaved ? (
-            'Zapisano ✓'
+            t('google.saved')
           ) : (
-            'Zapisz'
+            t('google.save')
           )}
         </button>
 
-        {isFetching && (
-          <span className="text-xs text-slate-500">Ładowanie aktualnego Place ID...</span>
-        )}
+        {isFetching && <span className="text-xs text-slate-500">{t('google.loadingPlaceId')}</span>}
       </div>
 
-      {error && (
-        <p className="mt-3 text-xs text-red-500 font-medium">{error}</p>
-      )}
+      {error && <p className="mt-3 text-xs text-red-500 font-medium">{error}</p>}
 
       <a
         href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder"
@@ -120,7 +116,7 @@ export const GoogleReviewsSettings: React.FC<Props> = ({ userId }) => {
         rel="noopener noreferrer"
         className="inline-block mt-5 text-xs font-semibold text-slate-600 hover:text-slate-900 underline underline-offset-2"
       >
-        Znajdź swoje Place ID
+        {t('google.findPlaceId')}
       </a>
     </div>
   );

@@ -1,0 +1,56 @@
+{
+  "title": "Smart Backdrop Studio",
+  "subtitle": "Upload a photo of your dining room and create an authentic scene for your dishes. AI separates the food and adds professional depth.",
+  "freePlanHint": "Free plan: no AI. Save your own backdrop. On the digital menu: Powered by Chefvision.pl.",
+  "sourceTitle": "Image source",
+  "uploadFromDisk": "Upload from disk",
+  "blurTitle": "Blur level",
+  "blur": {
+    "natural": {
+      "title": "Original",
+      "desc": "No blur effect"
+    },
+    "instagram": {
+      "title": "Instagram social style",
+      "desc": "Gentle blur that keeps your venue's character in the background. Ideal for quick posts and stories."
+    },
+    "fineDining": {
+      "title": "Bokeh effect (Premium)",
+      "desc": "Soft, blurred background that complements the subject without dominating the composition — a luxurious, editorial look."
+    }
+  },
+  "process": {
+    "processing": "PROCESSING...",
+    "prepare": "PREPARE BACKDROP",
+    "unavailable": "AI UNAVAILABLE"
+  },
+  "previewTitle": "Studio preview",
+  "preview": {
+    "clickToStart": "CLICK \"PREPARE BACKDROP\" TO START",
+    "choosePhoto": "Choose a photo to see the preview",
+    "processedAlt": "Processed backdrop",
+    "sourceAlt": "Source",
+    "readyBadge": "Backdrop ready to use"
+  },
+  "actions": {
+    "title": "Actions",
+    "saving": "SAVING...",
+    "saved": "BACKDROP SAVED IN STUDIO",
+    "save": "SAVE AS STUDIO BASE",
+    "saveHint": "You can use this backdrop in Chef's Studio. We store up to {{max}} backdrops in the cloud (oldest is replaced on the next save)."
+  },
+  "status": {
+    "label": "Status",
+    "ready": "Photo professionally prepared",
+    "waiting": "Waiting for action"
+  },
+  "tip": {
+    "label": "Chefvision tip",
+    "text": "Use this backdrop in Studio for a 100% realistic effect."
+  },
+  "errors": {
+    "noTokens": "No tokens — Backdrop studio AI requires trial with tokens or Premium.",
+    "processing": "AI processing error",
+    "saveFailed": "Could not save the backdrop."
+  }
+}

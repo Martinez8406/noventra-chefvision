@@ -1,0 +1,68 @@
+{
+  "title": "Edit menu",
+  "searchPlaceholder": "Search dish or ingredient...",
+  "filters": {
+    "all": "All",
+    "approved": "Standards",
+    "pending": "Pending"
+  },
+  "status": {
+    "approvedTitle": "Approved standard",
+    "pendingTitle": "Awaiting approval",
+    "needsApproval": "Needs approval",
+    "approved": "APPROVED",
+    "approve": "APPROVE STANDARD"
+  },
+  "actions": {
+    "downloadImage": "Download image to device",
+    "deleteImage": "Delete image"
+  },
+  "empty": {
+    "title": "No results",
+    "hint": "Try changing filters or your search phrase"
+  },
+  "dishPanel": {
+    "title": "Edit standard",
+    "uploadOwnPhoto": "Upload your own photo",
+    "compressing": "(compressing...)",
+    "nameAndDescription": "Name & marketing description",
+    "descriptionPlaceholder": "Short description guests will see...",
+    "ingredients": "Recipe ingredients",
+    "addIngredient": "Add ingredient...",
+    "technique": "Preparation notes (hidden from guests online — staff notes only)",
+    "techniquePlaceholder": "Add notes about the dish...",
+    "allergens": "Allergens",
+    "dietaryTags": "Dietary labels",
+    "spiceLevel": "Spice level",
+    "save": "SAVE STANDARD CHANGES",
+    "uploadError": "Could not upload the image."
+  },
+  "allergens": {
+    "Gluten": "Gluten",
+    "Laktoza": "Lactose",
+    "Orzechy": "Nuts",
+    "Skorupiaki": "Shellfish",
+    "Jaja": "Eggs",
+    "Ryby": "Fish",
+    "Soja": "Soya",
+    "Gorczyca": "Mustard"
+  },
+  "dietary": {
+    "vegetarian": { "label": "Vegetarian", "description": "" },
+    "vegan": { "label": "Vegan", "description": "" },
+    "halal": { "label": "Halal", "description": "Prepared according to Islamic guidelines." },
+    "kosher": { "label": "Kosher", "description": "Prepared according to Jewish dietary laws." },
+    "gluten_free": { "label": "Gluten-free", "description": "No gluten (trace amounts possible)." },
+    "lactose_free": { "label": "Lactose-free", "description": "Suitable for lactose intolerance." }
+  },
+  "spice": {
+    "mild": { "label": "Mild", "description": "For children or sensitive guests." },
+    "medium": { "label": "Medium spice", "description": "Moderate heat." },
+    "hot": { "label": "Very hot", "description": "For lovers of bold flavours." }
+  },
+  "errors": {
+    "deleteFailed": "Could not delete the dish. Please try again.",
+    "saveFailed": "Could not save the dish.",
+    "quotaExceeded": "The image is too large for this browser. Sign in (Supabase) to save photos in the cloud."
+  }
+}

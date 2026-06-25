@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   MAX_ENHANCE_PREVIEWS,
   ENHANCE_STYLES,
@@ -17,7 +18,7 @@ import {
   shareImageViaSystem,
 } from '../services/imageClient';
 import { GeneratorParams, UserTokens } from '../types';
-import { formatTokenStatus } from '../utils/tokens';
+import { formatTokenStatusI18n } from '../utils/formatTokenStatusI18n';
 import { WatermarkWrapper } from './WatermarkWrapper';
 import {
   AlertCircle,
@@ -75,10 +76,12 @@ function StepHeader({ n, title, required, disabled }: { n: number; title: string
 
 function EnhanceStyleCard({
   option,
+  label,
   active,
   onSelect,
 }: {
   option: (typeof ENHANCE_STYLES)[number];
+  label: string;
   active: boolean;
   onSelect: () => void;
 }) {
@@ -89,7 +92,7 @@ function EnhanceStyleCard({
       type="button"
       onClick={onSelect}
       aria-pressed={active}
-      title={option.label}
+      title={label}
       className={`group relative aspect-square h-[148px] w-[148px] overflow-hidden rounded-2xl border-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-chef-gold focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
         active
           ? 'border-chef-gold shadow-[0_0_0_3px_rgba(187,152,96,0.35)]'
@@ -110,7 +113,7 @@ function EnhanceStyleCard({
         aria-hidden
       />
       <span className="pointer-events-none absolute bottom-2.5 left-2.5 right-2 z-[3] text-left text-[13px] font-black leading-tight tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)]">
-        {option.label}
+        {label}
       </span>
     </button>
   );
@@ -123,12 +126,14 @@ function QuickAddOriginalCard({
   disabled: boolean;
   onClick: () => void;
 }) {
+  const { t } = useTranslation('studio');
+
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      title={disabled ? 'Najpierw wgraj zdjęcie w kroku 1' : 'Dodaj zdjęcie bez ulepszania'}
+      title={disabled ? t('quickAdd.disabledTitle') : t('quickAdd.enabledTitle')}
       className={`group relative aspect-square h-[148px] w-[148px] overflow-hidden rounded-2xl border-2 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-chef-gold focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
         disabled
           ? 'cursor-not-allowed border-slate-100 bg-slate-50'
@@ -140,12 +145,12 @@ function QuickAddOriginalCard({
       <div className="relative z-[2] flex h-full flex-col items-start justify-between p-3.5">
         <span className="inline-flex items-center gap-1 rounded-xl bg-white/15 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-white">
           <Upload size={12} />
-          Bez AI
+          {t('quickAdd.noAi')}
         </span>
         <span className="text-[13px] font-black leading-tight tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)]">
-          Dodaj zdjęcie
+          {t('quickAdd.titleLine1')}
           <br />
-          bez ulepszania
+          {t('quickAdd.titleLine2')}
         </span>
       </div>
     </button>
@@ -164,6 +169,7 @@ export const ChefsStudio: React.FC<Props> = ({
   onCreditsUpdated,
   onRequestPremium,
 }) => {
+  const { t } = useTranslation('studio');
   // ── Step 1: uploaded dish photo ─────────────────────────────────────────────
   const [dishReference, setDishReference] = useState<string | null>(null);
   const [isUploadingRef, setIsUploadingRef] = useState(false);
@@ -194,7 +200,7 @@ export const ChefsStudio: React.FC<Props> = ({
   const isTrial = subscriptionStatus === 'trial';
   const canUseAi = !isFree && credits > 0;
   const hasNoCredits = !canUseAi;
-  const tokenLabel = formatTokenStatus(subscriptionStatus, credits, tokens, trialEndsAt);
+  const tokenLabel = formatTokenStatusI18n(subscriptionStatus, credits, tokens, trialEndsAt);
   const canGenerate = canUseAi && !!dishReference && !!style && !isGenerating;
   const latestGeneratedImage = generatedImages[0] ?? null;
 
@@ -253,7 +259,7 @@ export const ChefsStudio: React.FC<Props> = ({
       const dataUrl = await compressImageForUpload(file);
       setDishReference(dataUrl);
     } catch (e: any) {
-      setError(e?.message || 'Błąd przetwarzania zdjęcia.');
+      setError(e?.message || t('errors.imageProcessing'));
     } finally {
       setIsUploadingRef(false);
     }
@@ -275,11 +281,11 @@ export const ChefsStudio: React.FC<Props> = ({
   const handleGenerate = async () => {
     if (isGenerating) return;
     if (!dishReference) {
-      setError('Wgraj zdjęcie dania (krok 1).');
+      setError(t('errors.uploadDishStep1'));
       return;
     }
     if (!style) {
-      setError('Wybierz styl zdjęcia (krok 2).');
+      setError(t('errors.selectStyleStep2'));
       return;
     }
     if (isFree) {
@@ -287,7 +293,7 @@ export const ChefsStudio: React.FC<Props> = ({
       return;
     }
     if (!canUseAi) {
-      setError('Brak tokenów trial. Możesz dodawać własne zdjęcia lub przejść na Premium.');
+      setError(t('errors.noTrialTokens'));
       return;
     }
     setError(null);
@@ -308,7 +314,7 @@ export const ChefsStudio: React.FC<Props> = ({
       }
       onGenerationSuccess?.();
     } catch (err: any) {
-      setError(err?.message || 'Błąd wizualizacji.');
+      setError(err?.message || t('errors.visualization'));
     } finally {
       setIsGenerating(false);
     }
@@ -330,14 +336,12 @@ export const ChefsStudio: React.FC<Props> = ({
 
   const shareImage = async () => {
     if (!shareTargetImage) return;
-    const outcome = await shareImageViaSystem(shareTargetImage, 'Danie');
+    const outcome = await shareImageViaSystem(shareTargetImage, t('shareDishName'));
     if (outcome === 'shared' || outcome === 'cancelled') {
       setShareTargetImage(null);
       return;
     }
-    alert(
-      'Udostępnianie pliku nie jest dostępne w tej przeglądarce. Użyj „Pobierz”, a następnie dodaj plik w wybranej aplikacji.'
-    );
+    alert(t('errors.shareUnavailable'));
   };
 
   const removeGeneratedImage = (indexToRemove: number) => {
@@ -346,7 +350,7 @@ export const ChefsStudio: React.FC<Props> = ({
 
   const handleQuickAddOriginal = () => {
     if (!dishReference) {
-      setError('Najpierw wgraj zdjęcie dania (krok 1).');
+      setError(t('errors.uploadFirstStep1'));
       return;
     }
     setError(null);
@@ -373,14 +377,14 @@ export const ChefsStudio: React.FC<Props> = ({
           <div className="flex items-center gap-4">
             <AlertCircle className="text-slate-500 shrink-0" />
             <div>
-              <p className="font-black">Plan darmowy</p>
+              <p className="font-black">{t('freePlan.title')}</p>
               <p className="text-xs text-slate-600 mt-1">
-                Brak AI. Wgraj zdjęcie i „Dodaj bez ulepszania”. W menu cyfrowym: Powered by Chefvision.pl.
+                {t('freePlan.description')}
               </p>
             </div>
           </div>
           <button type="button" onClick={onRequestPremium} className="bg-gradient-to-r from-emerald-400 to-green-500 text-[#0a1a12] px-6 py-3 rounded-2xl font-black text-sm shrink-0 shadow-[0_0_16px_rgba(52,211,153,0.35)]">
-            Odblokuj Premium
+            {t('freePlan.unlockPremium')}
           </button>
         </div>
       )}
@@ -388,13 +392,13 @@ export const ChefsStudio: React.FC<Props> = ({
       {isTrial && !canUseAi && (
         <div className="bg-amber-500/10 border border-amber-500/20 p-6 rounded-[30px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-slate-800">
           <div>
-            <p className="font-black">Tokeny trial wyczerpane</p>
+            <p className="font-black">{t('trial.noTokensTitle')}</p>
             <p className="text-xs text-slate-600 mt-1">
-              Trial trwa do końca 14 dni — własne zdjęcia bez AI. Premium przywraca generowanie.
+              {t('trial.noTokensDescription')}
             </p>
           </div>
           <button type="button" onClick={onRequestPremium} className="bg-gradient-to-r from-emerald-400 to-green-500 text-[#0a1a12] px-5 py-2.5 rounded-2xl font-black text-sm shrink-0">
-            Odblokuj Premium
+            {t('freePlan.unlockPremium')}
           </button>
         </div>
       )}
@@ -403,9 +407,9 @@ export const ChefsStudio: React.FC<Props> = ({
         <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-[30px] flex items-center gap-4 text-slate-800">
           <Gift className="text-blue-600 shrink-0" />
           <div>
-            <p className="font-black">Tryb trial (14 dni)</p>
+            <p className="font-black">{t('trial.activeTitle')}</p>
             <p className="text-xs text-slate-600 mt-1">
-              Pełna jakość jak Premium — bez znaku wodnego, 50 tokenów. Po trialie: Premium lub plan darmowy.
+              {t('trial.activeDescription')}
             </p>
           </div>
         </div>
@@ -415,7 +419,7 @@ export const ChefsStudio: React.FC<Props> = ({
         <div className="flex items-start gap-3 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800">
           <AlertCircle className="shrink-0 mt-0.5" size={20} />
           <div className="flex-1 min-w-0">
-            <p className="font-semibold">Błąd</p>
+            <p className="font-semibold">{t('errorTitle')}</p>
             <p className="text-sm mt-1">{error}</p>
           </div>
           <button type="button" onClick={() => setError(null)} className="p-1 rounded-lg hover:bg-red-100 text-red-600">
@@ -430,7 +434,7 @@ export const ChefsStudio: React.FC<Props> = ({
         <div className="space-y-5 min-w-0">
           {/* Step 1 — Upload */}
           <div className={STEP_CARD_CLS}>
-            <StepHeader n={1} title="Wgraj zdjęcie dania" required />
+            <StepHeader n={1} title={t('steps.uploadDish')} required />
             <input
               ref={dishRefInputRef}
               type="file"
@@ -440,13 +444,13 @@ export const ChefsStudio: React.FC<Props> = ({
             />
             {dishReference ? (
               <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                <img src={dishReference} alt="Wgrane danie" className="w-20 h-20 object-cover rounded-xl" />
+                <img src={dishReference} alt={t('upload.uploadedAlt')} className="w-20 h-20 object-cover rounded-xl" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-800">Zdjęcie gotowe</p>
+                  <p className="text-sm font-bold text-slate-800">{t('upload.readyTitle')}</p>
                   <p className="text-xs text-slate-500">
                     {isFree || !canUseAi
-                      ? 'Użyj „Dodaj bez ulepszania” lub wykup Premium.'
-                      : 'Przejdź do kroku 2 — wybierz styl.'}
+                      ? t('upload.readyFreeHint')
+                      : t('upload.readyNextStep')}
                   </p>
                 </div>
                 <button
@@ -455,7 +459,7 @@ export const ChefsStudio: React.FC<Props> = ({
                     setDishReference(null);
                   }}
                   className="p-2 rounded-xl text-slate-400 hover:bg-slate-200 hover:text-slate-700"
-                  aria-label="Usuń zdjęcie"
+                  aria-label={t('upload.removePhoto')}
                 >
                   <X size={18} />
                 </button>
@@ -480,8 +484,8 @@ export const ChefsStudio: React.FC<Props> = ({
                 />
                 <div className="flex flex-col items-center gap-3 text-slate-500">
                   {isUploadingRef ? <Loader2 className="animate-spin" size={28} /> : <Upload size={28} />}
-                  <p className="text-sm font-bold text-slate-700">Przeciągnij zdjęcie lub kliknij, aby wybrać</p>
-                  <p className="text-xs text-slate-400">JPG / PNG / WEBP · do 1 MB (kompresujemy automatycznie)</p>
+                  <p className="text-sm font-bold text-slate-700">{t('upload.dropzoneTitle')}</p>
+                  <p className="text-xs text-slate-400">{t('upload.dropzoneHint')}</p>
                 </div>
               </label>
             )}
@@ -489,14 +493,19 @@ export const ChefsStudio: React.FC<Props> = ({
 
           {/* Step 2 — Style (required): kwadratowe karty ze zdjęciem + etykieta */}
           <div className={`${STEP_CARD_CLS} min-w-0 overflow-hidden`}>
-            <StepHeader n={2} title="Wybierz styl zdjęcia" required />
+            <StepHeader n={2} title={t('steps.selectStyle')} required />
             <div
               ref={styleScrollerRef}
               className="flex w-full min-w-0 max-w-full gap-3 overflow-x-auto overscroll-x-contain pb-1 pt-0.5 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {ENHANCE_STYLES.map((opt) => (
                 <div key={opt.id} className="shrink-0 snap-center">
-                  <EnhanceStyleCard option={opt} active={style === opt.id} onSelect={() => setStyle(opt.id)} />
+                  <EnhanceStyleCard
+                    option={opt}
+                    label={t(`styles.${opt.id}`)}
+                    active={style === opt.id}
+                    onSelect={() => setStyle(opt.id)}
+                  />
                 </div>
               ))}
               <div className="shrink-0 snap-center">
@@ -522,7 +531,7 @@ export const ChefsStudio: React.FC<Props> = ({
                 onInput={(e) => handleStyleSlider(Number(e.currentTarget.value))}
                 onChange={(e) => handleStyleSlider(Number(e.target.value))}
                 className="mt-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-slate-200 [&::-webkit-slider-thumb]:-mt-1 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-md [&::-webkit-slider-thumb]:bg-orange-500 [&::-webkit-slider-thumb]:shadow-sm [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-7 [&::-moz-range-thumb]:rounded-md [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-orange-500"
-                aria-label="Przewijaj style zdjęcia"
+                aria-label={t('styles.scrollAria')}
               />
             )}
           </div>
@@ -546,12 +555,12 @@ export const ChefsStudio: React.FC<Props> = ({
           >
             {isGenerating ? <Loader2 className="animate-spin" size={22} /> : <Wand2 size={22} />}
             {isGenerating
-              ? 'ULEPSZAM...'
+              ? t('generate.enhancing')
               : isFree
-                ? 'ODBLOKUJ AI — PREMIUM'
+                ? t('generate.unlockPremium')
                 : !canUseAi
-                  ? 'BRAK TOKENÓW TRIAL'
-                  : 'ULEPSZ ZDJĘCIE'}
+                  ? t('generate.noTrialTokens')
+                  : t('generate.enhance')}
           </button>
         </div>
 
@@ -560,7 +569,7 @@ export const ChefsStudio: React.FC<Props> = ({
           <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-sm sticky top-6 space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-black tracking-tight text-slate-800 flex items-center gap-2">
-                <Sparkles size={16} className="text-amber-500" /> Podgląd ({generatedImages.length}/{MAX_ENHANCE_PREVIEWS})
+                <Sparkles size={16} className="text-amber-500" /> {t('preview.title', { count: generatedImages.length, max: MAX_ENHANCE_PREVIEWS })}
               </h4>
               {generatedImages.length > 0 && (
                 <button
@@ -568,15 +577,15 @@ export const ChefsStudio: React.FC<Props> = ({
                   onClick={() => setGeneratedImages([])}
                   className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-700"
                 >
-                  Wyczyść
+                  {t('preview.clear')}
                 </button>
               )}
             </div>
             {generatedImages.length === 0 ? (
               <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 min-h-[360px] flex flex-col items-center justify-center text-center p-8 text-slate-400">
                 <ImageIcon size={40} className="mb-3" />
-                <p className="text-sm font-bold text-slate-500">Tutaj pojawi się ulepszone zdjęcie</p>
-                <p className="text-xs mt-1">Każde kolejne kliknięcie „Ulepsz zdjęcie” doda wariant (max {MAX_ENHANCE_PREVIEWS}).</p>
+                <p className="text-sm font-bold text-slate-500">{t('preview.emptyTitle')}</p>
+                <p className="text-xs mt-1">{t('preview.emptyHint', { max: MAX_ENHANCE_PREVIEWS })}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -586,20 +595,20 @@ export const ChefsStudio: React.FC<Props> = ({
                       type="button"
                       onClick={() => removeGeneratedImage(idx)}
                       className="absolute top-2 right-2 z-10 p-2 rounded-lg bg-black/65 text-white hover:bg-red-600 transition-colors"
-                      title="Usuń zdjęcie"
-                      aria-label="Usuń zdjęcie"
+                      title={t('preview.removeImage')}
+                      aria-label={t('preview.removeImage')}
                     >
                       <Trash2 size={16} />
                     </button>
                     <WatermarkWrapper show={showWatermark} className="">
-                      <img src={src} alt="Wariant" className="w-full h-auto block" />
+                      <img src={src} alt={t('preview.variantAlt')} className="w-full h-auto block" />
                     </WatermarkWrapper>
                     <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-1">
                       <button
                         type="button"
                         onClick={() => downloadDataUrl(src, `${safeImageFileBase('danie')}-${idx + 1}.png`)}
                         className="p-2 rounded-lg bg-white/90 text-slate-800 hover:bg-white"
-                        title="Pobierz"
+                        title={t('preview.download')}
                       >
                         <Download size={16} />
                       </button>
@@ -607,7 +616,7 @@ export const ChefsStudio: React.FC<Props> = ({
                         type="button"
                         onClick={() => setShareTargetImage(src)}
                         className="p-2 rounded-lg bg-white/90 text-slate-800 hover:bg-white"
-                        title="Udostępnij"
+                        title={t('preview.share')}
                       >
                         <Share2 size={16} />
                       </button>
@@ -618,7 +627,7 @@ export const ChefsStudio: React.FC<Props> = ({
                           setSaveDishName('');
                         }}
                         className="p-2 rounded-lg bg-chef-gold text-white hover:bg-chef-gold2"
-                        title="Zapisz do menu"
+                        title={t('preview.saveToMenu')}
                       >
                         <Save size={16} />
                       </button>
@@ -642,7 +651,7 @@ export const ChefsStudio: React.FC<Props> = ({
             className="flex-1 py-4 px-6 rounded-2xl bg-chef-gold text-white font-black text-sm sm:text-base flex items-center justify-center gap-2 hover:bg-chef-gold2 transition-colors shadow-md"
           >
             <Save size={20} />
-            Zapisz do menu
+            {t('stickyBar.saveToMenu')}
           </button>
           <button
             type="button"
@@ -651,7 +660,7 @@ export const ChefsStudio: React.FC<Props> = ({
             className="flex-1 py-4 px-6 rounded-2xl bg-chef-dark text-white font-black text-sm sm:text-base flex items-center justify-center gap-2 hover:bg-chef-dark2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
           >
             <RotateCcw size={20} />
-            Spróbuj jeszcze raz
+            {t('stickyBar.tryAgain')}
           </button>
         </div>
       )}
@@ -661,25 +670,25 @@ export const ChefsStudio: React.FC<Props> = ({
         <div className="fixed inset-0 z-[400] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-[28px] w-full max-w-md p-6 space-y-5 shadow-2xl">
             <div className="flex justify-between items-start gap-3">
-              <h3 className="text-lg font-black text-slate-900">Zapisz do menu</h3>
+              <h3 className="text-lg font-black text-slate-900">{t('saveModal.title')}</h3>
               <button
                 type="button"
                 onClick={() => setSaveTargetImage(null)}
                 className="p-2 rounded-xl text-slate-400 hover:bg-slate-100"
-                aria-label="Zamknij"
+                aria-label={t('saveModal.close')}
               >
                 <X size={18} />
               </button>
             </div>
-            <img src={saveTargetImage} alt="Podgląd" className="w-full aspect-[4/3] object-cover rounded-2xl" />
+            <img src={saveTargetImage} alt={t('saveModal.previewAlt')} className="w-full aspect-[4/3] object-cover rounded-2xl" />
             <label className="block space-y-2">
-              <span className={STEP_LABEL_CLS}>Nazwa dania</span>
+              <span className={STEP_LABEL_CLS}>{t('saveModal.dishName')}</span>
               <input
                 type="text"
                 autoFocus
                 value={saveDishName}
                 onChange={(e) => setSaveDishName(e.target.value)}
-                placeholder="np. Polędwica Wellington"
+                placeholder={t('saveModal.dishNamePlaceholder')}
                 className="w-full px-4 py-3 border-2 border-slate-100 focus:ring-4 focus:ring-chef-beige/40 rounded-2xl outline-none text-slate-700"
               />
             </label>
@@ -689,7 +698,7 @@ export const ChefsStudio: React.FC<Props> = ({
               disabled={!saveDishName.trim()}
               className="w-full py-4 bg-chef-gold text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-chef-gold2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <CheckCircle size={18} /> ZAPISZ
+              <CheckCircle size={18} /> {t('saveModal.save')}
             </button>
           </div>
         </div>
@@ -700,23 +709,23 @@ export const ChefsStudio: React.FC<Props> = ({
         <div className="fixed inset-0 z-[500] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
           <div className="bg-white rounded-[28px] w-full max-w-md p-6 shadow-2xl space-y-4">
             <div className="flex justify-between items-start">
-              <h3 className="text-lg font-black text-slate-900">Udostępnij</h3>
+              <h3 className="text-lg font-black text-slate-900">{t('shareModal.title')}</h3>
               <button
                 type="button"
                 onClick={() => setShareTargetImage(null)}
                 className="p-2 rounded-xl text-slate-400 hover:bg-slate-100"
-                aria-label="Zamknij"
+                aria-label={t('shareModal.close')}
               >
                 <X size={18} />
               </button>
             </div>
-            <img src={shareTargetImage} alt="Podgląd" className="w-full aspect-[4/3] object-cover rounded-2xl" />
+            <img src={shareTargetImage} alt={t('shareModal.previewAlt')} className="w-full aspect-[4/3] object-cover rounded-2xl" />
             <button
               type="button"
               onClick={() => void shareImage()}
               className="w-full py-4 rounded-2xl bg-chef-dark text-white font-black text-sm flex items-center justify-center gap-2 hover:bg-chef-dark2 transition-colors"
             >
-              <Share2 size={18} /> Udostępnij przez system
+              <Share2 size={18} /> {t('shareModal.shareSystem')}
             </button>
             <button
               type="button"
@@ -725,7 +734,7 @@ export const ChefsStudio: React.FC<Props> = ({
               }}
               className="w-full py-4 rounded-2xl border-2 border-slate-200 text-slate-800 font-black text-sm flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
             >
-              <Download size={18} /> Pobierz plik
+              <Download size={18} /> {t('shareModal.downloadFile')}
             </button>
           </div>
         </div>

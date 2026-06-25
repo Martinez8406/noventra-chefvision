@@ -1,0 +1,45 @@
+{
+  "language": "Język",
+  "defaultRestaurantName": "Twoja Restauracja",
+  "logout": "Wyloguj",
+  "freePlan": {
+    "badge": "Plan darmowy",
+    "title": "Odblokuj pełny potencjał ChefVision",
+    "description": "Przejdź na plan Start lub Premium i wykorzystaj wszystkie możliwości platformy.",
+    "features": [
+      "Obsługa zagranicznych gości",
+      "Profesjonalna prezentacja menu",
+      "Funkcje zwiększające sprzedaż",
+      "Narzędzia dla restauracji i hotel"
+    ],
+    "cta": "Przejdź na wyższy plan"
+  },
+  "trialPlan": {
+    "badge": "Plan trial",
+    "title": "Pełna jakość jak Premium — bez znaku wodnego.",
+    "features": [
+      "Tokeny co miesiąc po trialu",
+      "Bez watermarku w menu",
+      "Pełny dostęp do AI"
+    ],
+    "footer": "Po skończeniu planu Trial przejdź na Premium, aby zachować wszystkie funkcje.",
+    "cta": "Przejdź na Premium"
+  },
+  "tokenStatus": {
+    "start": "Start · {{total}} tokenów ({{subscription}} z subskrypcji{{extraPart}})",
+    "startExtra": " + {{extra}} dodatkowych",
+    "premium": "Premium · {{total}} tokenów ({{subscription}} z subskrypcji{{extraPart}})",
+    "premiumExtra": " + {{extra}} dodatkowych",
+    "premiumShort": "Premium · {{total}} tokenów",
+    "trial": "Trial · {{trial}}/{{max}} tokenów",
+    "trialDays_one": " · {{count}} dzień",
+    "trialDays_few": " · {{count}} dni",
+    "trialDays_many": " · {{count}} dni",
+    "trialDays_other": " · {{count}} dni",
+    "trialLastDay": " · ostatni dzień",
+    "trialNoAi": " · tylko własne zdjęcia (bez AI)",
+    "freeLimited": "Darmowy · własne zdjęcia, bez AI",
+    "credits": "Tokeny: {{credits}}",
+    "freeNoTokens": "Darmowy · brak tokenów AI"
+  }
+}

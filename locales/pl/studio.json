@@ -1,0 +1,89 @@
+{
+  "loadingProfile": "Ładowanie profilu...",
+  "loadingHint": "Za chwilę Chef’s Studio będzie dostępne.",
+  "freePlan": {
+    "title": "Plan darmowy",
+    "description": "Brak AI. Wgraj zdjęcie i „Dodaj bez ulepszania”. W menu cyfrowym: Powered by Chefvision.pl.",
+    "unlockPremium": "Odblokuj Premium"
+  },
+  "trial": {
+    "noTokensTitle": "Tokeny trial wyczerpane",
+    "noTokensDescription": "Trial trwa do końca 14 dni — własne zdjęcia bez AI. Premium przywraca generowanie.",
+    "activeTitle": "Tryb trial (14 dni)",
+    "activeDescription": "Pełna jakość jak Premium — bez znaku wodnego, 50 tokenów. Po trialie: Premium lub plan darmowy."
+  },
+  "errorTitle": "Błąd",
+  "errors": {
+    "imageProcessing": "Błąd przetwarzania zdjęcia.",
+    "uploadDishStep1": "Wgraj zdjęcie dania (krok 1).",
+    "selectStyleStep2": "Wybierz styl zdjęcia (krok 2).",
+    "noTrialTokens": "Brak tokenów trial. Możesz dodawać własne zdjęcia lub przejść na Premium.",
+    "visualization": "Błąd wizualizacji.",
+    "uploadFirstStep1": "Najpierw wgraj zdjęcie dania (krok 1).",
+    "shareUnavailable": "Udostępnianie pliku nie jest dostępne w tej przeglądarce. Użyj „Pobierz”, a następnie dodaj plik w wybranej aplikacji."
+  },
+  "steps": {
+    "uploadDish": "Wgraj zdjęcie dania",
+    "selectStyle": "Wybierz styl zdjęcia"
+  },
+  "upload": {
+    "uploadedAlt": "Wgrane danie",
+    "readyTitle": "Zdjęcie gotowe",
+    "readyFreeHint": "Użyj „Dodaj bez ulepszania” lub wykup Premium.",
+    "readyNextStep": "Przejdź do kroku 2 — wybierz styl.",
+    "removePhoto": "Usuń zdjęcie",
+    "dropzoneTitle": "Przeciągnij zdjęcie lub kliknij, aby wybrać",
+    "dropzoneHint": "JPG / PNG / WEBP · do 1 MB (kompresujemy automatycznie)"
+  },
+  "quickAdd": {
+    "noAi": "Bez AI",
+    "titleLine1": "Dodaj zdjęcie",
+    "titleLine2": "bez ulepszania",
+    "disabledTitle": "Najpierw wgraj zdjęcie w kroku 1",
+    "enabledTitle": "Dodaj zdjęcie bez ulepszania"
+  },
+  "styles": {
+    "fine_dining": "Fine Dining",
+    "rustic": "Rustic",
+    "street_food": "Street Food",
+    "lifestyle": "Lifestyle",
+    "scrollAria": "Przewijaj style zdjęcia"
+  },
+  "generate": {
+    "enhancing": "ULEPSZAM...",
+    "unlockPremium": "ODBLOKUJ AI — PREMIUM",
+    "noTrialTokens": "BRAK TOKENÓW TRIAL",
+    "enhance": "ULEPSZ ZDJĘCIE"
+  },
+  "preview": {
+    "title": "Podgląd ({{count}}/{{max}})",
+    "clear": "Wyczyść",
+    "emptyTitle": "Tutaj pojawi się ulepszone zdjęcie",
+    "emptyHint": "Każde kolejne kliknięcie „Ulepsz zdjęcie” doda wariant (max {{max}}).",
+    "variantAlt": "Wariant",
+    "removeImage": "Usuń zdjęcie",
+    "download": "Pobierz",
+    "share": "Udostępnij",
+    "saveToMenu": "Zapisz do menu"
+  },
+  "stickyBar": {
+    "saveToMenu": "Zapisz do menu",
+    "tryAgain": "Spróbuj jeszcze raz"
+  },
+  "saveModal": {
+    "title": "Zapisz do menu",
+    "close": "Zamknij",
+    "previewAlt": "Podgląd",
+    "dishName": "Nazwa dania",
+    "dishNamePlaceholder": "np. Polędwica Wellington",
+    "save": "ZAPISZ"
+  },
+  "shareModal": {
+    "title": "Udostępnij",
+    "close": "Zamknij",
+    "previewAlt": "Podgląd",
+    "shareSystem": "Udostępnij przez system",
+    "downloadFile": "Pobierz plik"
+  },
+  "shareDishName": "Danie"
+}

@@ -1,0 +1,21 @@
+{
+  "title": "Statystyki",
+  "subtitle": "Otwarcia menu cyfrowego — dzisiaj i w tym miesiącu.",
+  "refresh": "Odśwież",
+  "loading": "Ładowanie statystyk...",
+  "errors": {
+    "loadFailed": "Nie udało się pobrać statystyk menu."
+  },
+  "cards": {
+    "today": "Dzisiaj",
+    "todayHint": "Liczba otwarć menu w dniu {{date}}",
+    "month": "Miesiąc",
+    "monthHint": "Liczba otwarć menu w miesiącu {{month}}"
+  },
+  "chart": {
+    "title": "Trend 30 dni",
+    "empty": "Brak danych do wykresu.",
+    "ariaLabel": "Wykres liniowy otwarć menu z ostatnich 30 dni"
+  },
+  "footnote": "Statystyki liczą wejścia do publicznego adresu menu (`/menu/[userId]`) i odświeżają się po kliknięciu „Odśwież”."
+}

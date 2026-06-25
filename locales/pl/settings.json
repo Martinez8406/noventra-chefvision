@@ -1,0 +1,151 @@
+{
+  "panelLabel": "Ustawienia",
+  "loginRequiredBranding": "Zaloguj się, aby edytować logo i zdjęcie główne.",
+  "sections": {
+    "qr": {
+      "title": "Kod QR",
+      "description": "Wygeneruj i pobierz kod QR prowadzący do Twojego menu cyfrowego."
+    },
+    "branding": {
+      "title": "Logo / zdjęcie główne",
+      "description": "Logo restauracji i zdjęcie cover widoczne na górze Live Menu."
+    },
+    "google": {
+      "title": "Opinie Google",
+      "description": "Połącz menu z Google, aby goście mogli zostawiać opinie jednym kliknięciem."
+    },
+    "feedback": {
+      "title": "Opinie i sugestie",
+      "description": "Pozwól gościom wysyłać uwagi i sugestie bezpośrednio z Live Menu na Twój e-mail."
+    },
+    "subscription": {
+      "title": "Zarządzaj subskrypcją",
+      "description": "Twój plan, płatności Stripe oraz przejście na Premium."
+    }
+  },
+  "qr": {
+    "title": "Twój Generator QR Menu",
+    "introLoggedIn": "Zeskanuj kod powyżej lub udostępnij ten link swoim gościom, aby mogli przeglądać Twoje menu online.",
+    "introLoggedOut": "Zaloguj się, aby wygenerować unikalny link i kod QR do Twojego menu.",
+    "loading": "Ładowanie...",
+    "noLink": "Brak linku – zaloguj się",
+    "downloadPng": "Pobierz jako obraz PNG",
+    "shareLink": "Udostępnij link",
+    "shareText": "Cyfrowe menu restauracji"
+  },
+  "google": {
+    "title": "Opinie Google",
+    "intro": "Wklej swój Google Place ID, aby umożliwić gościom szybkie wystawianie ocen bezpośrednio z Twojego menu.",
+    "placeIdLabel": "Google Place ID",
+    "placeIdPlaceholder": "Np. ChIJN1t_tDeuEmsRUsoyG83frY4",
+    "saving": "Zapisywanie...",
+    "saved": "Zapisano ✓",
+    "save": "Zapisz",
+    "loadingPlaceId": "Ładowanie aktualnego Place ID...",
+    "findPlaceId": "Znajdź swoje Place ID",
+    "errors": {
+      "fetchFailed": "Nie udało się pobrać Google Place ID.",
+      "saveFailed": "Nie udało się zapisać Google Place ID."
+    }
+  },
+  "feedback": {
+    "title": "Opinie i sugestie",
+    "intro": "Pozwól gościom wysyłać uwagi, skargi i sugestie bezpośrednio z Live Menu. Wiadomości trafią na Twój adres e-mail.",
+    "enableLabel": "Włącz opinie gości",
+    "enableHelp": "Sekcja na dole menu publicznego z formularzem wiadomości",
+    "emailLabel": "Adres e-mail do otrzymywania opinii",
+    "emailPlaceholder": "manager@restauracja.pl",
+    "emailRequired": "Uzupełnij e-mail, aby sekcja opinii była widoczna w Live Menu.",
+    "invalidEmail": "Podaj prawidłowy adres e-mail.",
+    "saving": "Zapisywanie...",
+    "saved": "Zapisano ✓",
+    "save": "Zapisz",
+    "loading": "Ładowanie ustawień...",
+    "errors": {
+      "fetchFailed": "Nie udało się pobrać ustawień opinii.",
+      "migrationRequired": "Uruchom migrację SQL: supabase/feedback_settings.sql",
+      "saveFailed": "Nie udało się zapisać ustawień."
+    }
+  },
+  "subscription": {
+    "yourPlan": "Twój plan",
+    "loading": "Ładowanie planu…",
+    "premiumStripeHelp": "Subskrypcja jest powiązana ze Stripe — możesz zmienić kartę, pobrać faktury lub anulować plan.",
+    "premiumManualHelp": "Konto Premium jest aktywne. Zarządzanie płatnościami odbywa się poza standardowym portalem Stripe (np. indywidualna umowa).",
+    "trialHelp": "W okresie trial masz ograniczoną pulę tokenów AI. Przejdź na Premium, aby odblokować pełne funkcje.",
+    "freeHelp": "Plan darmowy — własne zdjęcia w menu. Premium odblokowuje generowanie AI i rekomendacje.",
+    "upgradeToPremium": "Przejdź na Premium",
+    "buyPremium": "Kup Premium",
+    "manageStripe": "Zarządzaj w Stripe",
+    "stripePortalHelp": "Portal Stripe umożliwia zmianę metody płatności, podgląd faktur i anulowanie subskrypcji. Po anulowaniu konto wraca do planu darmowego po zakończeniu opłaconego okresu.",
+    "loginRequired": "Musisz być zalogowany.",
+    "errors": {
+      "loadFailed": "Nie udało się załadować planu.",
+      "checkoutFailed": "Nie udało się otworzyć płatności.",
+      "portalFailed": "Nie udało się otworzyć portalu Stripe."
+    }
+  },
+  "branding": {
+    "title": "Logo i zdjęcie cover (widoczne w Live Menu)",
+    "intro": "Wgraj logo i zdjęcie tła na górze menu. Wybierz element (logo lub cover) i ustaw jego kadrowanie — podgląd poniżej wygląda tak samo jak w menu publicznym.",
+    "uploading": "Przesyłanie…",
+    "changeLogo": "Zmień logo",
+    "uploadLogo": "Wgraj logo",
+    "removeLogo": "Usuń logo",
+    "logoUploaded": "Logo wgrane!",
+    "logoFormats": "Logo: PNG, JPG — max 2 MB",
+    "changeCover": "Zmień cover",
+    "uploadCover": "Wgraj cover",
+    "removeCover": "Usuń cover",
+    "coverUploaded": "Cover wgrany!",
+    "coverFormats": "Cover: JPG, PNG, WebP — max 5 MB",
+    "dbSetupTitle": "Jednorazowa konfiguracja bazy (Supabase)",
+    "dbSetupIntroBefore": "Aby zapisać kadrowanie, uruchom w ",
+    "dbSetupIntroAfter": " skrypty z folderu ",
+    "dbSetupIntroSuffix": " (logo i cover), np.:",
+    "dbSetupAfterBefore": "Po uruchomieniu: Supabase → ",
+    "dbSetupAfterMiddle": " (jeśli jest), potem ",
+    "dbSetupAfterSuffix": " w aplikacji. Upewnij się, że SQL uruchomiłeś w tym samym projekcie co w pliku .env.",
+    "dbSetupReloadSchema": "Settings → API → Reload schema",
+    "previewTitle": "Podgląd — jak w menu publicznym",
+    "frameElement": "Kadruj element",
+    "frameTabAria": "Wybór elementu do kadrowania",
+    "logoTab": "Logo",
+    "coverTab": "Cover",
+    "unsavedChanges": "Niezapisane zmiany ({{target}})",
+    "logoScaleHelp": "Kadrowanie logo. Przesuń w lewo, aby pomniejszyć; punkt kadrowania ustawia widoczny fragment przy powiększeniu.",
+    "coverScaleHelp": "Kadrowanie zdjęcia cover. Przesuń w lewo, aby pomniejszyć; punkt kadrowania wybiera widoczny fragment banera.",
+    "uploadToFrame": "Wgraj {{target}}, aby ustawić kadrowanie.",
+    "uploadLogoTarget": "logo",
+    "uploadCoverTarget": "zdjęcie cover",
+    "saveFrame": "Zapisz kadrowanie",
+    "frameSaved": "Kadrowanie zapisane",
+    "unsavedOtherElement": "Niezapisane zmiany w drugim elemencie",
+    "errors": {
+      "logoTooLarge": "Plik jest za duży (max 2 MB).",
+      "logoUploadFailed": "Błąd przesyłania logo.",
+      "coverTooLarge": "Plik cover jest za duży (max 5 MB).",
+      "coverUploadFailed": "Błąd przesyłania zdjęcia cover.",
+      "frameColumnsMissing": "Kolumny kadrowania nie są widoczne w API. Uruchom migrację SQL (poniżej), potem w Supabase: Settings → API → Reload schema (lub odczekaj 1–2 min) i odśwież F5.",
+      "frameSaveFailed": "Nie udało się zapisać kadrowania: {{message}}",
+      "frameSaveGeneric": "Błąd zapisu kadrowania."
+    }
+  },
+  "frame": {
+    "framingPoint": "{{title}} — punkt kadrowania",
+    "scale": "{{title}} — powiększenie ({{percent}}%)",
+    "smaller": "Mniejsze",
+    "larger": "Większe",
+    "position": {
+      "top_left": "Góra lewo",
+      "top": "Góra",
+      "top_right": "Góra prawo",
+      "left": "Lewo",
+      "center": "Środek",
+      "right": "Prawo",
+      "bottom_left": "Dół lewo",
+      "bottom": "Dół",
+      "bottom_right": "Dół prawo"
+    }
+  }
+}
