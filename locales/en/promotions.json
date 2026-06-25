@@ -21,9 +21,9 @@
   "savings": "You save {{percent}}% — calculated automatically",
   "relatedProducts": "Related products",
   "polecaneSlots": {
-    "perfectWith": "Perfect with this",
-    "finishWith": "Finish with",
-    "addA": "Add",
+    "perfectWith": "Wine/Beer",
+    "finishWith": "Dessert",
+    "addA": "Beverage",
     "inputPlaceholder": "e.g. Pinot Grigio",
     "pricePlaceholder": "Price"
   },

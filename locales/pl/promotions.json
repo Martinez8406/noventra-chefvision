@@ -21,9 +21,9 @@
   "savings": "Oszczędzasz {{percent}}% — wyliczone automatycznie",
   "relatedProducts": "Produkty powiązane",
   "polecaneSlots": {
-    "perfectWith": "Perfect with this",
-    "finishWith": "Finish with",
-    "addA": "Add",
+    "perfectWith": "Wino/piwo",
+    "finishWith": "Deser",
+    "addA": "Napój",
     "inputPlaceholder": "np. Pinot Grigio",
     "pricePlaceholder": "Cena"
   },
