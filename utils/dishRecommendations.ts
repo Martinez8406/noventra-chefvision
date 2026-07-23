@@ -1,6 +1,7 @@
 import type { Dish, DishRecommendation, DishRecommendationItem, DishRecommendationType } from '../types';
 import { db, supabase } from '../services/supabaseService';
 import { normalizeRecommendation, stripCurrencyMetaItems } from './recommendationCurrency';
+import { resolvePolecaneSlotLabel } from './polecaneSlotLabels';
 
 export const RECOMMENDATIONS_STORAGE_KEY = (userId: string) =>
   `chefvision_dish_recommendations:${userId}`;
@@ -39,6 +40,7 @@ export function createPolecaneItems(existing?: DishRecommendationItem[]): DishRe
       title: prev?.title ?? '',
       price: prev?.price,
       emoji: slot.emoji,
+      slotLabel: resolvePolecaneSlotLabel(slot.id, prev?.slotLabel),
     };
   });
 }
@@ -135,6 +137,7 @@ export function buildMockRecommendations(dishes: Dish[]): DishRecommendation[] {
       dishId: targets[0].id,
       type: 'polecane',
       isActive: true,
+      customHeaderText: RECOMMENDATION_DEFAULT_HEADER.polecane,
       items: createPolecaneItems([
         { id: 'polecane-perfect-with', title: 'Pinot Grigio', price: '22', emoji: '🍷' },
         { id: 'polecane-finish-with', title: 'Domowe tiramisu', price: '18', emoji: '🍰' },
@@ -149,26 +152,7 @@ export function buildMockRecommendations(dishes: Dish[]): DishRecommendation[] {
       dishId: targets[1].id,
       type: 'popularne',
       isActive: true,
-      items: [
-        {
-          id: 'mock-item-fries',
-          title: 'Frytki z batatów',
-          subtitle: 'Chrupiące i lekko słodkie',
-          price: '15',
-          emoji: '🍟',
-          imageUrl:
-            'https://images.unsplash.com/photo-1573080496219-b080abffe19f?w=120&h=120&fit=crop',
-        },
-        {
-          id: 'mock-item-beer',
-          title: 'Piwo kraftowe IPA',
-          subtitle: 'Cytrusowe, lekko goryczkowe',
-          price: '18',
-          emoji: '🍺',
-          imageUrl:
-            'https://images.unsplash.com/photo-1608270586620-248524c67de9?w=120&h=120&fit=crop',
-        },
-      ],
+      items: [],
     });
   }
 

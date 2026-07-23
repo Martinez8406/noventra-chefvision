@@ -18,6 +18,7 @@ import { buildPublicMenuUrl, getShareMenuText } from '../utils/publicMenuShare';
 import { PublicMenuSkeleton } from './PublicMenuSkeleton';
 import { PublicMenuCategoryTabs } from './PublicMenuCategoryTabs';
 import { GuestFeedbackSection } from './GuestFeedbackSection';
+import { ServiceCallSection } from './ServiceCallSection';
 import {
   fetchRecommendationTranslation,
   loadRecommendationTranslations,
@@ -27,6 +28,7 @@ import {
   type RecommendationTranslationCache,
 } from '../utils/recommendationTranslations';
 import { MENU_TRANSLATION_LOCALES_FREE } from '../utils/tokens';
+import { tableStorageKey } from '../utils/publicMenuShare';
 
 interface Props {
   dishes: Dish[];
@@ -40,6 +42,8 @@ interface Props {
   hubSectionId?: string | null;
   /** restaurant | hub — z URL */
   initialMenuMode?: 'restaurant' | 'hub';
+  /** Numer stolika z ?table= */
+  tableNumber?: string | null;
 }
 
 const CATEGORY_ORDER = [...MENU_CATEGORIES];
@@ -77,6 +81,7 @@ export const PublicMenu: React.FC<Props> = ({
   loading = false,
   hubSectionId = null,
   initialMenuMode = 'restaurant',
+  tableNumber: tableNumberProp = null,
 }) => {
   const CATEGORY_TRANSLATIONS_KEY = (uid: string) => `chefvision_public_category_translations:${uid}`;
   const normalizeCategoryKey = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -104,6 +109,8 @@ export const PublicMenu: React.FC<Props> = ({
   const [profileCategoryTranslations, setProfileCategoryTranslations] = useState<Record<string, Partial<Record<PublicMenuLocale, string>>>>({});
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [feedbackAvailable, setFeedbackAvailable] = useState(false);
+  const [waiterCallAvailable, setWaiterCallAvailable] = useState(false);
+  const [resolvedTableNumber, setResolvedTableNumber] = useState<string | null>(null);
   const [hotelHubEnabled, setHotelHubEnabled] = useState(false);
   const [hubData, setHubData] = useState<HotelHubData>({
     enabled: false,
@@ -118,6 +125,25 @@ export const PublicMenu: React.FC<Props> = ({
     setMenuMode(initialMenuMode);
     setActiveHubSectionId(hubSectionId);
   }, [initialMenuMode, hubSectionId]);
+
+  useEffect(() => {
+    const fromProp = tableNumberProp?.trim() || null;
+    if (fromProp) {
+      setResolvedTableNumber(fromProp);
+      try {
+        sessionStorage.setItem(tableStorageKey(userId), fromProp);
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+    try {
+      const stored = sessionStorage.getItem(tableStorageKey(userId));
+      setResolvedTableNumber(stored?.trim() || null);
+    } catch {
+      setResolvedTableNumber(null);
+    }
+  }, [tableNumberProp, userId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -268,6 +294,7 @@ export const PublicMenu: React.FC<Props> = ({
     setProfileMenuCategories([]);
     setProfileCategoryTranslations({});
     setFeedbackAvailable(false);
+    setWaiterCallAvailable(false);
 
     if (!supabase || !userId) {
       setProfileLoaded(true);
@@ -277,7 +304,7 @@ export const PublicMenu: React.FC<Props> = ({
     let cancelled = false;
     supabase
       .from('profiles')
-      .select('logo_url, logo_object_position, logo_scale, cover_url, cover_object_position, cover_scale, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations, feedback_available, hotel_hub_enabled')
+      .select('logo_url, logo_object_position, logo_scale, cover_url, cover_object_position, cover_scale, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations, feedback_available, waiter_call_available, waiter_call_enabled, hotel_hub_enabled')
       .eq('id', userId)
       .single()
       .then(({ data, error: profileError }) => {
@@ -298,6 +325,7 @@ export const PublicMenu: React.FC<Props> = ({
               if (fallback?.restaurant_name) setRestaurantName(fallback.restaurant_name);
               setGooglePlaceId(fallback?.google_place_id?.trim() || null);
               setFeedbackAvailable(false);
+              setWaiterCallAvailable(false);
             });
         }
         if (data?.logo_url) setLogoUrl(data.logo_url);
@@ -312,6 +340,9 @@ export const PublicMenu: React.FC<Props> = ({
         if (data?.restaurant_name) setRestaurantName(data.restaurant_name);
         setGooglePlaceId(data?.google_place_id?.trim() || null);
         setFeedbackAvailable((data as { feedback_available?: boolean })?.feedback_available === true);
+        const waiterAvail = (data as { waiter_call_available?: boolean })?.waiter_call_available;
+        const waiterEnabled = (data as { waiter_call_enabled?: boolean })?.waiter_call_enabled;
+        setWaiterCallAvailable(waiterAvail === true || (waiterAvail == null && waiterEnabled === true));
         if (Array.isArray((data as any)?.menu_categories)) {
           const list = (data as any).menu_categories.map((x: any) => String(x).trim()).filter(Boolean);
           setProfileMenuCategories(list);
@@ -964,6 +995,15 @@ export const PublicMenu: React.FC<Props> = ({
       )}
 
       <main className="w-full max-w-6xl mx-auto overflow-x-hidden pt-6 sm:pt-8 space-y-14">
+        {waiterCallAvailable && (
+          <ServiceCallSection
+            restaurantId={userId}
+            tableNumber={resolvedTableNumber}
+            primaryColor={primaryColor}
+            menuLocale={menuLocale}
+          />
+        )}
+
         {orderedKeys.map((category) => (
           <section
             key={category}

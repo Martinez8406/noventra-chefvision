@@ -29,6 +29,7 @@ import { supabase, db, authService, uploadDishImage } from './services/supabaseS
 import { hotelHubDb } from './services/hotelHubService';
 import { requestMenuTranslations } from './services/aiService';
 import { shouldRequestMenuTranslation } from './utils/menuTranslations';
+import { notifyNewUserRegistration } from './utils/notifyNewUserRegistration';
 import { createCheckoutSession, confirmPremiumSession } from './services/stripeService';
 import { 
   LayoutDashboard, 
@@ -65,10 +66,12 @@ type AppTab =
   | 'settings-branding'
   | 'settings-google'
   | 'settings-feedback'
+  | 'settings-waiter'
   | 'settings-subscription';
 
 const SETTINGS_SUB_NAV: { id: AppTab; labelKey: string }[] = [
   { id: 'settings-qr', labelKey: 'settingsQr' },
+  { id: 'settings-waiter', labelKey: 'settingsWaiter' },
   { id: 'settings-branding', labelKey: 'settingsBranding' },
   { id: 'settings-google', labelKey: 'settingsGoogle' },
   { id: 'settings-feedback', labelKey: 'settingsFeedback' },
@@ -96,6 +99,7 @@ function settingsSectionFromTab(tab: AppTab): SettingsSection | null {
   if (tab === 'settings-branding') return 'branding';
   if (tab === 'settings-google') return 'google';
   if (tab === 'settings-feedback') return 'feedback';
+  if (tab === 'settings-waiter') return 'waiter';
   if (tab === 'settings-subscription') return 'subscription';
   return null;
 }
@@ -126,6 +130,7 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [hash, setHash] = useState(window.location.hash);
   const [pathname, setPathname] = useState(window.location.pathname);
+  const [search, setSearch] = useState(window.location.search);
   const [savedBackdrops, setSavedBackdrops] = useState<Backdrop[]>([]);
   const [statusToast, setStatusToast] = useState<string | null>(null);
   const [publicHasWatermark, setPublicHasWatermark] = useState<boolean>(false);
@@ -154,8 +159,11 @@ const App: React.FC = () => {
 
     if (supabase) {
       // Listen first so we catch the PKCE code-exchange session right away.
-      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      const { data } = supabase.auth.onAuthStateChange((event, session) => {
         markInitialised(session);
+        if (event === 'SIGNED_IN' && session) {
+          void notifyNewUserRegistration(session);
+        }
       });
       subscription = data.subscription;
 
@@ -168,10 +176,14 @@ const App: React.FC = () => {
       setIsSyncing(false);
     }
 
-    const handleHashChange = () => setHash(window.location.hash);
+    const handleHashChange = () => {
+      setHash(window.location.hash);
+      setSearch(window.location.search);
+    };
     const handlePopState = () => {
       setHash(window.location.hash);
       setPathname(window.location.pathname);
+      setSearch(window.location.search);
     };
     window.addEventListener('hashchange', handleHashChange);
     window.addEventListener('popstate', handlePopState);
@@ -315,6 +327,16 @@ const App: React.FC = () => {
   const isPublicMenu = !!publicMenuUserId;
   const publicMenuMode: 'restaurant' | 'hub' =
     pathname.includes('/hub') || hash.includes('/hub') ? 'hub' : 'restaurant';
+  const publicTableNumber = (() => {
+    const fromSearch = new URLSearchParams(search).get('table');
+    if (fromSearch?.trim()) return fromSearch.trim();
+    const qIdx = hash.indexOf('?');
+    if (qIdx >= 0) {
+      const fromHash = new URLSearchParams(hash.slice(qIdx + 1)).get('table');
+      if (fromHash?.trim()) return fromHash.trim();
+    }
+    return null;
+  })();
   const isSuccessPage = hash.includes('#/success');
   const isPricingPage = hash.includes('#/cennik') || pathname === '/cennik';
 
@@ -609,6 +631,7 @@ const App: React.FC = () => {
         loading={publicMenuLoading}
         hubSectionId={publicHubSectionId}
         initialMenuMode={publicMenuMode}
+        tableNumber={publicTableNumber}
       />
     );
   }
@@ -735,7 +758,9 @@ const App: React.FC = () => {
                             : 'text-zinc-500 hover:text-white hover:bg-white/[0.04]'
                         }`}
                       >
-                        {tNav(sub.labelKey)}
+                        {sub.id === 'settings-waiter'
+                          ? tNav('settingsWaiter', { defaultValue: 'Kelner / rachunek' })
+                          : tNav(sub.labelKey)}
                       </button>
                     );
                   })}

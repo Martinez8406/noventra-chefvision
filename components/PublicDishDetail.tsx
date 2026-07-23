@@ -149,7 +149,7 @@ export const PublicDishDetail: React.FC<Props> = ({
           </div>
         </div>
 
-        {recommendation?.isActive && (
+        {recommendation?.isActive && recommendation.type !== 'popularne' && (
           <DishRecommendationBox
             recommendation={recommendation}
             dishName={copy.name}

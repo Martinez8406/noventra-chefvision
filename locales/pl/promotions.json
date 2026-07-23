@@ -21,9 +21,10 @@
   "savings": "Oszczędzasz {{percent}}% — wyliczone automatycznie",
   "relatedProducts": "Produkty powiązane",
   "polecaneSlots": {
-    "perfectWith": "Wino/piwo",
+    "perfectWith": "Wino",
     "finishWith": "Deser",
     "addA": "Napój",
+    "slotLabel": "Kategoria",
     "inputPlaceholder": "np. Pinot Grigio",
     "pricePlaceholder": "Cena"
   },
@@ -64,7 +65,7 @@
     },
     "popularne": {
       "label": "Najlepiej sprzedawane",
-      "desc": "Bestseller — social proof",
+      "desc": "Tylko odznaka na zdjęciu dania",
       "badge": "Najlepiej sprzedawane",
       "defaultHeader": "Inni często zamawiają z"
     },

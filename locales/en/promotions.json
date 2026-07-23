@@ -21,9 +21,10 @@
   "savings": "You save {{percent}}% — calculated automatically",
   "relatedProducts": "Related products",
   "polecaneSlots": {
-    "perfectWith": "Wine/Beer",
+    "perfectWith": "Wine",
     "finishWith": "Dessert",
     "addA": "Beverage",
+    "slotLabel": "Category",
     "inputPlaceholder": "e.g. Pinot Grigio",
     "pricePlaceholder": "Price"
   },
@@ -64,7 +65,7 @@
     },
     "popularne": {
       "label": "Best sellers",
-      "desc": "Bestseller — social proof",
+      "desc": "Badge on dish photo only",
       "badge": "Best sellers",
       "defaultHeader": "Others often order with"
     },

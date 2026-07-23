@@ -8,14 +8,19 @@ import {
   normalizePolecaneItems,
   persistRecommendations,
   POLECANE_SLOTS,
+  RECOMMENDATION_DEFAULT_HEADER,
 } from '../utils/dishRecommendations';
+import {
+  POLECANE_BEVERAGE_SLOT_OPTIONS,
+  resolvePolecaneSlotLabel,
+} from '../utils/polecaneSlotLabels';
 import {
   DEFAULT_RECOMMENDATION_CURRENCY,
   RECOMMENDATION_CURRENCY_CODES,
   resolveRecommendationCurrency,
 } from '../utils/recommendationCurrency';
 import { RecommendationCurrency } from '../types';
-import { ChevronDown, Gift, Plus, Trash2, Megaphone, ToggleLeft, ToggleRight } from 'lucide-react';
+import { ChevronDown, Gift, Trash2, Megaphone, ToggleLeft, ToggleRight } from 'lucide-react';
 
 interface Props {
   dishes: Dish[];
@@ -46,10 +51,11 @@ function newRecommendation(dishId: string, type: DishRecommendationType): DishRe
         ? [newItem(), newItem(), newItem()]
         : type === 'polecane'
           ? createPolecaneItems()
-          : [newItem()],
+          : [],
     bundlePriceOutside: type === 'zestaw' ? '' : undefined,
     bundlePrice: type === 'zestaw' ? '' : undefined,
     currency: DEFAULT_RECOMMENDATION_CURRENCY,
+    customHeaderText: type === 'polecane' ? RECOMMENDATION_DEFAULT_HEADER.polecane : undefined,
   };
 }
 
@@ -140,18 +146,30 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
   const saveEditing = async () => {
     if (!editing) return;
     const normalizedItems =
-      editing.type === 'polecane' ? normalizePolecaneItems(editing.items) : editing.items.filter((i) => i.title.trim());
+      editing.type === 'polecane'
+        ? normalizePolecaneItems(editing.items)
+        : editing.type === 'popularne'
+          ? []
+          : editing.items.filter((i) => i.title.trim());
     const cleaned: DishRecommendation = {
       ...editing,
       items: normalizedItems,
-      customHeaderText: editing.customHeaderText?.trim() || undefined,
+      customHeaderText:
+        editing.type === 'popularne'
+          ? undefined
+          : (() => {
+              const trimmed = editing.customHeaderText?.trim();
+              if (trimmed) return trimmed;
+              if (editing.type === 'polecane') return RECOMMENDATION_DEFAULT_HEADER.polecane;
+              return undefined;
+            })(),
       currency: resolveRecommendationCurrency(editing.currency),
     };
     const filledCount =
       editing.type === 'polecane'
         ? normalizedItems.filter((i) => i.title.trim()).length
         : cleaned.items.length;
-    if (filledCount === 0) {
+    if (editing.type !== 'popularne' && filledCount === 0) {
       alert(t('errors.minOneProduct'));
       return;
     }
@@ -275,12 +293,20 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                             )
                         : optValue === 'polecane'
                           ? createPolecaneItems(editing.items)
-                          : editing.items.slice(0, 5);
+                          : optValue === 'popularne'
+                            ? []
+                            : editing.items.slice(0, 5);
                     updateEditing({
                       type: optValue,
                       items,
                       bundlePriceOutside: optValue === 'zestaw' ? editing.bundlePriceOutside ?? '' : undefined,
                       bundlePrice: optValue === 'zestaw' ? editing.bundlePrice ?? '' : undefined,
+                      customHeaderText:
+                        optValue === 'polecane'
+                          ? editing.customHeaderText?.trim() || RECOMMENDATION_DEFAULT_HEADER.polecane
+                          : optValue === 'popularne'
+                            ? undefined
+                            : editing.customHeaderText,
                     });
                   }}
                   className={`text-left px-4 py-3 rounded-xl border transition-colors ${
@@ -314,6 +340,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
             </button>
           </div>
 
+          {editing.type !== 'popularne' && (
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
               {t('customHeader')}
@@ -321,12 +348,17 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
             <input
               type="text"
               placeholder={t(`types.${editing.type}.defaultHeader`)}
-              value={editing.customHeaderText ?? ''}
+              value={
+                editing.customHeaderText?.trim() ||
+                (editing.type === 'polecane' ? RECOMMENDATION_DEFAULT_HEADER.polecane : '')
+              }
               onChange={(e) => updateEditing({ customHeaderText: e.target.value })}
               className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm"
             />
           </div>
+          )}
 
+          {editing.type !== 'popularne' && (
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
               {t('currency')}
@@ -346,6 +378,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
             </div>
           </div>
+          )}
 
           {editing.type === 'zestaw' && (
             <div className="grid grid-cols-2 gap-3">
@@ -383,6 +416,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
             </div>
           )}
 
+          {editing.type !== 'popularne' && (
           <div className="space-y-3">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
               {editing.type === 'polecane' ? t('types.polecane.label') : t('relatedProducts')}
@@ -390,17 +424,51 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
             {editing.type === 'polecane' ? (
               normalizePolecaneItems(editing.items).map((item, idx) => {
                 const slot = POLECANE_SLOTS[idx];
-                const labelKey =
-                  slot.id === 'polecane-perfect-with'
-                    ? 'polecaneSlots.perfectWith'
-                    : slot.id === 'polecane-finish-with'
-                      ? 'polecaneSlots.finishWith'
-                      : 'polecaneSlots.addA';
+                const slotLabel = resolvePolecaneSlotLabel(slot.id, item.slotLabel);
                 return (
                   <div key={item.id} className="bg-slate-50 rounded-xl p-3 space-y-2 border border-slate-100">
-                    <p className="text-sm font-bold text-slate-800">
-                      <span aria-hidden>{slot.emoji}</span> {t(labelKey)}
-                    </p>
+                    {slot.id === 'polecane-perfect-with' ? (
+                      <label className="block space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          {t('polecaneSlots.slotLabel')}
+                        </span>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base" aria-hidden>
+                            {slot.emoji}
+                          </span>
+                          <select
+                            value={slotLabel}
+                            onChange={(e) => {
+                              const items = normalizePolecaneItems(editing.items);
+                              items[idx] = {
+                                ...item,
+                                slotLabel: e.target.value,
+                                emoji: slot.emoji,
+                              };
+                              updateEditing({ items });
+                            }}
+                            className="w-full appearance-none bg-white border border-slate-100 rounded-lg pl-10 pr-10 py-2 text-sm font-bold text-slate-800"
+                          >
+                            {POLECANE_BEVERAGE_SLOT_OPTIONS.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                            size={18}
+                          />
+                        </div>
+                      </label>
+                    ) : (
+                      <p className="text-sm font-bold text-slate-800">
+                        <span aria-hidden>{slot.emoji}</span>{' '}
+                        {slot.id === 'polecane-finish-with'
+                          ? t('polecaneSlots.finishWith')
+                          : t('polecaneSlots.addA')}
+                      </p>
+                    )}
                     <input
                       type="text"
                       placeholder={t('polecaneSlots.inputPlaceholder')}
@@ -477,16 +545,8 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                 )}
               </div>
             )))}
-            {editing.type === 'popularne' && editing.items.length < 4 && (
-              <button
-                type="button"
-                onClick={() => updateEditing({ items: [...editing.items, newItem()] })}
-                className="flex items-center gap-2 text-sm font-bold text-slate-600 px-3 py-2"
-              >
-                <Plus size={16} /> {t('addProduct')}
-              </button>
-            )}
           </div>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-2 pt-2">
             <button

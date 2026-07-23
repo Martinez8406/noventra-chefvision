@@ -177,7 +177,7 @@ function PolecaneContent({
         const slot = POLECANE_SLOTS.find((s) => s.id === item.id);
         if (!slot) return null;
         const copy = getPublicRecommendationItemCopy(item, menuLocale, translationCache);
-        const label = getPublicPolecaneSlotLabel(slot.id, menuLocale);
+        const label = getPublicPolecaneSlotLabel(slot.id, menuLocale, item.slotLabel);
         return (
           <div key={item.id} className="min-w-0">
             <p className="text-[11px] font-bold text-slate-600 leading-snug">
@@ -289,6 +289,8 @@ export const DishRecommendationBox: React.FC<Props> = ({
   className = '',
 }) => {
   const { type, items } = recommendation;
+  if (type === 'popularne') return null;
+
   const currency = resolveRecommendationCurrency(recommendation.currency);
   const styles = TYPE_STYLES[type];
   const headerText = getPublicRecommendationHeader(recommendation, menuLocale, translationCache);
@@ -303,7 +305,9 @@ export const DishRecommendationBox: React.FC<Props> = ({
       className={`rounded-xl border p-3 shadow-sm ${styles.box} ${className}`}
       onClick={(e: React.MouseEvent) => e.stopPropagation()}
     >
-      {type !== 'polecane' && (
+      {type === 'polecane' ? (
+        <p className={`text-xs font-bold mb-2.5 leading-snug ${styles.header}`}>{headerText}</p>
+      ) : (
         <div className={`flex items-center gap-1.5 mb-2.5 ${styles.header}`}>
           <RecommendationTypeIcon type={type} />
           <p className="text-[9px] font-black uppercase tracking-[0.12em] leading-tight">{headerText}</p>

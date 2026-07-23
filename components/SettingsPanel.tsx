@@ -4,9 +4,16 @@ import { QRGenerator } from './QRGenerator';
 import { UploadLogo } from './UploadLogo';
 import { GoogleReviewsSettings } from './GoogleReviewsSettings';
 import { GuestFeedbackSettings } from './GuestFeedbackSettings';
+import { WaiterCallSettings } from './WaiterCallSettings';
 import { SubscriptionSettings } from './SubscriptionSettings';
 
-export type SettingsSection = 'qr' | 'branding' | 'google' | 'feedback' | 'subscription';
+export type SettingsSection =
+  | 'qr'
+  | 'branding'
+  | 'google'
+  | 'feedback'
+  | 'waiter'
+  | 'subscription';
 
 interface Props {
   section: SettingsSection;
@@ -27,7 +34,12 @@ export const SettingsPanel: React.FC<Props> = ({ section, userId, restaurantName
         <p className="text-sm text-slate-500 mt-2">{t(`sections.${section}.description`)}</p>
       </div>
 
-      {section === 'qr' && <QRGenerator userId={userId} />}
+      {section === 'qr' && (
+        <>
+          <QRGenerator userId={userId} />
+          <WaiterCallSettings userId={userId} />
+        </>
+      )}
 
       {section === 'branding' && userId && (
         <div className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100">
@@ -46,6 +58,8 @@ export const SettingsPanel: React.FC<Props> = ({ section, userId, restaurantName
       )}
 
       {section === 'feedback' && <GuestFeedbackSettings userId={userId} />}
+
+      {section === 'waiter' && <WaiterCallSettings userId={userId} />}
 
       {section === 'subscription' && (
         <div className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100">

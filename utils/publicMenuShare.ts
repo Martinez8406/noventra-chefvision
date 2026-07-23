@@ -4,7 +4,12 @@ export type ShareLinkOutcome = 'shared' | 'copied' | 'cancelled' | 'failed';
 
 export function buildPublicMenuUrl(
   userId: string,
-  options?: { dishId?: string | null; usePathRouting?: boolean; hubSectionId?: string | null }
+  options?: {
+    dishId?: string | null;
+    usePathRouting?: boolean;
+    hubSectionId?: string | null;
+    table?: string | number | null;
+  }
 ): string {
   const origin =
     typeof window !== 'undefined' ? window.location.origin : 'https://app.chefvision.pl';
@@ -20,11 +25,40 @@ export function buildPublicMenuUrl(
     ? `/dish/${encodeURIComponent(options.dishId)}`
     : '';
 
+  const tableRaw =
+    options?.table != null && String(options.table).trim()
+      ? String(options.table).trim()
+      : '';
+  const tableQuery = tableRaw ? `?table=${encodeURIComponent(tableRaw)}` : '';
+
   if (options?.usePathRouting) {
-    return `${origin}/menu/${encodedUserId}${hubSegment}${dishSegment}`;
+    return `${origin}/menu/${encodedUserId}${hubSegment}${dishSegment}${tableQuery}`;
   }
 
-  return `${origin}${pathBase}#/menu/${encodedUserId}${hubSegment}${dishSegment}`;
+  // Dla hash-routingu query musi być przed hashem (location.search).
+  return `${origin}${pathBase}${tableQuery}#/menu/${encodedUserId}${hubSegment}${dishSegment}`;
+}
+
+/** Numer stolika z ?table= (path) lub z hash (#/menu/...?table=). */
+export function parseTableFromLocation(
+  search: string = typeof window !== 'undefined' ? window.location.search : '',
+  hash: string = typeof window !== 'undefined' ? window.location.hash : '',
+): string | null {
+  const fromSearch = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search).get(
+    'table',
+  );
+  if (fromSearch?.trim()) return fromSearch.trim();
+
+  const hashQueryIndex = hash.indexOf('?');
+  if (hashQueryIndex >= 0) {
+    const fromHash = new URLSearchParams(hash.slice(hashQueryIndex + 1)).get('table');
+    if (fromHash?.trim()) return fromHash.trim();
+  }
+  return null;
+}
+
+export function tableStorageKey(userId: string): string {
+  return `chefvision_table:${userId}`;
 }
 
 const SHARE_LABEL: Record<PublicMenuLocale, string> = {

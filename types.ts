@@ -96,6 +96,8 @@ export interface DishRecommendationItem {
   price?: string;
   imageUrl?: string;
   emoji?: string;
+  /** Własna etykieta slotu w „Szef kuchni poleca” (np. Wino, Piwo) */
+  slotLabel?: string;
 }
 
 export interface DishRecommendation {

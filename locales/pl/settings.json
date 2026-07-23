@@ -18,6 +18,10 @@
       "title": "Opinie i sugestie",
       "description": "Pozwól gościom wysyłać uwagi i sugestie bezpośrednio z Live Menu na Twój e-mail."
     },
+    "waiter": {
+      "title": "Kelner / rachunek",
+      "description": "Połącz Discord i włącz przyciski „Poproś o kelnera” oraz „Poproś o rachunek” w Live Menu."
+    },
     "subscription": {
       "title": "Zarządzaj subskrypcją",
       "description": "Twój plan, płatności Stripe oraz przejście na Premium."
@@ -31,7 +35,14 @@
     "noLink": "Brak linku – zaloguj się",
     "downloadPng": "Pobierz jako obraz PNG",
     "shareLink": "Udostępnij link",
-    "shareText": "Cyfrowe menu restauracji"
+    "shareText": "Cyfrowe menu restauracji",
+    "tablesTitle": "Kody QR per stolik (opcjonalnie)",
+    "tablesIntro": "Nie musisz mieć osobnego QR na każdy stolik. Przy jednym wspólnym QR gość wybiera numer stolika w menu przed wezwaniem kelnera. Osobne QR per stolik są opcjonalne — wtedy numer jest od razu w linku.",
+    "tableCountLabel": "Liczba stolików",
+    "generateTables": "Generuj kody",
+    "downloadAllTables": "Pobierz wszystkie",
+    "downloadTable": "Pobierz PNG",
+    "tableLabel": "Stolik {{number}}"
   },
   "google": {
     "title": "Opinie Google",
@@ -65,6 +76,30 @@
       "fetchFailed": "Nie udało się pobrać ustawień opinii.",
       "migrationRequired": "Uruchom migrację SQL: supabase/feedback_settings.sql",
       "saveFailed": "Nie udało się zapisać ustawień."
+    }
+  },
+  "waiterCall": {
+    "title": "Kelner / rachunek (Discord)",
+    "intro": "Gdy gość otworzy Live Menu (nawet z jednego wspólnego QR), wybiera stolik i może poprosić o kelnera, dodatkowe zamówienie lub rachunek. Powiadomienie trafia na Discord.",
+    "enableLabel": "Włącz wezwanie kelnera",
+    "enableHelp": "Sekcja w Live Menu: wybór stolika + przyciski wezwania",
+    "webhookLabel": "Discord Webhook URL",
+    "webhookPlaceholder": "https://discord.com/api/webhooks/…",
+    "webhookRequired": "Wklej webhook Discord, aby funkcja była aktywna.",
+    "webhookHelp": "Discord → Ustawienia kanału → Integracje → Webhooki → Nowy webhook → Skopiuj URL. Ty możesz to zrobić za klienta i wkleić tutaj.",
+    "invalidWebhook": "To nie wygląda na prawidłowy URL webhooka Discord.",
+    "saving": "Zapisywanie...",
+    "saved": "Zapisano ✓",
+    "save": "Zapisz",
+    "test": "Wyślij test",
+    "testing": "Wysyłanie…",
+    "testOk": "Test wysłany — sprawdź kanał Discord (Stolik TEST).",
+    "loading": "Ładowanie ustawień...",
+    "errors": {
+      "fetchFailed": "Nie udało się pobrać ustawień.",
+      "migrationRequired": "Uruchom migrację SQL: supabase/waiter_call_settings.sql",
+      "saveFailed": "Nie udało się zapisać ustawień.",
+      "testFailed": "Nie udało się wysłać testu. Sprawdź webhook i API."
     }
   },
   "subscription": {

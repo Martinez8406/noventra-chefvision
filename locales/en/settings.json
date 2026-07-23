@@ -18,6 +18,10 @@
       "title": "Feedback & suggestions",
       "description": "Let guests send comments and suggestions from Live Menu directly to your email."
     },
+    "waiter": {
+      "title": "Waiter / bill",
+      "description": "Connect Discord and enable “Call waiter” and “Request the bill” buttons in Live Menu."
+    },
     "subscription": {
       "title": "Manage subscription",
       "description": "Your plan, Stripe billing, and upgrading to Premium."
@@ -31,7 +35,14 @@
     "noLink": "No link — sign in",
     "downloadPng": "Download as PNG",
     "shareLink": "Share link",
-    "shareText": "Restaurant digital menu"
+    "shareText": "Restaurant digital menu",
+    "tablesTitle": "Per-table QR codes (optional)",
+    "tablesIntro": "You do not need a separate QR for each table. With one shared QR, the guest picks their table number in the menu before calling staff. Per-table QRs are optional — then the number is already in the link.",
+    "tableCountLabel": "Number of tables",
+    "generateTables": "Generate codes",
+    "downloadAllTables": "Download all",
+    "downloadTable": "Download PNG",
+    "tableLabel": "Table {{number}}"
   },
   "google": {
     "title": "Google reviews",
@@ -65,6 +76,30 @@
       "fetchFailed": "Could not fetch feedback settings.",
       "migrationRequired": "Run SQL migration: supabase/feedback_settings.sql",
       "saveFailed": "Could not save settings."
+    }
+  },
+  "waiterCall": {
+    "title": "Waiter / bill (Discord)",
+    "intro": "When a guest opens Live Menu (even from one shared QR), they pick their table and can call a waiter, request an extra order, or ask for the bill. The alert goes to Discord.",
+    "enableLabel": "Enable waiter call",
+    "enableHelp": "Section in Live Menu: table picker + call buttons",
+    "webhookLabel": "Discord Webhook URL",
+    "webhookPlaceholder": "https://discord.com/api/webhooks/…",
+    "webhookRequired": "Paste a Discord webhook URL to activate this feature.",
+    "webhookHelp": "Discord → Channel settings → Integrations → Webhooks → New webhook → Copy URL. You can do this for the client and paste it here.",
+    "invalidWebhook": "This does not look like a valid Discord webhook URL.",
+    "saving": "Saving...",
+    "saved": "Saved ✓",
+    "save": "Save",
+    "test": "Send test",
+    "testing": "Sending…",
+    "testOk": "Test sent — check Discord (Table TEST).",
+    "loading": "Loading settings...",
+    "errors": {
+      "fetchFailed": "Could not fetch settings.",
+      "migrationRequired": "Run SQL migration: supabase/waiter_call_settings.sql",
+      "saveFailed": "Could not save settings.",
+      "testFailed": "Could not send test. Check the webhook and API."
     }
   },
   "subscription": {

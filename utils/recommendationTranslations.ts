@@ -1,5 +1,6 @@
 import type { DishRecommendation, DishRecommendationItem, DishRecommendationType, PublicMenuLocale } from '../types';
-import { getRecommendationHeader, normalizePolecaneItems, POLECANE_SLOTS } from './dishRecommendations';
+import { getRecommendationHeader, normalizePolecaneItems } from './dishRecommendations';
+export { getPublicPolecaneSlotLabel } from './polecaneSlotLabels';
 import { isCurrencyMetaItem } from './recommendationCurrency';
 
 export const REC_TRANSLATIONS_STORAGE_KEY = (userId: string) =>
@@ -132,67 +133,6 @@ export const RECOMMENDATION_HEADER_I18N: Record<DishRecommendationType, Record<P
     zh: '最受欢迎套餐',
   },
 };
-
-export const POLECANE_SLOT_LABEL_I18N: Record<
-  (typeof POLECANE_SLOTS)[number]['id'],
-  Record<PublicMenuLocale, string>
-> = {
-  'polecane-perfect-with': {
-    pl: 'Wino/piwo',
-    en: 'Wine/Beer',
-    he: 'יין/בירה',
-    ar: 'نبيذ/بيرة',
-    uk: 'Вино/пиво',
-    de: 'Wein/Bier',
-    es: 'Vino/cerveza',
-    it: 'Vino/birra',
-    ko: '와인/맥주',
-    ja: 'ワイン/ビール',
-    fr: 'Vin/bière',
-    cs: 'Víno/pivo',
-    nl: 'Wijn/bier',
-    zh: '葡萄酒/啤酒',
-  },
-  'polecane-finish-with': {
-    pl: 'Deser',
-    en: 'Dessert',
-    he: 'קינוח',
-    ar: 'حلوى',
-    uk: 'Десерт',
-    de: 'Dessert',
-    es: 'Postre',
-    it: 'Dolce',
-    ko: '디저트',
-    ja: 'デザート',
-    fr: 'Dessert',
-    cs: 'Dezert',
-    nl: 'Dessert',
-    zh: '甜点',
-  },
-  'polecane-add-a': {
-    pl: 'Napój',
-    en: 'Beverage',
-    he: 'משקה',
-    ar: 'مشروب',
-    uk: 'Напій',
-    de: 'Getränk',
-    es: 'Bebida',
-    it: 'Bevanda',
-    ko: '음료',
-    ja: 'ドリンク',
-    fr: 'Boisson',
-    cs: 'Nápoj',
-    nl: 'Drank',
-    zh: '饮料',
-  },
-};
-
-export function getPublicPolecaneSlotLabel(
-  slotId: (typeof POLECANE_SLOTS)[number]['id'],
-  locale: PublicMenuLocale,
-): string {
-  return POLECANE_SLOT_LABEL_I18N[slotId][locale] || POLECANE_SLOT_LABEL_I18N[slotId].pl;
-}
 
 const SAVINGS_I18N: Record<PublicMenuLocale, (pct: number) => string> = {
   pl: (pct) => `Oszczędzasz ${pct}%`,
