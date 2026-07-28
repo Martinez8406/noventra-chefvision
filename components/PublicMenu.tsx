@@ -331,6 +331,12 @@ export const PublicMenu: React.FC<Props> = ({
               setGooglePlaceId(fallback?.google_place_id?.trim() || null);
               setFeedbackAvailable(false);
               setWaiterCallAvailable(false);
+              if (Array.isArray((fallback as { menu_categories?: unknown })?.menu_categories)) {
+                const list = (fallback as { menu_categories: unknown[] }).menu_categories
+                  .map((x) => String(x).trim())
+                  .filter(Boolean);
+                setProfileMenuCategories(list);
+              }
             });
         }
         if (data?.logo_url) setLogoUrl(data.logo_url);
@@ -505,11 +511,21 @@ export const PublicMenu: React.FC<Props> = ({
 
   const categoryOrder = profileMenuCategories.length > 0 ? profileMenuCategories : CATEGORY_ORDER;
 
+  const categoryOrderIndex = new Map(
+    categoryOrder.map((category, index) => [normalizeCategoryKey(category), index]),
+  );
+
   // Sekcje w ustalonej kolejności; dodatkowe kategorie (spoza listy) na końcu
-  const orderedKeys = [
-    ...categoryOrder.filter((c) => groups[c]?.length),
-    ...Object.keys(groups).filter((c) => !categoryOrder.includes(c) && groups[c]?.length),
-  ];
+  const orderedKeys = Object.keys(groups)
+    .filter((category) => groups[category]?.length)
+    .sort((a, b) => {
+      const indexA = categoryOrderIndex.get(normalizeCategoryKey(a));
+      const indexB = categoryOrderIndex.get(normalizeCategoryKey(b));
+      if (indexA !== undefined && indexB !== undefined) return indexA - indexB;
+      if (indexA !== undefined) return -1;
+      if (indexB !== undefined) return 1;
+      return a.localeCompare(b, 'pl');
+    });
 
   const categorySectionId = (category: string) =>
     `menu-cat-${normalizeCategoryKey(category).replace(/\s+/g, '-')}`;

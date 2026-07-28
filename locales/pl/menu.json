@@ -14,9 +14,12 @@
     "saveName": "Zapisz nazwę",
     "saveColors": "Zapisz kolory",
     "contrastWarning": "⚠️ Wybierz kontrastowe kolory",
-    "commitCategories": "Zatwierdź nazwy kategorii",
-    "committingCategories": "Zatwierdzanie zakładek...",
-    "categoriesCommitted": "Zakładki zapisane i przetłumaczone ✓"
+    "categoryOrderTitle": "Kolejność kategorii w menu",
+    "categoryOrderHint": "Widać tylko kategorie z przypisanymi daniami. Zmiana strzałkami zapisuje się od razu — odśwież menu live, żeby zobaczyć efekt.",
+    "categoryOrderEmpty": "Przypisz kategorię do co najmniej jednego dania, żeby ustawić kolejność sekcji w menu.",
+    "commitCategories": "Zapisz kolejność i nazwy kategorii",
+    "committingCategories": "Zapisywanie zakładek...",
+    "categoriesCommitted": "Kolejność zapisana i przetłumaczona ✓"
   },
   "table": {
     "product": "Produkt",
@@ -38,7 +41,9 @@
     "delete": "Usuń kategorię",
     "edit": "Edycja",
     "close": "Zamknij",
-    "customPlaceholder": "Wpisz własną kategorię"
+    "customPlaceholder": "Wpisz własną kategorię",
+    "moveUp": "Przesuń wyżej",
+    "moveDown": "Przesuń niżej"
   },
   "visibility": {
     "restaurant": "Restauracja",
@@ -80,7 +85,8 @@
   "errors": {
     "saveCategories": "Nie udało się zapisać kategorii.",
     "badContrast": "Kolory są zbyt podobne – menu będzie nieczytelne. Wybierz bardziej kontrastowe kolory.",
-    "minOneCategory": "Musi pozostać co najmniej jedna kategoria w menu."
+    "minOneCategory": "Musi pozostać co najmniej jedna kategoria w menu.",
+    "missingMenuCategoriesColumn": "Brak kolumny menu_categories w bazie. Uruchom migrację SQL: supabase/menu_categories.sql"
   },
   "confirm": {
     "deleteCategory": "Czy na pewno chcesz usunąć kategorię „{{name}}”?",

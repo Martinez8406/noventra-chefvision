@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dish, HotelHubData, RecommendationCurrency } from '../types';
 import {
@@ -8,7 +8,7 @@ import {
   RECOMMENDATION_CURRENCY_CODES,
   resolveRecommendationCurrency,
 } from '../utils/recommendationCurrency';
-import { Link2, Eye, EyeOff, ExternalLink, QrCode, Trash2, Edit, Settings, Building2 } from 'lucide-react';
+import { Link2, Eye, EyeOff, ExternalLink, QrCode, Trash2, Edit, Settings, Building2, ChevronUp, ChevronDown } from 'lucide-react';
 import { supabase } from '../services/supabaseService';
 import { hotelHubDb } from '../services/hotelHubService';
 import { MENU_CATEGORIES } from '../constants';
@@ -209,9 +209,68 @@ export const MenuManager: React.FC<Props> = ({
     }
   };
 
+  const cleanMenuCategories = (list: string[]) =>
+    list.map((c) => c.trim()).filter(Boolean);
+
+  const saveMenuCategoriesToProfile = async (categories: string[]): Promise<{ ok: boolean; error?: string }> => {
+    if (!menuUserId || !supabase) {
+      return { ok: false, error: t('errors.saveCategories') };
+    }
+    const cleaned = cleanMenuCategories(categories);
+    if (cleaned.length === 0) {
+      return { ok: false, error: t('errors.minOneCategory') };
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ menu_categories: cleaned })
+      .eq('id', menuUserId);
+
+    if (error) {
+      const msg = error.message || t('errors.saveCategories');
+      const missingColumn = msg.includes('menu_categories');
+      return {
+        ok: false,
+        error: missingColumn ? t('errors.missingMenuCategoriesColumn') : msg,
+      };
+    }
+
+    setHasProfileMenuCategories(true);
+    return { ok: true };
+  };
+
+  const syncMenuCategoryTranslations = async (categories: string[]) => {
+    if (!supabase) return;
+    try {
+      await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+
+      const resp = await fetch('/api/save-menu-categories', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ categories }),
+      });
+      const data = await resp.json().catch(() => null);
+      if (!resp.ok) return;
+
+      const next = Array.isArray(data?.menuCategories)
+        ? data.menuCategories.map((x: any) => String(x).trim()).filter(Boolean)
+        : categories;
+      if (next.length > 0) persistMenuCategories(next);
+    } catch {
+      /* tłumaczenia opcjonalne — kolejność jest już w bazie */
+    }
+  };
+
   const handleCommitMenuCategories = async () => {
     if (!menuUserId) return;
-    const cleaned = Array.from(new Set(menuCategories.map((c) => c.trim()).filter(Boolean)));
+    const cleaned = cleanMenuCategories(
+      categoriesWithDishes.length > 0
+        ? applyActiveCategoryOrder(categoriesWithDishes)
+        : menuCategories,
+    );
     persistMenuCategories(cleaned);
     setCategoriesError(null);
 
@@ -223,23 +282,11 @@ export const MenuManager: React.FC<Props> = ({
 
     setCategoriesSaving(true);
     try {
-      // Refresh auth/session first
-      await supabase.auth.getUser();
-      const { data: { session } } = await supabase.auth.getSession();
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-
-      const resp = await fetch('/api/save-menu-categories', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ categories: cleaned }),
-      });
-      const data = await resp.json().catch(() => null);
-      if (!resp.ok) {
-        throw new Error(data?.error || `HTTP ${resp.status}`);
+      const result = await saveMenuCategoriesToProfile(cleaned);
+      if (!result.ok) {
+        throw new Error(result.error || t('errors.saveCategories'));
       }
-      const next = Array.isArray(data?.menuCategories) ? data.menuCategories.map((x: any) => String(x).trim()).filter(Boolean) : cleaned;
-      persistMenuCategories(Array.from(new Set(next)));
+      await syncMenuCategoryTranslations(cleaned);
       setCategoriesSaved(true);
       setTimeout(() => setCategoriesSaved(false), 2500);
     } catch (e: any) {
@@ -345,6 +392,48 @@ export const MenuManager: React.FC<Props> = ({
 
   const countDishesInCategory = (category: string) =>
     dishes.filter((d) => (d.category ?? '').trim() === category.trim()).length;
+
+  const categoriesWithDishes = useMemo(() => {
+    const fromList = menuCategories.filter((cat) => countDishesInCategory(cat) > 0);
+    const known = new Set(fromList.map((cat) => cat.trim().toLowerCase()));
+    const extra = Array.from(
+      new Set(
+        dishes
+          .map((d) => (d.category ?? '').trim())
+          .filter(Boolean),
+      ),
+    ).filter((cat) => !known.has(cat.toLowerCase()));
+    return [...fromList, ...extra];
+  }, [menuCategories, dishes]);
+
+  const applyActiveCategoryOrder = (orderedActive: string[]) => {
+    const activeLower = new Set(orderedActive.map((cat) => cat.trim().toLowerCase()));
+    const inactive = menuCategories.filter((cat) => !activeLower.has(cat.trim().toLowerCase()));
+    return [...orderedActive, ...inactive];
+  };
+
+  const moveCategory = (index: number, direction: 'up' | 'down') => {
+    const target = direction === 'up' ? index - 1 : index + 1;
+    if (target < 0 || target >= categoriesWithDishes.length) return;
+    const reorderedActive = [...categoriesWithDishes];
+    [reorderedActive[index], reorderedActive[target]] = [reorderedActive[target], reorderedActive[index]];
+    const next = applyActiveCategoryOrder(reorderedActive);
+    persistMenuCategories(next);
+    setCategoriesSaved(false);
+    setCategoriesError(null);
+
+    void (async () => {
+      setCategoriesSaving(true);
+      const result = await saveMenuCategoriesToProfile(next);
+      setCategoriesSaving(false);
+      if (result.ok) {
+        setCategoriesSaved(true);
+        setTimeout(() => setCategoriesSaved(false), 2000);
+        return;
+      }
+      if (result.error) setCategoriesError(result.error);
+    })();
+  };
 
   const deleteCategory = (category: string) => {
     const name = category.trim();
@@ -508,7 +597,52 @@ export const MenuManager: React.FC<Props> = ({
           </div>
         </div>
 
-        <div className="mt-6 pt-6 border-t border-slate-200 flex flex-wrap items-center gap-3">
+        <div className="mt-6 pt-6 border-t border-slate-200">
+          <h4 className="text-sm font-bold text-slate-800 mb-1">{t('appearance.categoryOrderTitle')}</h4>
+          <p className="text-xs text-slate-500 mb-4">{t('appearance.categoryOrderHint')}</p>
+          {categoriesWithDishes.length === 0 ? (
+            <p className="text-sm text-slate-500 mb-5">{t('appearance.categoryOrderEmpty')}</p>
+          ) : (
+          <ul className="space-y-1.5 max-h-72 overflow-y-auto pr-1 mb-5">
+            {categoriesWithDishes.map((cat, index) => (
+              <li
+                key={cat}
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm"
+              >
+                <span className="w-6 text-[10px] font-black text-slate-300 tabular-nums">{index + 1}</span>
+                <span className="flex-1 text-sm font-medium text-slate-700 truncate" title={cat}>
+                  {getCategoryLabel(cat)}
+                </span>
+                <span className="text-[10px] font-bold text-slate-400 tabular-nums shrink-0">
+                  {countDishesInCategory(cat)}
+                </span>
+                <div className="flex flex-col shrink-0 -my-0.5">
+                  <button
+                    type="button"
+                    onClick={() => moveCategory(index, 'up')}
+                    disabled={index === 0 || categoriesSaving}
+                    className="p-1 rounded-md text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+                    title={t('category.moveUp')}
+                    aria-label={t('category.moveUp')}
+                  >
+                    <ChevronUp size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveCategory(index, 'down')}
+                    disabled={index === categoriesWithDishes.length - 1 || categoriesSaving}
+                    className="p-1 rounded-md text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors disabled:opacity-25 disabled:pointer-events-none"
+                    title={t('category.moveDown')}
+                    aria-label={t('category.moveDown')}
+                  >
+                    <ChevronDown size={16} />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          )}
+          <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={() => void handleCommitMenuCategories()}
@@ -524,6 +658,7 @@ export const MenuManager: React.FC<Props> = ({
           {categoriesError && (
             <p className="text-xs font-semibold text-red-600">{categoriesError}</p>
           )}
+          </div>
         </div>
       </div>
 

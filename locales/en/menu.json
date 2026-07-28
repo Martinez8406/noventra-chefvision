@@ -14,9 +14,12 @@
     "saveName": "Save name",
     "saveColors": "Save colours",
     "contrastWarning": "⚠️ Choose more contrasting colours",
-    "commitCategories": "Confirm category names",
-    "committingCategories": "Confirming tabs...",
-    "categoriesCommitted": "Tabs saved and translated ✓"
+    "categoryOrderTitle": "Category order in the menu",
+    "categoryOrderHint": "Only categories with assigned dishes are shown. Arrow changes save immediately — refresh the live menu to see the effect.",
+    "categoryOrderEmpty": "Assign a category to at least one dish to set section order in the menu.",
+    "commitCategories": "Save category order and names",
+    "committingCategories": "Saving tabs...",
+    "categoriesCommitted": "Order saved and translated ✓"
   },
   "table": {
     "product": "Product",
@@ -38,7 +41,9 @@
     "delete": "Delete category",
     "edit": "Edit",
     "close": "Close",
-    "customPlaceholder": "Enter custom category"
+    "customPlaceholder": "Enter custom category",
+    "moveUp": "Move up",
+    "moveDown": "Move down"
   },
   "visibility": {
     "restaurant": "Restaurant",
@@ -80,7 +85,8 @@
   "errors": {
     "saveCategories": "Could not save categories.",
     "badContrast": "Colours are too similar — the menu will be hard to read. Choose more contrasting colours.",
-    "minOneCategory": "At least one menu category must remain."
+    "minOneCategory": "At least one menu category must remain.",
+    "missingMenuCategoriesColumn": "Missing menu_categories column in the database. Run the SQL migration: supabase/menu_categories.sql"
   },
   "confirm": {
     "deleteCategory": "Are you sure you want to delete the category “{{name}}”?",
