@@ -49,7 +49,7 @@
     "autoEnableHotelHub": "Po przypisaniu danie zostanie automatycznie włączone w Hotel Hub."
   },
   "price": {
-    "placeholder": "np. 39",
+    "placeholder": "np. 39 lub 30 | 130",
     "currency": "zł",
     "currencyLabel": "Waluta",
     "add": "Dodaj cenę"

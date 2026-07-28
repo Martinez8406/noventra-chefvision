@@ -13,6 +13,7 @@ import { supabase } from '../services/supabaseService';
 import { hotelHubDb } from '../services/hotelHubService';
 import { MENU_CATEGORIES } from '../constants';
 import { sortHotelHubCategories, sortHotelHubSections } from '../utils/hotelHub';
+import { buildPublicMenuUrl } from '../utils/publicMenuShare';
 import { HotelHubSectionIcon } from './HotelHubSectionIcon';
 interface Props {
   dishes: Dish[];
@@ -374,9 +375,11 @@ export const MenuManager: React.FC<Props> = ({
     }
   };
 
-  const getBaseUrl = () =>
-    `${window.location.origin}${(window.location.pathname || '/').replace(/\/+$/, '') || ''}`;
-  const menuUrl = menuUserId ? `${getBaseUrl()}/#/menu/${menuUserId}` : '';
+  const menuUrl = menuUserId ? buildPublicMenuUrl(menuUserId) : '';
+  const openDishPreview = (dishId: string) => {
+    if (!menuUserId) return;
+    window.open(buildPublicMenuUrl(menuUserId, { dishId }), '_blank');
+  };
 
   return (
     <>
@@ -844,7 +847,7 @@ export const MenuManager: React.FC<Props> = ({
 
                 {/* Cena – inline edit + waluta */}
                 <td className="px-6 py-4">
-                  <div className="flex items-center justify-end gap-1.5 min-w-[8.5rem]">
+                  <div className="flex items-center justify-end gap-1.5 min-w-[10rem]">
                     {editingPriceId === dish.id ? (
                       <input
                         autoFocus
@@ -860,17 +863,17 @@ export const MenuManager: React.FC<Props> = ({
                             setDraftCurrency(DEFAULT_RECOMMENDATION_CURRENCY);
                           }
                         }}
-                        className="w-16 px-2 py-1 text-xs font-medium rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-right"
+                        className="w-28 min-w-[7rem] max-w-[11rem] px-2 py-1 text-xs font-medium rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-right"
                         placeholder={t('price.placeholder')}
                       />
                     ) : (
                       <button
                         type="button"
                         onClick={() => beginEditPrice(dish)}
-                        className="inline-flex items-center justify-end min-w-[3rem] text-xs font-semibold text-slate-700 hover:text-slate-900"
+                        className="inline-flex items-center justify-end min-w-[3rem] max-w-[11rem] text-xs font-semibold text-slate-700 hover:text-slate-900 text-right"
                       >
                         {dish.menuPrice ? (
-                          <span className="tabular-nums">
+                          <span className="tabular-nums break-words">
                             {formatRecommendationPrice(dish.menuPrice, dish.menuPriceCurrency)}
                           </span>
                         ) : (
@@ -924,7 +927,7 @@ export const MenuManager: React.FC<Props> = ({
                       <Edit size={18} />
                     </button>
                     <button
-                      onClick={() => menuUrl && window.open(`${menuUrl}/dish/${dish.id}`, '_blank')}
+                      onClick={() => openDishPreview(dish.id)}
                       disabled={!menuUserId}
                       className="p-2 text-slate-400 hover:text-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title={t('actions.previewInMenu')}

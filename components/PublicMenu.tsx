@@ -14,7 +14,8 @@ import { MenuHeroIdentityPreview } from './MenuHeroIdentityPreview';
 import { ShareLinkButton } from './ShareLinkButton';
 import { normalizeLogoPosition, normalizeLogoScale } from '../utils/logoFrame';
 import { normalizeCoverPosition, normalizeCoverScale } from '../utils/coverFrame';
-import { buildPublicMenuUrl, getShareMenuText } from '../utils/publicMenuShare';
+import { buildPublicMenuUrl, getShareMenuText, tableStorageKey } from '../utils/publicMenuShare';
+import { navigateToPublicDish, navigateToPublicMenuList } from '../utils/publicMenuNavigation';
 import { PublicMenuSkeleton } from './PublicMenuSkeleton';
 import { PublicMenuCategoryTabs } from './PublicMenuCategoryTabs';
 import { GuestFeedbackSection } from './GuestFeedbackSection';
@@ -28,7 +29,6 @@ import {
   type RecommendationTranslationCache,
 } from '../utils/recommendationTranslations';
 import { MENU_TRANSLATION_LOCALES_FREE } from '../utils/tokens';
-import { tableStorageKey } from '../utils/publicMenuShare';
 
 interface Props {
   dishes: Dish[];
@@ -120,6 +120,11 @@ export const PublicMenu: React.FC<Props> = ({
   });
   const [menuMode, setMenuMode] = useState<'restaurant' | 'hub'>(initialMenuMode);
   const [activeHubSectionId, setActiveHubSectionId] = useState<string | null>(hubSectionId);
+  const [viewDishId, setViewDishId] = useState<string | null>(dishId);
+
+  useEffect(() => {
+    setViewDishId(dishId);
+  }, [dishId]);
 
   useEffect(() => {
     setMenuMode(initialMenuMode);
@@ -460,13 +465,25 @@ export const PublicMenu: React.FC<Props> = ({
       };
 
   const goBack = () => {
-    if (usePathRouting) {
-      history.pushState({}, '', menuBasePath);
-      onPathChange?.();
-    } else {
-      window.location.hash = menuBaseHash;
-    }
+    setViewDishId(null);
+    navigateToPublicMenuList({
+      userId,
+      usePathRouting: !!usePathRouting,
+      onPathChange,
+    });
   };
+
+  const openDishDetail = (targetDishId: string) => {
+    setViewDishId(targetDishId);
+    navigateToPublicDish({
+      userId,
+      dishId: targetDishId,
+      usePathRouting: !!usePathRouting,
+      onPathChange,
+    });
+  };
+
+  const activeDishId = viewDishId ?? dishId;
 
   const decodeRouteParam = (value: string | null): string | null => {
     if (!value) return null;
@@ -602,9 +619,9 @@ export const PublicMenu: React.FC<Props> = ({
     return <PublicMenuSkeleton />;
   }
 
-  if (dishId) {
-    const rawDishId = String(dishId).trim();
-    const decodedDishId = (decodeRouteParam(dishId) || '').trim();
+  if (activeDishId) {
+    const rawDishId = String(activeDishId).trim();
+    const decodedDishId = (decodeRouteParam(activeDishId) || '').trim();
     const dish = userDishes.find((d) => {
       const rowId = String(d.id || '').trim();
       if (!rowId) return false;
@@ -1038,10 +1055,7 @@ export const PublicMenu: React.FC<Props> = ({
                     recByDish[dish.id] ? recTranslations[recByDish[dish.id].id] ?? null : null
                   }
                   menuLocale={menuLocale}
-                  basePath={menuBasePath}
-                  baseHash={menuBaseHash}
-                  usePathRouting={!!usePathRouting}
-                  onPathChange={onPathChange}
+                  onOpenDish={openDishDetail}
                   showWatermark={showWatermark}
                   shareUrl={buildPublicMenuUrl(userId, {
                     dishId: dish.id,

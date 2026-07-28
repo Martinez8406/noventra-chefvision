@@ -49,7 +49,7 @@
     "autoEnableHotelHub": "After assignment, the dish will be automatically enabled in Hotel Hub."
   },
   "price": {
-    "placeholder": "e.g. 39",
+    "placeholder": "e.g. 39 or 30 | 130",
     "currency": "PLN",
     "currencyLabel": "Currency",
     "add": "Add price"

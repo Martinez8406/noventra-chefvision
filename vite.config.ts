@@ -35,7 +35,11 @@ export default defineConfig(({ mode }) => {
           configureServer(server) {
             server.middlewares.use((req, res, next) => {
               const url = req.url?.split('?')[0] || '';
-              if (url === '/success' || url === '/success/') {
+              if (
+                url === '/success' ||
+                url === '/success/' ||
+                url.startsWith('/menu')
+              ) {
                 req.url = '/index.html';
               }
               next();

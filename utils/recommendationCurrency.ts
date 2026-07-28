@@ -74,6 +74,15 @@ export function resolveRecommendationCurrency(
   return DEFAULT_RECOMMENDATION_CURRENCY;
 }
 
+/** Cena menu: cyfry + separatory wielu cen w jednym wierszu (np. "30 | 130"). Symbol waluty dodawany przy wyświetlaniu. */
+export function normalizeMenuPrice(value: string): string {
+  return value
+    .trim()
+    .replace(/[^\d.,|/\-\s–·]/g, '')
+    .replace(/\s+/g, ' ')
+    .slice(0, 48);
+}
+
 export function formatRecommendationPrice(
   amount: string | undefined,
   currency?: RecommendationCurrency | string | null,

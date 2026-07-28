@@ -24,6 +24,7 @@ interface Props {
   recommendation?: DishRecommendation | null;
   recTranslationCache?: RecommendationTranslationCache | null;
   menuLocale?: PublicMenuLocale;
+  onOpenDish?: (dishId: string) => void;
   basePath?: string;
   baseHash?: string;
   usePathRouting?: boolean;
@@ -39,6 +40,7 @@ export const PublicDishCard: React.FC<Props> = ({
   recommendation = null,
   recTranslationCache = null,
   menuLocale = 'pl',
+  onOpenDish,
   basePath = '/menu/demo',
   baseHash = '#/menu/demo',
   usePathRouting,
@@ -53,6 +55,10 @@ export const PublicDishCard: React.FC<Props> = ({
   const ingredientsUi = getPublicIngredientsDisplay(dish, menuLocale);
   const isRtl = isRtlMenuLocale(menuLocale);
   const openDetail = () => {
+    if (onOpenDish) {
+      onOpenDish(dish.id);
+      return;
+    }
     const encodedDishId = encodeURIComponent(dish.id);
     if (usePathRouting) {
       history.pushState({}, '', `${basePath}/dish/${encodedDishId}`);
@@ -94,7 +100,7 @@ export const PublicDishCard: React.FC<Props> = ({
             <h3 className={`font-serif font-bold text-2xl text-slate-900 leading-tight min-w-0 ${isRtl ? 'text-end' : ''}`}>
               {copy.name}
             </h3>
-            <span className="text-[1.35rem] font-semibold text-slate-900 whitespace-nowrap tabular-nums shrink-0">
+            <span className="text-[1.35rem] font-semibold text-slate-900 tabular-nums shrink-0 max-w-[45%] text-end leading-tight">
               {formatRecommendationPrice(dish.menuPrice, resolveRecommendationCurrency(dish.menuPriceCurrency))}
             </span>
           </div>

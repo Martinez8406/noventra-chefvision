@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dish, DishStatus, GeneratorParams, UserProfile, Backdrop, RecommendationCurrency } from './types';
 import { ChefsStudio } from './components/ChefsStudio';
 import { SeasonalThemes } from './components/SeasonalThemes';
@@ -24,12 +24,13 @@ import { BRAND_LOGO_SRC, TRIAL_TOKENS } from './constants';
 import { useTranslation } from 'react-i18next';
 import { hasProFeatures, canUseHotelHub } from './utils/tokens';
 import { formatTokenStatusI18n, formatPremiumTokenShort } from './utils/formatTokenStatusI18n';
-import { resolveRecommendationCurrency } from './utils/recommendationCurrency';
+import { normalizeMenuPrice, resolveRecommendationCurrency } from './utils/recommendationCurrency';
 import { supabase, db, authService, uploadDishImage } from './services/supabaseService';
 import { hotelHubDb } from './services/hotelHubService';
 import { requestMenuTranslations } from './services/aiService';
 import { shouldRequestMenuTranslation } from './utils/menuTranslations';
 import { notifyNewUserRegistration } from './utils/notifyNewUserRegistration';
+import { parsePublicMenuRoute } from './utils/publicMenuRoute';
 import { createCheckoutSession, confirmPremiumSession } from './services/stripeService';
 import { 
   LayoutDashboard, 
@@ -135,6 +136,7 @@ const App: React.FC = () => {
   const [statusToast, setStatusToast] = useState<string | null>(null);
   const [publicHasWatermark, setPublicHasWatermark] = useState<boolean>(false);
   const [publicMenuLoading, setPublicMenuLoading] = useState(false);
+  const loadedPublicMenuUserRef = useRef<string | null>(null);
   const [startPromoBarVisible, setStartPromoBarVisible] = useState(false);
   const { t: tNav } = useTranslation('nav');
   const { t: tSidebar } = useTranslation('sidebar');
@@ -196,10 +198,20 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const isPublic = hash.includes('#/') || pathname.startsWith('/menu/');
-    if (session || isPublic) {
-      syncData();
+    const route = parsePublicMenuRoute(pathname, hash);
+    const menuUserId = route.userId;
+    const isPublicMenuRoute =
+      !!menuUserId || pathname.startsWith('/menu/') || hash.includes('#/menu/');
+
+    if (!session && !isPublicMenuRoute) return;
+
+    // Nie przeładowuj listy dań przy wejściu w szczegóły / hub — tylko przy zmianie restauracji
+    if (menuUserId && menuUserId === loadedPublicMenuUserRef.current) {
+      return;
     }
+
+    loadedPublicMenuUserRef.current = menuUserId;
+    void syncData();
   }, [session, hash, pathname]);
 
   const syncData = async () => {
@@ -208,10 +220,8 @@ const App: React.FC = () => {
     if (isInitialLoad) setIsSyncing(true);
     let loadingPublicMenu = false;
     try {
-      const hashMatch = hash.match(/#\/menu\/([^/?#]+)(?:\/hub(?:\/([^/?#]+))?(?:\/dish\/([^/?#]+))?)?/);
-      const pathMatch = pathname.match(/^\/menu\/([^/]+)(?:\/hub(?:\/([^/]+))?(?:\/dish\/([^/]+))?)?\/?$/);
-      const publicMenuUserId =
-        safeDecodeRouteParam(hashMatch?.[1]) ?? safeDecodeRouteParam(pathMatch?.[1]);
+      const publicRoute = parsePublicMenuRoute(pathname, hash);
+      const publicMenuUserId = publicRoute.userId;
       if (publicMenuUserId) {
         loadingPublicMenu = true;
         setPublicMenuLoading(true);
@@ -316,17 +326,12 @@ const App: React.FC = () => {
     }
   };
 
-  const hashMatch = hash.match(/#\/menu\/([^/?#]+)(?:\/hub(?:\/([^/?#]+))?(?:\/dish\/([^/?#]+))?)?/);
-  const pathMatch = pathname.match(/^\/menu\/([^/]+)(?:\/hub(?:\/([^/]+))?(?:\/dish\/([^/]+))?)?\/?$/);
-  const publicMenuUserId =
-    safeDecodeRouteParam(hashMatch?.[1]) ?? safeDecodeRouteParam(pathMatch?.[1]);
-  const publicHubSectionId =
-    safeDecodeRouteParam(hashMatch?.[2]) ?? safeDecodeRouteParam(pathMatch?.[2]);
-  const publicDishId =
-    safeDecodeRouteParam(hashMatch?.[3]) ?? safeDecodeRouteParam(pathMatch?.[3]);
+  const publicRoute = parsePublicMenuRoute(pathname, hash);
+  const publicMenuUserId = publicRoute.userId;
+  const publicHubSectionId = publicRoute.hubSectionId;
+  const publicDishId = publicRoute.dishId;
   const isPublicMenu = !!publicMenuUserId;
-  const publicMenuMode: 'restaurant' | 'hub' =
-    pathname.includes('/hub') || hash.includes('/hub') ? 'hub' : 'restaurant';
+  const publicMenuMode = publicRoute.mode;
   const publicTableNumber = (() => {
     const fromSearch = new URLSearchParams(search).get('table');
     if (fromSearch?.trim()) return fromSearch.trim();
@@ -536,7 +541,7 @@ const App: React.FC = () => {
     price: string,
     currency: RecommendationCurrency,
   ) => {
-    const normalized = price.replace(/[^\d.,]/g, '').trim();
+    const normalized = normalizeMenuPrice(price);
     const menuPriceCurrency = resolveRecommendationCurrency(currency);
     setDishes((prev) =>
       prev.map((d) =>
@@ -626,7 +631,10 @@ const App: React.FC = () => {
         dishId={publicDishId}
         userId={publicMenuUserId}
         usePathRouting={usePathRouting}
-        onPathChange={() => setPathname(window.location.pathname)}
+        onPathChange={() => {
+          setPathname(window.location.pathname);
+          setHash(window.location.hash);
+        }}
         showWatermark={publicHasWatermark}
         loading={publicMenuLoading}
         hubSectionId={publicHubSectionId}
