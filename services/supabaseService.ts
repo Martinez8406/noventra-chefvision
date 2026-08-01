@@ -253,6 +253,13 @@ const mapRow = (row: any): Dish => ({
     row.menu_price_currency ?? row.menuPriceCurrency,
   ),
   category: row.category ?? null,
+  imageObjectPosition:
+    row.image_object_position ?? row.imageObjectPosition ?? 'center',
+  imageScale: (() => {
+    const raw = row.image_scale ?? row.imageScale;
+    const n = typeof raw === 'number' ? raw : Number(raw);
+    return Number.isFinite(n) ? n : 1;
+  })(),
   translations: row.translations ?? null,
   visibleInHotelHub: row.visible_in_hotel_hub ?? row.visibleInHotelHub ?? false,
 });
@@ -354,6 +361,13 @@ export const db = {
       }
       payload.category    = (dish as any).category ?? null;
       if (dish.translations !== undefined) payload.translations = dish.translations;
+      if (dish.imageObjectPosition !== undefined) {
+        payload.image_object_position = dish.imageObjectPosition || 'center';
+      }
+      if (dish.imageScale !== undefined) {
+        const n = Number(dish.imageScale);
+        payload.image_scale = Number.isFinite(n) ? n : 1;
+      }
 
       const { data, error } = await supabase
         .from('dishes')
@@ -365,8 +379,23 @@ export const db = {
         return mapRow(data) as Dish;
       }
 
-      // Gdy Supabase zwróci błąd – rzucamy go jawnie, żeby alert był widoczny w UI
+      // Fallback: kolumny kadrowania jeszcze nie istnieją w bazie
       const msg = error?.message || 'Nieznany błąd Supabase';
+      const missingFrame =
+        error?.code === 'PGRST204' ||
+        msg.toLowerCase().includes('image_object_position') ||
+        msg.toLowerCase().includes('image_scale');
+      if (missingFrame) {
+        delete payload.image_object_position;
+        delete payload.image_scale;
+        const retry = await supabase.from('dishes').upsert(payload).select('*').single();
+        if (!retry.error && retry.data) {
+          console.warn('[saveDish] Zapisano bez kadrowania — uruchom supabase/dishes_image_frame.sql');
+          return mapRow(retry.data) as Dish;
+        }
+      }
+
+      // Gdy Supabase zwróci błąd – rzucamy go jawnie, żeby alert był widoczny w UI
       console.error('[saveDish] Supabase error:', msg, error?.details, error?.hint);
       throw new Error(msg);
     }

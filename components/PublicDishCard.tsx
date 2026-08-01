@@ -18,6 +18,7 @@ import { ShareLinkButton } from './ShareLinkButton';
 import { SocialLinkButton } from './SocialLinkButton';
 import type { DishRecommendation } from '../types';
 import type { RecommendationTranslationCache } from '../utils/recommendationTranslations';
+import { dishImageStyle } from '../utils/dishFrame';
 
 interface Props {
   dish: Dish;
@@ -86,11 +87,14 @@ export const PublicDishCard: React.FC<Props> = ({
           <DishRecommendationBadge type={recommendation.type} menuLocale={menuLocale} />
         )}
         <WatermarkWrapper show={!!showWatermark} className="block h-full w-full">
-          <img
-            src={dish.imageUrl}
-            alt={copy.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+          <div className="h-full w-full transition-transform duration-500 group-hover:scale-105">
+            <img
+              src={dish.imageUrl}
+              alt={copy.name}
+              className="w-full h-full"
+              style={dishImageStyle(dish.imageObjectPosition, dish.imageScale)}
+            />
+          </div>
         </WatermarkWrapper>
       </div>
 

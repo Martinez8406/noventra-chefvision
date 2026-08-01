@@ -1,10 +1,20 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dish, Allergen, DietaryTag, SpiceLevel } from '../types';
 import { ALLERGENS_LIST, DIETARY_TAG_OPTIONS, SPICE_LEVEL_OPTIONS } from '../constants';
 import { compressImageForUpload } from '../services/imageService';
 import { uploadDishImage } from '../services/supabaseService';
+import { ImageFrameControls } from './ImageFrameControls';
+import {
+  DEFAULT_DISH_POSITION,
+  DEFAULT_DISH_SCALE,
+  MAX_DISH_SCALE,
+  MIN_DISH_SCALE,
+  dishImageStyle,
+  normalizeDishPosition,
+  normalizeDishScale,
+  type DishObjectPosition,
+} from '../utils/dishFrame';
 import {
   X,
   Save,
@@ -40,25 +50,24 @@ const normalizeTechnique = (technique?: string) => {
   return LEGACY_TECHNIQUE_DEFAULTS.includes(value) ? '' : technique ?? '';
 };
 
+const withDishFrameDefaults = (dish: Dish): Dish => ({
+  ...dish,
+  technique: normalizeTechnique(dish.technique),
+  dietaryTags: dish.dietaryTags ?? [],
+  spiceLevel: dish.spiceLevel ?? null,
+  imageObjectPosition: normalizeDishPosition(dish.imageObjectPosition),
+  imageScale: normalizeDishScale(dish.imageScale),
+});
+
 export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId }) => {
   const { t } = useTranslation('kitchen');
-  const [editedDish, setEditedDish] = useState<Dish>({
-    ...dish,
-    technique: normalizeTechnique(dish.technique),
-    dietaryTags: dish.dietaryTags ?? [],
-    spiceLevel: dish.spiceLevel ?? null,
-  });
+  const [editedDish, setEditedDish] = useState<Dish>(() => withDishFrameDefaults(dish));
   const [newIngredient, setNewIngredient] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const customImageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setEditedDish({
-      ...dish,
-      technique: normalizeTechnique(dish.technique),
-      dietaryTags: dish.dietaryTags ?? [],
-      spiceLevel: dish.spiceLevel ?? null,
-    });
+    setEditedDish(withDishFrameDefaults(dish));
   }, [dish]);
 
   const handleCustomImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,7 +79,12 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
     try {
       const dataUrl = await compressImageForUpload(file);
       const imageUrl = await uploadDishImage(dataUrl, userId);
-      setEditedDish((prev) => ({ ...prev, imageUrl }));
+      setEditedDish((prev) => ({
+        ...prev,
+        imageUrl,
+        imageObjectPosition: DEFAULT_DISH_POSITION,
+        imageScale: DEFAULT_DISH_SCALE,
+      }));
     } catch (err) {
       console.error('Błąd wgrywania zdjęcia:', err);
       alert(err instanceof Error ? err.message : t('dishPanel.uploadError'));
@@ -117,6 +131,9 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
     });
   };
 
+  const dishPosition = normalizeDishPosition(editedDish.imageObjectPosition);
+  const dishScale = normalizeDishScale(editedDish.imageScale);
+
   return (
     <div className="fixed inset-y-0 right-0 w-full md:w-[500px] bg-white shadow-2xl z-[200] flex flex-col animate-in slide-in-from-right duration-300">
       <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -136,8 +153,13 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
 
       <div className="flex-1 overflow-y-auto p-8 space-y-8">
         <div className="space-y-4">
-          <div className="relative h-48 rounded-[30px] overflow-hidden border-4 border-slate-50 shadow-inner group">
-            <img src={editedDish.imageUrl} alt={editedDish.name} className="w-full h-full object-cover" />
+          <div className="relative h-48 rounded-[30px] overflow-hidden border-4 border-slate-50 shadow-inner group bg-slate-100">
+            <img
+              src={editedDish.imageUrl}
+              alt={editedDish.name}
+              className="w-full h-full"
+              style={dishImageStyle(dishPosition, dishScale)}
+            />
           </div>
           <input
             ref={customImageInputRef}
@@ -155,6 +177,27 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
             {isUploadingImage ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
             {t('dishPanel.uploadOwnPhoto')} {isUploadingImage ? t('dishPanel.compressing') : ''}
           </button>
+
+          <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 space-y-3">
+            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+              {t('dishPanel.imageFrame')}
+            </p>
+            <p className="text-xs text-slate-500 leading-relaxed">{t('dishPanel.imageFrameHint')}</p>
+            <ImageFrameControls
+              title={t('dishPanel.imageFrameTitle')}
+              position={dishPosition}
+              scale={dishScale}
+              minScale={MIN_DISH_SCALE}
+              maxScale={MAX_DISH_SCALE}
+              onPositionChange={(position: DishObjectPosition) =>
+                setEditedDish((prev) => ({ ...prev, imageObjectPosition: position }))
+              }
+              onScaleChange={(scale) =>
+                setEditedDish((prev) => ({ ...prev, imageScale: normalizeDishScale(scale) }))
+              }
+              scaleHelp={t('dishPanel.imageFrameScaleHelp')}
+            />
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -307,7 +350,11 @@ export const DishDetailPanel: React.FC<Props> = ({ dish, onClose, onSave, userId
 
       <div className="p-6 border-t border-slate-100 bg-slate-50/80 backdrop-blur">
         <button 
-          onClick={() => onSave(editedDish)}
+          onClick={() => onSave({
+            ...editedDish,
+            imageObjectPosition: normalizeDishPosition(editedDish.imageObjectPosition),
+            imageScale: normalizeDishScale(editedDish.imageScale),
+          })}
           className="w-full bg-amber-500 text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-amber-500/20 hover:bg-amber-600 transition-all flex items-center justify-center gap-3 active:scale-95"
         >
           <Save size={24} /> {t('dishPanel.save')}

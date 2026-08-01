@@ -16,6 +16,7 @@ import { WatermarkWrapper } from './WatermarkWrapper';
 import { ShareLinkButton } from './ShareLinkButton';
 import { SocialLinkButton } from './SocialLinkButton';
 import type { RecommendationTranslationCache } from '../utils/recommendationTranslations';
+import { dishImageStyle } from '../utils/dishFrame';
 
 interface Props {
   dish: Dish;
@@ -63,7 +64,12 @@ export const PublicDishDetail: React.FC<Props> = ({
         )}
         <WatermarkWrapper show={!!showWatermark} className="relative h-full">
           <>
-            <img src={dish.imageUrl} alt={copy.name} className="w-full h-full object-cover object-center scale-150" />
+            <img
+              src={dish.imageUrl}
+              alt={copy.name}
+              className="w-full h-full"
+              style={dishImageStyle(dish.imageObjectPosition, dish.imageScale)}
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
           <button 

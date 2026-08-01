@@ -34,6 +34,10 @@
     "allergens": "Allergens",
     "dietaryTags": "Dietary labels",
     "spiceLevel": "Spice level",
+    "imageFrame": "Digital menu framing",
+    "imageFrameTitle": "Photo",
+    "imageFrameHint": "Set the focus point and zoom — this is how the photo will look on the guest dish card.",
+    "imageFrameScaleHelp": "Slide right to zoom in. The framing point chooses which part of the photo stays in the frame.",
     "save": "SAVE STANDARD CHANGES",
     "uploadError": "Could not upload the image."
   },

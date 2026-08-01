@@ -135,6 +135,10 @@ export interface Dish {
   menuPriceCurrency?: RecommendationCurrency;
   /** Kategoria w karcie menu */
   category?: string | null;
+  /** Punkt kadrowania zdjęcia w menu cyfrowym (CSS object-position) */
+  imageObjectPosition?: string | null;
+  /** Powiększenie kadru zdjęcia w menu cyfrowym (1 = 100%) */
+  imageScale?: number | null;
   /** Tłumaczenia opisu i alergenów (JSONB). Klucze: en, he, ar, uk, de, es, it, ko, ja, fr, cs, nl, zh. Nazwa zawsze z pola `name`. */
   translations?: Partial<Record<'en' | 'he' | 'ar' | 'uk' | 'de' | 'es' | 'it' | 'ko' | 'ja' | 'fr' | 'cs' | 'nl' | 'zh', MenuTranslationEntry>> | null;
   isStandard: boolean;

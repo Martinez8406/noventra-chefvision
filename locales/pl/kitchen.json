@@ -34,6 +34,10 @@
     "allergens": "Alergeny",
     "dietaryTags": "Oznaczenia dietetyczne",
     "spiceLevel": "Poziom ostrości",
+    "imageFrame": "Kadrowanie w menu cyfrowym",
+    "imageFrameTitle": "Zdjęcie",
+    "imageFrameHint": "Ustaw punkt kadru i powiększenie — tak będzie wyglądać zdjęcie na karcie dania u gościa.",
+    "imageFrameScaleHelp": "Przesuń w prawo, żeby przybliżyć danie. Punkt kadrowania wybiera, która część zdjęcia zostaje w ramce.",
     "save": "ZAPISZ ZMIANY W STANDARDZIE",
     "uploadError": "Nie udało się wgrać zdjęcia."
   },
