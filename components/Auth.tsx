@@ -88,11 +88,10 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
       </div>
 
       <div className="w-full max-w-[480px] bg-white border border-slate-100 p-10 md:p-14 rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.03)] space-y-8">
-        <div className="text-center space-y-2">
+        <div className="text-center">
           <h2 className="text-3xl font-black text-[#1E293B] tracking-tight italic">
-            Zaloguj Restaurację
+            Zaloguj się lub zarejestruj konto
           </h2>
-          <p className="text-slate-400 font-medium">Panel zarządzania standardami AI</p>
         </div>
 
         {magicSent ? (
