@@ -130,7 +130,7 @@ create policy "profiles_staff_update_menu_service"
     and exists (
       select 1 from public.menu_service_orders o
       where o.client_user_id = profiles.id
-        and o.status in ('paid', 'in_progress')
+        and o.status in ('paid', 'in_progress', 'done')
     )
   )
   with check (
@@ -138,11 +138,11 @@ create policy "profiles_staff_update_menu_service"
     and exists (
       select 1 from public.menu_service_orders o
       where o.client_user_id = profiles.id
-        and o.status in ('paid', 'in_progress')
+        and o.status in ('paid', 'in_progress', 'done')
     )
   );
 
--- 5) Staff CRUD na daniach klienta ze zleceniem (paid / in_progress)
+-- 5) Staff CRUD na daniach klienta ze zleceniem (paid / in_progress / done)
 drop policy if exists "dishes_staff_select_menu_service" on public.dishes;
 create policy "dishes_staff_select_menu_service"
   on public.dishes
@@ -167,7 +167,7 @@ create policy "dishes_staff_insert_menu_service"
     and exists (
       select 1 from public.menu_service_orders o
       where o.client_user_id::text = dishes."userId"::text
-        and o.status in ('paid', 'in_progress')
+        and o.status in ('paid', 'in_progress', 'done')
     )
   );
 
@@ -181,7 +181,7 @@ create policy "dishes_staff_update_menu_service"
     and exists (
       select 1 from public.menu_service_orders o
       where o.client_user_id::text = dishes."userId"::text
-        and o.status in ('paid', 'in_progress')
+        and o.status in ('paid', 'in_progress', 'done')
     )
   )
   with check (
@@ -189,7 +189,7 @@ create policy "dishes_staff_update_menu_service"
     and exists (
       select 1 from public.menu_service_orders o
       where o.client_user_id::text = dishes."userId"::text
-        and o.status in ('paid', 'in_progress')
+        and o.status in ('paid', 'in_progress', 'done')
     )
   );
 
@@ -203,7 +203,7 @@ create policy "dishes_staff_delete_menu_service"
     and exists (
       select 1 from public.menu_service_orders o
       where o.client_user_id::text = dishes."userId"::text
-        and o.status in ('paid', 'in_progress')
+        and o.status in ('paid', 'in_progress', 'done')
     )
   );
 
@@ -226,7 +226,7 @@ create policy "dish_recommendations_staff_all_menu_service"
     and exists (
       select 1 from public.menu_service_orders o
       where o.client_user_id = dish_recommendations.user_id
-        and o.status in ('paid', 'in_progress')
+        and o.status in ('paid', 'in_progress', 'done')
     )
   );
 

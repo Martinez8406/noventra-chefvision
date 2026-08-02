@@ -85,7 +85,7 @@ export async function handleSaveMenuCategories({ authorization, body = {} }) {
       .from('menu_service_orders')
       .select('id')
       .eq('client_user_id', requestedTarget)
-      .in('status', ['paid', 'in_progress'])
+      .in('status', ['paid', 'in_progress', 'done'])
       .limit(1)
       .maybeSingle();
     if (!order?.id) {

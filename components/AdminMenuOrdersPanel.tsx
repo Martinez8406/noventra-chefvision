@@ -88,7 +88,7 @@ export const AdminMenuOrdersPanel: React.FC<Props> = ({ onManageClient }) => {
         <ul className="space-y-3">
           {orders.map((order) => {
             const busy = busyId === order.id;
-            const canEdit = order.status === 'paid' || order.status === 'in_progress';
+            const canEdit = order.status !== 'cancelled';
             return (
               <li
                 key={order.id}
