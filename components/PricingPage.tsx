@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Check, Loader2, Package } from 'lucide-react';
+import { ArrowLeft, Check, Loader2, Package, Wand2 } from 'lucide-react';
 import { BRAND_LOGO_SRC } from '../constants';
 import { canPurchaseTokenPacks } from '../utils/tokens';
-import type { SubscriptionStatus } from '../types';
+import type { MenuServiceStatus, SubscriptionStatus } from '../types';
 
-export type PricingPlanType = 'start' | 'premium' | 'tokens';
+export type PricingPlanType = 'start' | 'premium' | 'tokens' | 'menu_service';
 
 interface Props {
   subscriptionStatus?: SubscriptionStatus;
+  menuServiceStatus?: MenuServiceStatus | null;
   onBack: () => void;
   onBuy: (plan: PricingPlanType) => Promise<void>;
 }
@@ -38,13 +39,37 @@ const TOKEN_PACK_FEATURES = [
   'Idealne na zmianę karty sezonowej',
 ] as const;
 
-export const PricingPage: React.FC<Props> = ({ subscriptionStatus, onBack, onBuy }) => {
+const MENU_SERVICE_FEATURES = [
+  'Zespół ChefVision buduje Twoje menu cyfrowe',
+  'Zdjęcia, opisy, kategorie i ceny',
+  'Gotowe publiczne menu z linkiem i QR',
+  'Ty nadal masz własne konto i pełną kontrolę',
+] as const;
+
+const MENU_SERVICE_STATUS_COPY: Record<MenuServiceStatus, string> = {
+  paid: 'Zlecenie opłacone — nasz zespół wkrótce zajmie się Twoim menu.',
+  in_progress: 'Pracujemy nad Twoim menu. Damy znać, gdy będzie gotowe.',
+  done: 'Menu zostało przygotowane. Możesz je dalej edytować w panelu.',
+  cancelled: 'Zlecenie anulowane. Możesz zamówić ponownie.',
+};
+
+export const PricingPage: React.FC<Props> = ({
+  subscriptionStatus,
+  menuServiceStatus,
+  onBack,
+  onBuy,
+}) => {
   const [busy, setBusy] = useState<PricingPlanType | null>(null);
   const [error, setError] = useState<string | null>(null);
   const canBuyTokens = canPurchaseTokenPacks(subscriptionStatus);
+  const hasActiveMenuOrder =
+    menuServiceStatus === 'paid' || menuServiceStatus === 'in_progress' || menuServiceStatus === 'done';
 
   const handleBuy = async (plan: PricingPlanType) => {
     if (plan === 'tokens' && !canBuyTokens) return;
+    if (plan === 'menu_service' && (menuServiceStatus === 'paid' || menuServiceStatus === 'in_progress')) {
+      return;
+    }
     setBusy(plan);
     setError(null);
     try {
@@ -85,7 +110,6 @@ export const PricingPage: React.FC<Props> = ({ subscriptionStatus, onBack, onBuy
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-5 items-stretch">
-          {/* Start */}
           <div className="flex flex-col rounded-[28px] border border-slate-200 bg-white p-6 sm:p-7 shadow-sm">
             <span className="inline-flex self-start rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-700">
               Najlepszy na start
@@ -123,7 +147,6 @@ export const PricingPage: React.FC<Props> = ({ subscriptionStatus, onBack, onBuy
             </button>
           </div>
 
-          {/* Premium */}
           <div className="relative flex flex-col rounded-[28px] border-2 border-emerald-400 bg-white p-6 sm:p-7 shadow-[0_12px_40px_rgba(52,211,153,0.18)] lg:scale-[1.02]">
             <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-emerald-400 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#0a1a12] shadow-md">
               Najczęściej wybierany
@@ -161,7 +184,6 @@ export const PricingPage: React.FC<Props> = ({ subscriptionStatus, onBack, onBuy
             </button>
           </div>
 
-          {/* Token pack */}
           <div className="flex flex-col rounded-[28px] border border-slate-200 bg-white p-6 sm:p-7 shadow-sm">
             <div className="flex items-center gap-2 mt-1">
               <Package size={22} className="text-emerald-500" />
@@ -202,13 +224,71 @@ export const PricingPage: React.FC<Props> = ({ subscriptionStatus, onBack, onBuy
           </div>
         </div>
 
+        <div className="mt-10 rounded-[28px] border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-8">
+            <div className="flex-1 min-w-0">
+              <div className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                <Wand2 size={12} />
+                Usługa zespołu
+              </div>
+              <h2 className="mt-4 text-2xl font-black text-slate-900">Zleć wykonanie menu cyfrowego</h2>
+              <p className="mt-2 text-sm text-slate-600 leading-relaxed max-w-2xl">
+                Nie masz czasu na budowanie karty? Zakładasz konto jak zwykle, a my (lub nasi pracownicy)
+                zdalnie przygotujemy Twoje menu za jednorazową opłatą.
+              </p>
+              <ul className="mt-5 grid sm:grid-cols-2 gap-2.5">
+                {MENU_SERVICE_FEATURES.map((f) => (
+                  <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
+                    <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" strokeWidth={3} />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              {menuServiceStatus && hasActiveMenuOrder && (
+                <p className="mt-4 text-sm text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5">
+                  {MENU_SERVICE_STATUS_COPY[menuServiceStatus]}
+                </p>
+              )}
+            </div>
+            <div className="lg:w-56 shrink-0 text-center lg:text-right space-y-3">
+              <p className="text-4xl font-black text-slate-900">
+                299 zł
+                <span className="block text-sm font-bold text-slate-500 mt-1">jednorazowo</span>
+              </p>
+              <button
+                type="button"
+                disabled={
+                  !!busy ||
+                  menuServiceStatus === 'paid' ||
+                  menuServiceStatus === 'in_progress'
+                }
+                onClick={() => void handleBuy('menu_service')}
+                className="w-full py-3.5 rounded-2xl font-black text-sm text-white bg-slate-900 hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {busy === 'menu_service' ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <Loader2 size={16} className="animate-spin" />
+                    Przekierowanie…
+                  </span>
+                ) : menuServiceStatus === 'paid' || menuServiceStatus === 'in_progress' ? (
+                  'Zlecenie aktywne'
+                ) : menuServiceStatus === 'done' ? (
+                  'Zamów ponownie'
+                ) : (
+                  'Zlecam wykonanie'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
         {error && (
           <p className="mt-8 text-center text-sm font-medium text-red-600">{error}</p>
         )}
 
         <p className="mt-10 text-center text-[11px] text-slate-400 leading-relaxed max-w-2xl mx-auto">
           Tokeny subskrypcyjne resetują się 1. dnia każdego miesiąca i nie przechodzą na kolejny okres.
-          Tokeny z paczki są bezterminowe.
+          Tokeny z paczki są bezterminowe. Usługa wykonania menu to płatność jednorazowa — nie zmienia planu subskrypcji.
         </p>
       </main>
     </div>

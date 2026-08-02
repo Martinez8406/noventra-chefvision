@@ -30,8 +30,9 @@ export default async function handler(req, res) {
     if (session.payment_status !== 'paid') {
       return res.status(400).json({ error: 'Płatność nie została zakończona.' });
     }
-    const userId = session.client_reference_id || null;
-    return res.status(200).json({ ok: true, userId });
+    const userId = session.client_reference_id || session.metadata?.userId || null;
+    const planType = session.metadata?.planType || null;
+    return res.status(200).json({ ok: true, userId, planType });
   } catch (e) {
     console.error('Stripe confirm-premium:', e);
     return res.status(500).json({ error: e.message || 'Błąd weryfikacji sesji.' });

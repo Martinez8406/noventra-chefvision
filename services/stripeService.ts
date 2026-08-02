@@ -1,6 +1,6 @@
 const API_BASE = '';
 
-export type CheckoutPlanType = 'premium' | 'start' | 'tokens';
+export type CheckoutPlanType = 'premium' | 'start' | 'tokens' | 'menu_service';
 
 export interface CreateCheckoutOptions {
   userId?: string;
@@ -41,11 +41,17 @@ export async function createCheckoutSession(options: CreateCheckoutOptions = {})
 /**
  * Weryfikuje sesję Stripe po powrocie z płatności. Zwraca userId do ustawienia Premium (po stronie klienta).
  */
-export async function confirmPremiumSession(sessionId: string): Promise<{ ok: boolean; userId: string | null }> {
+export async function confirmPremiumSession(
+  sessionId: string,
+): Promise<{ ok: boolean; userId: string | null; planType: string | null }> {
   const res = await fetch(`${API_BASE}/api/confirm-premium?session_id=${encodeURIComponent(sessionId)}`);
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Błąd weryfikacji płatności.');
-  return { ok: data.ok === true, userId: data.userId ?? null };
+  return {
+    ok: data.ok === true,
+    userId: data.userId ?? null,
+    planType: typeof data.planType === 'string' ? data.planType : null,
+  };
 }
 
 /** Stripe Customer Portal — faktury, karta, anulowanie subskrypcji. */

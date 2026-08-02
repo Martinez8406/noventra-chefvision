@@ -68,6 +68,32 @@ export async function handleSaveMenuCategories({ authorization, body = {} }) {
     global: { headers: { Authorization: authorization } },
   });
 
+  let profileId = user.id;
+  const requestedTarget =
+    typeof body?.targetUserId === 'string' ? body.targetUserId.trim() : '';
+  if (requestedTarget && requestedTarget !== user.id) {
+    const { data: me } = await userClient
+      .from('profiles')
+      .select('platform_role')
+      .eq('id', user.id)
+      .maybeSingle();
+    const role = me?.platform_role;
+    if (role !== 'admin' && role !== 'staff') {
+      return { status: 403, body: { error: 'Brak uprawnień do edycji menu klienta.' } };
+    }
+    const { data: order } = await userClient
+      .from('menu_service_orders')
+      .select('id')
+      .eq('client_user_id', requestedTarget)
+      .in('status', ['paid', 'in_progress'])
+      .limit(1)
+      .maybeSingle();
+    if (!order?.id) {
+      return { status: 403, body: { error: 'Brak aktywnego zlecenia dla tego klienta.' } };
+    }
+    profileId = requestedTarget;
+  }
+
   let translations = fallbackTranslations(categories);
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (apiKey) {
@@ -112,7 +138,7 @@ Zwróć WYŁĄCZNIE JSON w formacie:
   const { data, error } = await userClient
     .from('profiles')
     .update(payload)
-    .eq('id', user.id)
+    .eq('id', profileId)
     .select('id, menu_categories, menu_category_translations')
     .single();
 

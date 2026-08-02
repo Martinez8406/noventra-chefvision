@@ -250,7 +250,7 @@ export const MenuManager: React.FC<Props> = ({
       const resp = await fetch('/api/save-menu-categories', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ categories }),
+        body: JSON.stringify({ categories, targetUserId: menuUserId }),
       });
       const data = await resp.json().catch(() => null);
       if (!resp.ok) return;

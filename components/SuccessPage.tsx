@@ -13,6 +13,7 @@ interface Props {
 export const SuccessPage: React.FC<Props> = ({ onBack, onPremiumActivated }) => {
   const [confirming, setConfirming] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [planType, setPlanType] = useState<string | null>(null);
 
   useEffect(() => {
     const search = window.location.search || window.location.hash.split('?')[1] || '';
@@ -25,26 +26,38 @@ export const SuccessPage: React.FC<Props> = ({ onBack, onPremiumActivated }) => 
     }
 
     confirmPremiumSession(sessionId)
-      .then(async ({ ok, userId }) => {
-        if (ok && userId) {
+      .then(async ({ ok, userId, planType: paidPlan }) => {
+        setPlanType(paidPlan);
+        if (!ok || !userId) return;
+
+        // Fallback tylko dla Premium — Start/tokeny/menu_service ustawia webhook.
+        if (paidPlan === 'premium' || !paidPlan) {
           const updated = await authService.setPremiumStatus(userId);
           if (updated && typeof window !== 'undefined') {
             localStorage.setItem('chefvision_premium', '1');
           }
-          if (updated) {
-            await onPremiumActivated?.();
-          }
         }
+
+        await onPremiumActivated?.();
       })
       .catch((err) => setError(err.message || 'Błąd weryfikacji płatności.'))
       .finally(() => setConfirming(false));
   }, []);
 
+  const successCopy =
+    planType === 'menu_service'
+      ? 'Dziękujemy! Zlecenie wykonania menu zostało opłacone. Nasz zespół zajmie się Twoją kartą.'
+      : planType === 'tokens'
+        ? 'Dziękujemy! Tokeny zostały dodane do konta.'
+        : planType === 'start'
+          ? 'Dziękujemy! Plan Start jest aktywny.'
+          : 'Dziękujemy! Twoje konto Premium jest aktywne.';
+
   if (confirming) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
         <Loader2 className="animate-spin text-amber-500" size={48} />
-        <p className="mt-4 text-slate-500 font-medium">Aktywujemy Twoje konto Premium...</p>
+        <p className="mt-4 text-slate-500 font-medium">Potwierdzamy płatność…</p>
       </div>
     );
   }
@@ -57,9 +70,7 @@ export const SuccessPage: React.FC<Props> = ({ onBack, onPremiumActivated }) => 
         </div>
         <div className="space-y-2">
           <h1 className="text-3xl font-black text-slate-900 tracking-tight italic">Płatność zakończona</h1>
-          <p className="text-slate-500 font-medium">
-            {error ? error : 'Dziękujemy! Twoje konto Premium jest aktywne.'}
-          </p>
+          <p className="text-slate-500 font-medium">{error ? error : successCopy}</p>
         </div>
         <button
           onClick={onBack}

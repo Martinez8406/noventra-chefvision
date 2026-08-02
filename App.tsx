@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Dish, DishStatus, GeneratorParams, UserProfile, Backdrop, RecommendationCurrency } from './types';
+import { Dish, DishStatus, GeneratorParams, UserProfile, Backdrop, RecommendationCurrency, MenuServiceOrder } from './types';
 import { ChefsStudio } from './components/ChefsStudio';
 import { SeasonalThemes } from './components/SeasonalThemes';
 import { BackdropLab } from './components/BackdropLab';
@@ -11,6 +11,7 @@ import { KitchenWall } from './components/KitchenWall';
 import { MenuManager } from './components/MenuManager';
 import { HotelHubManager } from './components/HotelHubManager';
 import { PromotionsManager } from './components/PromotionsManager';
+import { AdminMenuOrdersPanel } from './components/AdminMenuOrdersPanel';
 import { DishDetailPanel } from './components/DishDetailPanel';
 import { Auth } from './components/Auth';
 import { SuccessPage } from './components/SuccessPage';
@@ -25,7 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { hasProFeatures, canUseHotelHub } from './utils/tokens';
 import { formatTokenStatusI18n, formatPremiumTokenShort } from './utils/formatTokenStatusI18n';
 import { normalizeMenuPrice, resolveRecommendationCurrency } from './utils/recommendationCurrency';
-import { supabase, db, authService, uploadDishImage } from './services/supabaseService';
+import { supabase, db, authService, uploadDishImage, menuServiceDb } from './services/supabaseService';
 import { hotelHubDb } from './services/hotelHubService';
 import { requestMenuTranslations } from './services/aiService';
 import { shouldRequestMenuTranslation } from './utils/menuTranslations';
@@ -51,7 +52,8 @@ import {
   Settings,
   ChevronDown,
   ChevronRight,
-  Building2
+  Building2,
+  ClipboardList
 } from 'lucide-react';
 
 type AppTab =
@@ -63,6 +65,7 @@ type AppTab =
   | 'hotel-hub'
   | 'stats'
   | 'promotions'
+  | 'orders'
   | 'settings-qr'
   | 'settings-branding'
   | 'settings-google'
@@ -138,6 +141,8 @@ const App: React.FC = () => {
   const [publicMenuLoading, setPublicMenuLoading] = useState(false);
   const loadedPublicMenuUserRef = useRef<string | null>(null);
   const [startPromoBarVisible, setStartPromoBarVisible] = useState(false);
+  /** Gdy admin/staff edytuje menu klienta ze zlecenia. */
+  const [managingClient, setManagingClient] = useState<MenuServiceOrder | null>(null);
   const { t: tNav } = useTranslation('nav');
   const { t: tSidebar } = useTranslation('sidebar');
   const { t: tKitchen } = useTranslation('kitchen');
@@ -293,6 +298,12 @@ const App: React.FC = () => {
   const isTrial = currentUser?.subscriptionStatus === 'trial';
   const isStart = currentUser?.subscriptionStatus === 'start';
   const isFree = currentUser?.subscriptionStatus === 'free_limited';
+  const isPlatformStaff =
+    currentUser?.platformRole === 'admin' || currentUser?.platformRole === 'staff';
+  const workingUserId =
+    managingClient?.clientUserId ||
+    (session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id) ||
+    null;
   const hasProAccess = hasProFeatures(currentUser?.subscriptionStatus);
   const hasHotelHubAccess = canUseHotelHub(
     currentUser
@@ -377,13 +388,46 @@ const App: React.FC = () => {
     await refreshCurrentProfile();
   };
 
-  const handleSaveStandard = async (imageUrl: string, params: GeneratorParams) => {
+  const exitClientManageMode = async () => {
+    setManagingClient(null);
+    setSelectedDishId(null);
     if (!currentUser) return;
+    setIsSyncing(true);
+    try {
+      setDishes(await db.getDishes(currentUser.id));
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const enterClientManageMode = async (order: MenuServiceOrder) => {
+    setManagingClient(order);
+    setSelectedDishId(null);
+    setActiveTab('menu');
+    setIsSidebarOpen(false);
+    setIsSyncing(true);
+    try {
+      if (order.status === 'paid') {
+        await menuServiceDb.updateOrderStatus(order.id, 'in_progress');
+        setManagingClient({ ...order, status: 'in_progress' });
+      }
+      setDishes(await db.getDishes(order.clientUserId));
+    } catch (e) {
+      console.error('Nie udało się wczytać menu klienta:', e);
+      alert('Nie udało się wczytać menu klienta. Sprawdź migrację SQL i role platform_role.');
+      setManagingClient(null);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSaveStandard = async (imageUrl: string, params: GeneratorParams) => {
+    if (!currentUser || !workingUserId) return;
     setIsSyncing(true);
     try {
       let finalImageUrl = imageUrl;
       if (imageUrl.startsWith('data:') && supabase) {
-        finalImageUrl = await uploadDishImage(imageUrl, currentUser.id);
+        finalImageUrl = await uploadDishImage(imageUrl, workingUserId);
       }
       const newDish: Partial<Dish> = {
         name: params.dishName,
@@ -399,6 +443,7 @@ const App: React.FC = () => {
         status: DishStatus.PENDING,
         createdAt: Date.now(),
         clicks: 0,
+        restaurantId: workingUserId,
       };
       const saved = await db.saveDish(newDish);
       if (saved) {
@@ -422,7 +467,10 @@ const App: React.FC = () => {
   const handleUpdateDish = async (updatedDish: Dish) => {
     setIsSyncing(true);
     try {
-      const saved = await db.saveDish(updatedDish);
+      const saved = await db.saveDish({
+        ...updatedDish,
+        restaurantId: workingUserId || updatedDish.restaurantId,
+      });
       if (saved) {
         setDishes((prev) => prev.map((d) => (d.id === saved.id ? saved : d)));
         setSelectedDishId(null);
@@ -602,6 +650,7 @@ const App: React.FC = () => {
     return (
       <PricingPage
         subscriptionStatus={currentUser?.subscriptionStatus}
+        menuServiceStatus={currentUser?.menuServiceStatus}
         onBack={() => {
           window.location.hash = '';
           setHash('');
@@ -729,6 +778,23 @@ const App: React.FC = () => {
               );
             })}
 
+            {isPlatformStaff && (
+              <button
+                type="button"
+                onClick={() => handleNavClick('orders')}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/25 ${
+                  activeTab === 'orders' ? 'text-white bg-white/5' : 'text-zinc-500 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center gap-4 text-left min-w-0">
+                  <span className="w-5 shrink-0 flex justify-center">
+                    <ClipboardList size={20} />
+                  </span>
+                  <span className="leading-tight">{tNav('orders', { defaultValue: 'Zlecenia menu' })}</span>
+                </div>
+              </button>
+            )}
+
             <div className="pt-1">
               <button
                 type="button"
@@ -840,6 +906,24 @@ const App: React.FC = () => {
       </aside>
 
       <main className={`flex-1 overflow-y-auto ${startPromoBarVisible ? 'pb-28 sm:pb-24' : ''}`}>
+        {managingClient && (
+          <div className="sticky top-0 z-[85] bg-slate-900 text-white px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-bold">
+              Edytujesz menu klienta:{' '}
+              <span className="text-emerald-300">{managingClient.clientName}</span>
+              {managingClient.clientEmail ? (
+                <span className="text-white/60 font-medium"> · {managingClient.clientEmail}</span>
+              ) : null}
+            </p>
+            <button
+              type="button"
+              onClick={() => void exitClientManageMode()}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-white/10 hover:bg-white/20 border border-white/15"
+            >
+              Zakończ edycję klienta
+            </button>
+          </div>
+        )}
         <header className="lg:hidden h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 z-[80]">
           <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-600"><MenuIcon size={24} /></button>
           <div className="flex items-center gap-2">
@@ -940,9 +1024,12 @@ const App: React.FC = () => {
               onSelect={setSelectedDishId}
               onUpdateMenuPrice={handleUpdateDishMenuPrice}
               onUpdateCategory={handleUpdateDishCategory}
-              menuUserId={currentUser?.id ?? null}
+              menuUserId={workingUserId}
               hotelHubAvailable={hasHotelHubAccess}
             />
+          )}
+          {activeTab === 'orders' && isPlatformStaff && (
+            <AdminMenuOrdersPanel onManageClient={(order) => void enterClientManageMode(order)} />
           )}
           {activeTab === 'hotel-hub' && (
             hasHotelHubAccess ? (
@@ -1013,7 +1100,7 @@ const App: React.FC = () => {
           dish={dishes.find(d => d.id === selectedDishId)!} 
           onClose={() => setSelectedDishId(null)} 
           onSave={handleUpdateDish}
-          userId={currentUser?.id}
+          userId={workingUserId ?? undefined}
         />
       )}
 

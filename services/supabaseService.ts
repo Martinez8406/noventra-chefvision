@@ -2,7 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import { TRIAL_TOKENS, SUBSCRIPTION_TOKENS, MAX_USER_BACKDROPS } from '../constants';
-import { Dish, DishRecommendation, UserProfile, DishStatus, SubscriptionStatus, Backdrop, RecommendationCurrency } from '../types';
+import { Dish, DishRecommendation, UserProfile, DishStatus, SubscriptionStatus, Backdrop, RecommendationCurrency, PlatformRole, MenuServiceStatus, MenuServiceOrder } from '../types';
 import { mapProfileTokens, normalizeProfileForTokenOps } from '../utils/tokens.js';
 import {
   DEFAULT_RECOMMENDATION_CURRENCY,
@@ -264,6 +264,115 @@ const mapRow = (row: any): Dish => ({
   visibleInHotelHub: row.visible_in_hotel_hub ?? row.visibleInHotelHub ?? false,
 });
 
+function normalizePlatformRole(raw: unknown): PlatformRole {
+  if (raw === 'admin' || raw === 'staff') return raw;
+  return 'user';
+}
+
+function normalizeMenuServiceStatus(raw: unknown): MenuServiceStatus | null {
+  if (raw === 'paid' || raw === 'in_progress' || raw === 'done' || raw === 'cancelled') {
+    return raw;
+  }
+  return null;
+}
+
+function mapMenuServiceOrder(row: any, profile?: { name?: string; email?: string | null } | null): MenuServiceOrder {
+  return {
+    id: row.id,
+    clientUserId: row.client_user_id,
+    clientName: profile?.name || row.client_name || 'Restauracja',
+    clientEmail: profile?.email ?? row.client_email ?? null,
+    status: normalizeMenuServiceStatus(row.status) || 'paid',
+    notes: row.notes ?? null,
+    assignedTo: row.assigned_to ?? null,
+    paidAt: row.paid_at ?? null,
+    completedAt: row.completed_at ?? null,
+    createdAt: row.created_at || new Date().toISOString(),
+  };
+}
+
+async function fetchLatestMenuServiceStatus(userId: string): Promise<MenuServiceStatus | null> {
+  if (!supabase) return null;
+  try {
+    const { data } = await supabase
+      .from('menu_service_orders')
+      .select('status')
+      .eq('client_user_id', userId)
+      .neq('status', 'cancelled')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return normalizeMenuServiceStatus(data?.status);
+  } catch {
+    return null;
+  }
+}
+
+export const menuServiceDb = {
+  async listOrders(): Promise<MenuServiceOrder[]> {
+    if (!supabase) return [];
+    const { data: orders, error } = await supabase
+      .from('menu_service_orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error || !orders?.length) {
+      if (error) console.warn('[menuServiceDb.listOrders]', error.message);
+      return [];
+    }
+
+    const clientIds = Array.from(new Set(orders.map((o: any) => o.client_user_id).filter(Boolean)));
+    let profilesById: Record<string, { name?: string; email?: string | null }> = {};
+    if (clientIds.length) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+        .in('id', clientIds);
+      for (const p of profiles || []) {
+        profilesById[p.id] = { name: p.name, email: p.email };
+      }
+    }
+
+    return orders.map((row: any) => mapMenuServiceOrder(row, profilesById[row.client_user_id]));
+  },
+
+  async updateOrderStatus(
+    orderId: string,
+    status: MenuServiceStatus,
+    notes?: string | null,
+  ): Promise<boolean> {
+    if (!supabase) return false;
+    const patch: Record<string, unknown> = { status };
+    if (notes !== undefined) patch.notes = notes;
+    if (status === 'done') patch.completed_at = new Date().toISOString();
+    if (status === 'in_progress') patch.completed_at = null;
+    const { error } = await supabase
+      .from('menu_service_orders')
+      .update(patch)
+      .eq('id', orderId);
+    if (error) {
+      console.error('[menuServiceDb.updateOrderStatus]', error.message);
+      return false;
+    }
+    return true;
+  },
+
+  async getMyLatestOrder(): Promise<MenuServiceOrder | null> {
+    if (!supabase) return null;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    const { data, error } = await supabase
+      .from('menu_service_orders')
+      .select('*')
+      .eq('client_user_id', user.id)
+      .neq('status', 'cancelled')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error || !data) return null;
+    return mapMenuServiceOrder(data);
+  },
+};
+
 export const db = {
   async getDishes(userId: string): Promise<Dish[]> {
     if (supabase) {
@@ -339,6 +448,12 @@ export const db = {
 
       // Pola podstawowe (camelCase zgodne z tabelą dishes)
       if (dish.id)          payload.id           = dish.id;
+      const ownerId =
+        (dish as any).userId ||
+        dish.restaurantId ||
+        dish.authorId ||
+        null;
+      if (ownerId) payload.userId = ownerId;
       if (dish.name        !== undefined) payload.name        = dish.name;
       if (dish.imageUrl    !== undefined) payload.imageUrl    = dish.imageUrl;
       if (dish.description !== undefined) payload.description = dish.description;
@@ -751,6 +866,8 @@ export const authService = {
           extra: 0,
           total: demoPremium ? SUBSCRIPTION_TOKENS : credits,
         },
+        platformRole: 'admin',
+        menuServiceStatus: null,
       };
     }
 
@@ -876,6 +993,8 @@ export const authService = {
 
       const gensUsed = profileData?.generations_used ?? localGens;
       const mapped = mapProfileTokens(normalizeProfileForTokenOps(profileData));
+      const platformRole = normalizePlatformRole(profileData?.platform_role);
+      const menuServiceStatus = await fetchLatestMenuServiceStatus(user.id);
 
       return {
         id: user.id,
@@ -887,6 +1006,8 @@ export const authService = {
         credits: mapped.credits,
         tokens: mapped.tokens,
         trialEndsAt: mapped.trialEndsAt,
+        platformRole,
+        menuServiceStatus,
       };
     } catch (e) { return null; }
   },

@@ -76,6 +76,9 @@ if (!process.env.STRIPE_START_PRICE_ID) {
 if (!process.env.STRIPE_TOKEN_PACK_PRICE_ID) {
   console.warn('[SERVER] Brak STRIPE_TOKEN_PACK_PRICE_ID — paczka tokenów niedostępna w checkout.');
 }
+if (!process.env.STRIPE_MENU_SERVICE_PRICE_ID) {
+  console.warn('[SERVER] Brak STRIPE_MENU_SERVICE_PRICE_ID — zlecenie menu niedostępne w checkout.');
+}
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
@@ -124,8 +127,9 @@ app.get('/api/confirm-premium', async (req, res) => {
     if (session.payment_status !== 'paid') {
       return res.status(400).json({ error: 'Płatność nie została zakończona.' });
     }
-    const userId = session.client_reference_id || null;
-    return res.json({ ok: true, userId });
+    const userId = session.client_reference_id || session.metadata?.userId || null;
+    const planType = session.metadata?.planType || null;
+    return res.json({ ok: true, userId, planType });
   } catch (e) {
     console.error('Stripe confirm-premium:', e);
     return res.status(500).json({ error: e.message || 'Błąd weryfikacji sesji.' });

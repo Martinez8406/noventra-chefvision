@@ -161,6 +161,25 @@ export interface GeneratorParams {
   style: string;
 }
 
+/** Rola w zespole ChefVision (nie mylić z UserRole CHEF/STAFF w UI). */
+export type PlatformRole = 'user' | 'admin' | 'staff';
+
+/** Status płatnego zlecenia wykonania menu cyfrowego. */
+export type MenuServiceStatus = 'paid' | 'in_progress' | 'done' | 'cancelled';
+
+export interface MenuServiceOrder {
+  id: string;
+  clientUserId: string;
+  clientName?: string;
+  clientEmail?: string | null;
+  status: MenuServiceStatus;
+  notes?: string | null;
+  assignedTo?: string | null;
+  paidAt?: string | null;
+  completedAt?: string | null;
+  createdAt: string;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -172,6 +191,10 @@ export interface UserProfile {
   credits: number;
   tokens?: UserTokens;
   trialEndsAt?: string | null;
+  /** admin/staff widzą panel zleceń i mogą edytować menu klientów. */
+  platformRole?: PlatformRole;
+  /** Najnowsze aktywne zlecenie wykonania menu (jeśli jest). */
+  menuServiceStatus?: MenuServiceStatus | null;
 }
 
 export interface Backdrop {
