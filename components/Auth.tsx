@@ -20,6 +20,7 @@ const GoogleIcon = () => (
 export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
   const [loading, setLoading] = useState<'magic' | 'google' | null>(null);
   const [email, setEmail] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
   const [magicSent, setMagicSent] = useState(false);
   const [message, setMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null);
 
@@ -42,6 +43,7 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
         email,
         options: {
           emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
+          shouldCreateUser: isSignUp,
         },
       });
       if (error) throw error;
@@ -90,7 +92,7 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
       <div className="w-full max-w-[480px] bg-white border border-slate-100 p-10 md:p-14 rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.03)] space-y-8">
         <div className="text-center">
           <h2 className="text-3xl font-black text-[#1E293B] tracking-tight italic">
-            Zaloguj się lub zarejestruj konto
+            {isSignUp ? 'Zarejestruj konto' : 'Zaloguj się'}
           </h2>
         </div>
 
@@ -103,7 +105,7 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
               <p className="text-[#1E293B] font-black text-lg">Sprawdź skrzynkę!</p>
               <p className="text-slate-400 text-sm font-medium">
                 Wysłaliśmy magic link na <span className="text-[#1E293B] font-bold">{email}</span>.
-                Kliknij w link, żeby się zalogować. Sprawdź też folder SPAM.
+                Kliknij w link, żeby {isSignUp ? 'aktywować konto' : 'się zalogować'}. Sprawdź też folder SPAM.
               </p>
             </div>
             <button
@@ -125,7 +127,7 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
                 className="w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-100 hover:border-slate-200 hover:bg-slate-50 text-[#1E293B] font-black py-4 rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
               >
                 {loading === 'google' ? <Loader2 size={20} className="animate-spin" /> : <GoogleIcon />}
-                KONTYNUUJ PRZEZ GOOGLE
+                {isSignUp ? 'ZAREJESTRUJ PRZEZ GOOGLE' : 'KONTYNUUJ PRZEZ GOOGLE'}
               </button>
             )}
 
@@ -170,11 +172,37 @@ export const Auth: React.FC<Props> = ({ onDemoLogin }) => {
                 ) : (
                   <>
                     <Mail size={20} />
-                    WYŚLIJ LINK AKTYWACYJNY
+                    {isSignUp ? 'WYŚLIJ LINK AKTYWACYJNY' : 'WYŚLIJ LINK LOGOWANIA'}
                   </>
                 )}
               </button>
             </form>
+
+            <div className="pt-2 text-center">
+              {isSignUp ? (
+                <p className="text-sm text-slate-400 font-medium">
+                  Masz już konto?{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setIsSignUp(false); setMessage(null); setMagicSent(false); }}
+                    className="font-black text-[#1E293B] hover:text-chef-gold transition-colors uppercase tracking-wide"
+                  >
+                    Zaloguj się
+                  </button>
+                </p>
+              ) : (
+                <p className="text-sm text-slate-400 font-medium">
+                  Nie masz konta?{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setIsSignUp(true); setMessage(null); setMagicSent(false); }}
+                    className="font-black text-[#1E293B] hover:text-chef-gold transition-colors uppercase tracking-wide"
+                  >
+                    Zarejestruj się
+                  </button>
+                </p>
+              )}
+            </div>
           </>
         )}
 
