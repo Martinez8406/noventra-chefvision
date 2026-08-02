@@ -185,40 +185,52 @@ export const PricingPage: React.FC<Props> = ({
           </div>
 
           <div className="flex flex-col rounded-[28px] border border-slate-200 bg-white p-6 sm:p-7 shadow-sm">
-            <div className="flex items-center gap-2 mt-1">
-              <Package size={22} className="text-emerald-500" />
-              <p className="text-3xl font-black text-slate-900">30 zł</p>
+            <div className="inline-flex self-start items-center gap-1.5 rounded-full bg-slate-900 text-white px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+              <Wand2 size={12} />
+              Usługa zespołu
             </div>
-            <h2 className="mt-3 text-xl font-black text-slate-900">Paczka +50 tokenów</h2>
+            <p className="mt-5 text-3xl font-black text-slate-900">
+              299 zł
+              <span className="text-base font-bold text-slate-500"> jednorazowo</span>
+            </p>
+            <h2 className="mt-2 text-xl font-black text-slate-900">Zleć wykonanie menu</h2>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-              Jednorazowy zakup. Tokeny nie przedawniają się — czekają na koncie aż do wykorzystania.
+              Zakładasz konto jak zwykle — my zdalnie przygotujemy Twoją kartę cyfrową.
             </p>
             <ul className="mt-6 space-y-2.5 flex-1">
-              {TOKEN_PACK_FEATURES.map((f) => (
+              {MENU_SERVICE_FEATURES.map((f) => (
                 <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
-                  <span className="mt-0.5 text-emerald-500 text-sm">★</span>
+                  <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" strokeWidth={3} />
                   <span>{f}</span>
                 </li>
               ))}
             </ul>
-            {!canBuyTokens && (
-              <p className="mt-4 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
-                Paczka tokenów jest dostępna w aktywnym planie Start lub Premium.
+            {menuServiceStatus && hasActiveMenuOrder && (
+              <p className="mt-4 text-xs text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2">
+                {MENU_SERVICE_STATUS_COPY[menuServiceStatus]}
               </p>
             )}
             <button
               type="button"
-              disabled={!!busy || !canBuyTokens}
-              onClick={() => void handleBuy('tokens')}
-              className="mt-6 w-full py-3.5 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-300 hover:to-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={
+                !!busy ||
+                menuServiceStatus === 'paid' ||
+                menuServiceStatus === 'in_progress'
+              }
+              onClick={() => void handleBuy('menu_service')}
+              className="mt-6 w-full py-3.5 rounded-2xl font-black text-sm text-white bg-slate-900 hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {busy === 'tokens' ? (
-                <span className="inline-flex items-center gap-2">
+              {busy === 'menu_service' ? (
+                <span className="inline-flex items-center justify-center gap-2">
                   <Loader2 size={16} className="animate-spin" />
                   Przekierowanie…
                 </span>
+              ) : menuServiceStatus === 'paid' || menuServiceStatus === 'in_progress' ? (
+                'Zlecenie aktywne'
+              ) : menuServiceStatus === 'done' ? (
+                'Zamów ponownie'
               ) : (
-                'Kupuję'
+                'Zlecam wykonanie'
               )}
             </button>
           </div>
@@ -227,55 +239,46 @@ export const PricingPage: React.FC<Props> = ({
         <div className="mt-10 rounded-[28px] border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
           <div className="flex flex-col lg:flex-row lg:items-center gap-8">
             <div className="flex-1 min-w-0">
-              <div className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-3 py-1 text-[10px] font-black uppercase tracking-widest">
-                <Wand2 size={12} />
-                Usługa zespołu
+              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                <Package size={12} />
+                Paczka tokenów
               </div>
-              <h2 className="mt-4 text-2xl font-black text-slate-900">Zleć wykonanie menu cyfrowego</h2>
+              <h2 className="mt-4 text-2xl font-black text-slate-900">Paczka +50 tokenów</h2>
               <p className="mt-2 text-sm text-slate-600 leading-relaxed max-w-2xl">
-                Nie masz czasu na budowanie karty? Zakładasz konto jak zwykle, a my (lub nasi pracownicy)
-                zdalnie przygotujemy Twoje menu za jednorazową opłatą.
+                Jednorazowy zakup. Tokeny nie przedawniają się — czekają na koncie aż do wykorzystania.
               </p>
               <ul className="mt-5 grid sm:grid-cols-2 gap-2.5">
-                {MENU_SERVICE_FEATURES.map((f) => (
+                {TOKEN_PACK_FEATURES.map((f) => (
                   <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
                     <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" strokeWidth={3} />
                     <span>{f}</span>
                   </li>
                 ))}
               </ul>
-              {menuServiceStatus && hasActiveMenuOrder && (
-                <p className="mt-4 text-sm text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5">
-                  {MENU_SERVICE_STATUS_COPY[menuServiceStatus]}
+              {!canBuyTokens && (
+                <p className="mt-4 text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">
+                  Paczka tokenów jest dostępna w aktywnym planie Start lub Premium.
                 </p>
               )}
             </div>
             <div className="lg:w-56 shrink-0 text-center lg:text-right space-y-3">
               <p className="text-4xl font-black text-slate-900">
-                299 zł
+                30 zł
                 <span className="block text-sm font-bold text-slate-500 mt-1">jednorazowo</span>
               </p>
               <button
                 type="button"
-                disabled={
-                  !!busy ||
-                  menuServiceStatus === 'paid' ||
-                  menuServiceStatus === 'in_progress'
-                }
-                onClick={() => void handleBuy('menu_service')}
-                className="w-full py-3.5 rounded-2xl font-black text-sm text-white bg-slate-900 hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!!busy || !canBuyTokens}
+                onClick={() => void handleBuy('tokens')}
+                className="w-full py-3.5 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-300 hover:to-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {busy === 'menu_service' ? (
+                {busy === 'tokens' ? (
                   <span className="inline-flex items-center justify-center gap-2">
                     <Loader2 size={16} className="animate-spin" />
                     Przekierowanie…
                   </span>
-                ) : menuServiceStatus === 'paid' || menuServiceStatus === 'in_progress' ? (
-                  'Zlecenie aktywne'
-                ) : menuServiceStatus === 'done' ? (
-                  'Zamów ponownie'
                 ) : (
-                  'Zlecam wykonanie'
+                  'Kupuję'
                 )}
               </button>
             </div>
