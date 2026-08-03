@@ -80,6 +80,11 @@ export function canUseHotelHub(row) {
   return plan === 'premium' || plan === 'trial';
 }
 
+/** Kelner / rachunek — wyłącznie Premium. */
+export function canUseWaiterCall(row) {
+  return resolveEffectivePlan(row) === 'premium';
+}
+
 /** Paczki tokenów — aktywny plan Start lub Premium. */
 export function canPurchaseTokenPacks(subscriptionStatus) {
   return subscriptionStatus === 'premium' || subscriptionStatus === 'start';

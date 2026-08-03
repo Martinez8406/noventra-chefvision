@@ -11,6 +11,8 @@ export function isTrialActive(row: Record<string, unknown> | null | undefined): 
 export function resolveEffectivePlan(row: Record<string, unknown> | null | undefined): 'trial' | 'premium' | 'free';
 export function hasProFeatures(subscriptionStatus: string | undefined): boolean;
 export function canUseHotelHub(row: Record<string, unknown> | null | undefined): boolean;
+/** Kelner / rachunek — wyłącznie Premium. */
+export function canUseWaiterCall(row: Record<string, unknown> | null | undefined): boolean;
 export function canPurchaseTokenPacks(subscriptionStatus: string | undefined): boolean;
 export function canUseAiGeneration(row: Record<string, unknown> | null | undefined): boolean;
 export function getTokenBalances(row: Record<string, unknown> | null | undefined): {

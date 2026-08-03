@@ -26,6 +26,7 @@ const PREMIUM_FEATURES = [
   'Pairingi i upselling',
   'Tłumaczenia menu',
   'Hotel Hub',
+  'Kelner / rachunek',
   '50 tokenów AI miesięcznie',
   'Menu bez znaku wodnego',
   'Rekomendacje i promocje',

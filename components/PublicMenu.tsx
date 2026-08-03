@@ -20,6 +20,7 @@ import { PublicMenuSkeleton } from './PublicMenuSkeleton';
 import { PublicMenuCategoryTabs } from './PublicMenuCategoryTabs';
 import { GuestFeedbackSection } from './GuestFeedbackSection';
 import { ServiceCallSection } from './ServiceCallSection';
+import { canUseWaiterCall } from '../utils/tokens';
 import {
   fetchRecommendationTranslation,
   loadRecommendationTranslations,
@@ -309,7 +310,7 @@ export const PublicMenu: React.FC<Props> = ({
     let cancelled = false;
     supabase
       .from('profiles')
-      .select('logo_url, logo_object_position, logo_scale, cover_url, cover_object_position, cover_scale, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations, feedback_available, waiter_call_available, waiter_call_enabled, hotel_hub_enabled')
+      .select('logo_url, logo_object_position, logo_scale, cover_url, cover_object_position, cover_scale, primary_color, secondary_color, font_family, restaurant_name, google_place_id, menu_categories, menu_category_translations, feedback_available, waiter_call_available, waiter_call_enabled, hotel_hub_enabled, plan, subscription_status, trial_ends_at, stripe_subscription_id')
       .eq('id', userId)
       .single()
       .then(({ data, error: profileError }) => {
@@ -353,7 +354,9 @@ export const PublicMenu: React.FC<Props> = ({
         setFeedbackAvailable((data as { feedback_available?: boolean })?.feedback_available === true);
         const waiterAvail = (data as { waiter_call_available?: boolean })?.waiter_call_available;
         const waiterEnabled = (data as { waiter_call_enabled?: boolean })?.waiter_call_enabled;
-        setWaiterCallAvailable(waiterAvail === true || (waiterAvail == null && waiterEnabled === true));
+        const waiterConfigured =
+          waiterAvail === true || (waiterAvail == null && waiterEnabled === true);
+        setWaiterCallAvailable(waiterConfigured && canUseWaiterCall(data as Record<string, unknown>));
         if (Array.isArray((data as any)?.menu_categories)) {
           const list = (data as any).menu_categories.map((x: any) => String(x).trim()).filter(Boolean);
           setProfileMenuCategories(list);

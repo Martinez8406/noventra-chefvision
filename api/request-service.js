@@ -7,6 +7,7 @@ import {
   isValidServiceAction,
   sendDiscordWebhook,
 } from '../lib/discord.js';
+import { canUseWaiterCall } from '../utils/tokens.js';
 
 const TABLE_RATE_WINDOW_MS = 2 * 60 * 1000; // 2 minuty na ten sam typ prośby ze stolika
 const TABLE_RATE_MAX = 1;
@@ -73,12 +74,21 @@ export async function handleRequestService({ req, body = {} }) {
 
   const { data: profile, error: profileError } = await admin
     .from('profiles')
-    .select('waiter_call_enabled, discord_waiter_webhook_url, restaurant_name')
+    .select(
+      'waiter_call_enabled, discord_waiter_webhook_url, restaurant_name, plan, subscription_status, trial_ends_at, stripe_subscription_id',
+    )
     .eq('id', restaurantId)
     .single();
 
   if (profileError || !profile) {
     return { status: 404, body: { error: 'Nie znaleziono restauracji.' } };
+  }
+
+  if (!canUseWaiterCall(profile)) {
+    return {
+      status: 403,
+      body: { error: 'Wezwanie kelnera jest dostępne tylko w planie Premium.' },
+    };
   }
 
   const enabled = profile.waiter_call_enabled === true;

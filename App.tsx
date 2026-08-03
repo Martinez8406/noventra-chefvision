@@ -23,7 +23,7 @@ import { PricingPage, type PricingPlanType } from './components/PricingPage';
 import { StartPlanPromoBar } from './components/StartPlanPromoBar';
 import { BRAND_LOGO_SRC, TRIAL_TOKENS } from './constants';
 import { useTranslation } from 'react-i18next';
-import { hasProFeatures, canUseHotelHub } from './utils/tokens';
+import { hasProFeatures, canUseHotelHub, canUseWaiterCall } from './utils/tokens';
 import { formatTokenStatusI18n, formatPremiumTokenShort } from './utils/formatTokenStatusI18n';
 import { normalizeMenuPrice, resolveRecommendationCurrency } from './utils/recommendationCurrency';
 import { supabase, db, authService, uploadDishImage, menuServiceDb } from './services/supabaseService';
@@ -306,6 +306,15 @@ const App: React.FC = () => {
     null;
   const hasProAccess = hasProFeatures(currentUser?.subscriptionStatus);
   const hasHotelHubAccess = canUseHotelHub(
+    currentUser
+      ? {
+          plan: currentUser.plan,
+          subscription_status: currentUser.subscriptionStatus,
+          trial_ends_at: currentUser.trialEndsAt ?? null,
+        }
+      : null,
+  );
+  const hasWaiterCallAccess = canUseWaiterCall(
     currentUser
       ? {
           plan: currentUser.plan,
@@ -821,20 +830,26 @@ const App: React.FC = () => {
                 <div className="mt-1 ml-4 pl-4 border-l border-white/10 space-y-0.5">
                   {SETTINGS_SUB_NAV.map((sub) => {
                     const subActive = activeTab === sub.id;
+                    const waiterLocked = sub.id === 'settings-waiter' && !hasWaiterCallAccess;
                     return (
                       <button
                         key={sub.id}
                         type="button"
                         onClick={() => handleSettingsSubClick(sub.id)}
-                        className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-colors ${
+                        className={`w-full flex items-center justify-between gap-2 text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-colors ${
                           subActive
                             ? 'text-white bg-white/10'
                             : 'text-zinc-500 hover:text-white hover:bg-white/[0.04]'
                         }`}
                       >
-                        {sub.id === 'settings-waiter'
-                          ? tNav('settingsWaiter', { defaultValue: 'Kelner / rachunek' })
-                          : tNav(sub.labelKey)}
+                        <span>
+                          {sub.id === 'settings-waiter'
+                            ? tNav('settingsWaiter', { defaultValue: 'Kelner / rachunek' })
+                            : tNav(sub.labelKey)}
+                        </span>
+                        {waiterLocked && (
+                          <Lock size={12} className="shrink-0 text-zinc-500" aria-hidden />
+                        )}
                       </button>
                     );
                   })}
@@ -1089,6 +1104,8 @@ const App: React.FC = () => {
               section={settingsSectionActive}
               userId={currentUser?.id ?? null}
               restaurantName={currentUser?.name}
+              waiterCallAllowed={hasWaiterCallAccess}
+              onRequestPremium={openPricingPage}
             />
           )}
         </div>
