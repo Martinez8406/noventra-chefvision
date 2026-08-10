@@ -5,12 +5,14 @@ import { supabase } from '../services/supabaseService';
 
 interface Props {
   userId: string | null;
+  /** Gdy admin edytuje klienta — dopisek w nagłówku. */
+  clientLabel?: string;
 }
 
 const DISCORD_WEBHOOK_RE =
   /^https:\/\/(discord|discordapp)\.com\/api\/webhooks\/\d+\/[\w-]+$/i;
 
-export const WaiterCallSettings: React.FC<Props> = ({ userId }) => {
+export const WaiterCallSettings: React.FC<Props> = ({ userId, clientLabel }) => {
   const { t } = useTranslation('settings');
   const [enabled, setEnabled] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState('');
@@ -180,8 +182,17 @@ export const WaiterCallSettings: React.FC<Props> = ({ userId }) => {
           <BellRing size={22} />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-xl font-black text-slate-900">{t('waiterCall.title')}</h3>
-          <p className="mt-2 text-sm text-slate-500 max-w-3xl">{t('waiterCall.intro')}</p>
+          <h3 className="text-xl font-black text-slate-900">
+            {t('waiterCall.title')}
+            {clientLabel ? (
+              <span className="text-base font-bold text-slate-500"> · {clientLabel}</span>
+            ) : null}
+          </h3>
+          <p className="mt-2 text-sm text-slate-500 max-w-3xl">
+            {clientLabel
+              ? 'Podłącz Discord webhook dla klienta (gratis). Live Menu pokaże kelnera tylko przy aktywnym planie Premium.'
+              : t('waiterCall.intro')}
+          </p>
         </div>
       </div>
 

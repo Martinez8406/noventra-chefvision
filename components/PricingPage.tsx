@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Check, Loader2, Package, Wand2 } from 'lucide-react';
+import { ArrowLeft, Check, Loader2, Package, Wand2, FileImage } from 'lucide-react';
 import { BRAND_LOGO_SRC } from '../constants';
 import { canPurchaseTokenPacks } from '../utils/tokens';
-import type { MenuServiceStatus, SubscriptionStatus } from '../types';
+import type { FlyerServiceStatus, MenuServiceStatus, SubscriptionStatus } from '../types';
 
-export type PricingPlanType = 'start' | 'premium' | 'tokens' | 'menu_service';
+export type PricingPlanType = 'start' | 'premium' | 'tokens' | 'menu_service' | 'flyer_service';
 
 interface Props {
   subscriptionStatus?: SubscriptionStatus;
   menuServiceStatus?: MenuServiceStatus | null;
+  flyerServiceStatus?: FlyerServiceStatus | null;
   onBack: () => void;
   onBuy: (plan: PricingPlanType) => Promise<void>;
 }
@@ -19,7 +20,7 @@ const START_FEATURES = [
   'Menu bez znaku wodnego',
   'Tłumaczenia menu na 14 języków',
   'Rekomendacje i promocje',
-  'Statystyki',
+  'Statystyki otwarć menu',
 ] as const;
 
 const PREMIUM_FEATURES = [
@@ -27,10 +28,11 @@ const PREMIUM_FEATURES = [
   'Tłumaczenia menu',
   'Hotel Hub',
   'Kelner / rachunek',
+  'Ranking kliknięć w dania (7 dni / miesiąc / łącznie)',
   '50 tokenów AI miesięcznie',
   'Menu bez znaku wodnego',
   'Rekomendacje i promocje',
-  'Statystyki',
+  'Statystyki otwarć menu',
   'Pomoc we wdrożeniu',
 ] as const;
 
@@ -47,6 +49,13 @@ const MENU_SERVICE_FEATURES = [
   'Ty nadal masz własne konto i pełną kontrolę',
 ] as const;
 
+const FLYER_SERVICE_FEATURES = [
+  '3 warianty projektu do wyboru',
+  '3 drobne poprawki do wybranego wariantu (kolory, teksty, układ)',
+  'Plik gotowy do druku (PDF, format A5)',
+  'Realizacja w 3 dni robocze',
+] as const;
+
 const MENU_SERVICE_STATUS_COPY: Record<MenuServiceStatus, string> = {
   paid: 'Zlecenie opłacone — nasz zespół wkrótce zajmie się Twoim menu.',
   in_progress: 'Pracujemy nad Twoim menu. Damy znać, gdy będzie gotowe.',
@@ -54,9 +63,17 @@ const MENU_SERVICE_STATUS_COPY: Record<MenuServiceStatus, string> = {
   cancelled: 'Zlecenie anulowane. Możesz zamówić ponownie.',
 };
 
+const FLYER_SERVICE_STATUS_COPY: Record<FlyerServiceStatus, string> = {
+  paid: 'Zlecenie opłacone — wkrótce przygotujemy warianty ulotki.',
+  in_progress: 'Pracujemy nad ulotką. Damy znać, gdy będzie gotowa.',
+  done: 'Ulotka gotowa — plik PDF został przekazany.',
+  cancelled: 'Zlecenie anulowane. Możesz zamówić ponownie.',
+};
+
 export const PricingPage: React.FC<Props> = ({
   subscriptionStatus,
   menuServiceStatus,
+  flyerServiceStatus,
   onBack,
   onBuy,
 }) => {
@@ -65,10 +82,15 @@ export const PricingPage: React.FC<Props> = ({
   const canBuyTokens = canPurchaseTokenPacks(subscriptionStatus);
   const hasActiveMenuOrder =
     menuServiceStatus === 'paid' || menuServiceStatus === 'in_progress' || menuServiceStatus === 'done';
+  const hasActiveFlyerOrder =
+    flyerServiceStatus === 'paid' || flyerServiceStatus === 'in_progress' || flyerServiceStatus === 'done';
 
   const handleBuy = async (plan: PricingPlanType) => {
     if (plan === 'tokens' && !canBuyTokens) return;
     if (plan === 'menu_service' && (menuServiceStatus === 'paid' || menuServiceStatus === 'in_progress')) {
+      return;
+    }
+    if (plan === 'flyer_service' && (flyerServiceStatus === 'paid' || flyerServiceStatus === 'in_progress')) {
       return;
     }
     setBusy(plan);
@@ -110,7 +132,7 @@ export const PricingPage: React.FC<Props> = ({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-5 items-stretch">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-5 items-stretch">
           <div className="flex flex-col rounded-[28px] border border-slate-200 bg-white p-6 sm:p-7 shadow-sm">
             <span className="inline-flex self-start rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-700">
               Najlepszy na start
@@ -235,6 +257,57 @@ export const PricingPage: React.FC<Props> = ({
               )}
             </button>
           </div>
+
+          <div className="flex flex-col rounded-[28px] border border-slate-200 bg-white p-6 sm:p-7 shadow-sm">
+            <div className="inline-flex self-start items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+              <FileImage size={12} />
+              Projekt graficzny
+            </div>
+            <p className="mt-5 text-3xl font-black text-slate-900">
+              149 zł
+              <span className="text-base font-bold text-slate-500"> jednorazowo</span>
+            </p>
+            <h2 className="mt-2 text-xl font-black text-slate-900">Ulotka QR</h2>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              Spersonalizowany projekt z kodem QR do Twojego menu — gotowy do druku, w stylu Twojej marki.
+            </p>
+            <ul className="mt-6 space-y-2.5 flex-1">
+              {FLYER_SERVICE_FEATURES.map((f) => (
+                <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
+                  <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" strokeWidth={3} />
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+            {flyerServiceStatus && hasActiveFlyerOrder && (
+              <p className="mt-4 text-xs text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2">
+                {FLYER_SERVICE_STATUS_COPY[flyerServiceStatus]}
+              </p>
+            )}
+            <button
+              type="button"
+              disabled={
+                !!busy ||
+                flyerServiceStatus === 'paid' ||
+                flyerServiceStatus === 'in_progress'
+              }
+              onClick={() => void handleBuy('flyer_service')}
+              className="mt-6 w-full py-3.5 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-300 hover:to-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {busy === 'flyer_service' ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <Loader2 size={16} className="animate-spin" />
+                  Przekierowanie…
+                </span>
+              ) : flyerServiceStatus === 'paid' || flyerServiceStatus === 'in_progress' ? (
+                'Zlecenie aktywne'
+              ) : flyerServiceStatus === 'done' ? (
+                'Zamów ponownie'
+              ) : (
+                'Zlecam ulotkę'
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="mt-10 rounded-[28px] border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
@@ -292,7 +365,8 @@ export const PricingPage: React.FC<Props> = ({
 
         <p className="mt-10 text-center text-[11px] text-slate-400 leading-relaxed max-w-2xl mx-auto">
           Tokeny subskrypcyjne resetują się 1. dnia każdego miesiąca i nie przechodzą na kolejny okres.
-          Tokeny z paczki są bezterminowe. Usługa wykonania menu to płatność jednorazowa — nie zmienia planu subskrypcji.
+          Tokeny z paczki są bezterminowe. Usługa wykonania menu oraz ulotka QR to płatności jednorazowe — nie zmieniają planu subskrypcji.
+          Wezwanie kelnera / rachunek jest dostępne w planie Premium.
         </p>
       </main>
     </div>

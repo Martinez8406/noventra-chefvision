@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Dish, DishStatus, GeneratorParams, UserProfile, Backdrop, RecommendationCurrency, MenuServiceOrder } from './types';
+import { Dish, DishStatus, GeneratorParams, UserProfile, Backdrop, RecommendationCurrency, MenuServiceOrder, ManagingClientContext, AdminClientProfile } from './types';
 import { ChefsStudio } from './components/ChefsStudio';
 import { SeasonalThemes } from './components/SeasonalThemes';
 import { BackdropLab } from './components/BackdropLab';
@@ -12,6 +12,9 @@ import { MenuManager } from './components/MenuManager';
 import { HotelHubManager } from './components/HotelHubManager';
 import { PromotionsManager } from './components/PromotionsManager';
 import { AdminMenuOrdersPanel } from './components/AdminMenuOrdersPanel';
+import { AdminFlyerOrdersPanel } from './components/AdminFlyerOrdersPanel';
+import { AdminPremiumClientsPanel } from './components/AdminPremiumClientsPanel';
+import { WaiterCallSettings } from './components/WaiterCallSettings';
 import { DishDetailPanel } from './components/DishDetailPanel';
 import { Auth } from './components/Auth';
 import { SuccessPage } from './components/SuccessPage';
@@ -141,8 +144,8 @@ const App: React.FC = () => {
   const [publicMenuLoading, setPublicMenuLoading] = useState(false);
   const loadedPublicMenuUserRef = useRef<string | null>(null);
   const [startPromoBarVisible, setStartPromoBarVisible] = useState(false);
-  /** Gdy admin/staff edytuje menu klienta ze zlecenia. */
-  const [managingClient, setManagingClient] = useState<MenuServiceOrder | null>(null);
+  /** Gdy admin/staff edytuje konto klienta (zlecenie menu lub Premium). */
+  const [managingClient, setManagingClient] = useState<ManagingClientContext | null>(null);
   const { t: tNav } = useTranslation('nav');
   const { t: tSidebar } = useTranslation('sidebar');
   const { t: tKitchen } = useTranslation('kitchen');
@@ -410,20 +413,45 @@ const App: React.FC = () => {
   };
 
   const enterClientManageMode = async (order: MenuServiceOrder) => {
-    setManagingClient(order);
+    await openClientAccount({
+      clientUserId: order.clientUserId,
+      clientName: order.clientName || 'Restauracja',
+      clientEmail: order.clientEmail,
+      menuOrderId: order.id,
+      menuOrderStatus: order.status,
+    });
+  };
+
+  const openPremiumClientAccount = async (client: AdminClientProfile) => {
+    await openClientAccount({
+      clientUserId: client.id,
+      clientName: client.name,
+      clientEmail: client.email,
+      menuOrderId: null,
+      menuOrderStatus: null,
+    });
+  };
+
+  const openClientAccount = async (ctx: ManagingClientContext) => {
+    setManagingClient(ctx);
     setSelectedDishId(null);
     setActiveTab('menu');
     setIsSidebarOpen(false);
     setIsSyncing(true);
     try {
-      if (order.status === 'paid') {
-        await menuServiceDb.updateOrderStatus(order.id, 'in_progress');
-        setManagingClient({ ...order, status: 'in_progress' });
+      if (ctx.menuOrderId && ctx.menuOrderStatus === 'paid') {
+        await menuServiceDb.updateOrderStatus(ctx.menuOrderId, 'in_progress');
+        setManagingClient({ ...ctx, menuOrderStatus: 'in_progress' });
       }
-      setDishes(await db.getDishes(order.clientUserId));
+      try {
+        setDishes(await db.getDishes(ctx.clientUserId));
+      } catch (dishErr) {
+        console.warn('Menu klienta niedostępne (brak zlecenia / RLS):', dishErr);
+        setDishes([]);
+      }
     } catch (e) {
-      console.error('Nie udało się wczytać menu klienta:', e);
-      alert('Nie udało się wczytać menu klienta. Sprawdź migrację SQL i role platform_role.');
+      console.error('Nie udało się otworzyć konta klienta:', e);
+      alert('Nie udało się otworzyć konta klienta. Sprawdź migrację SQL (admin_staff_profiles_access.sql).');
       setManagingClient(null);
     } finally {
       setIsSyncing(false);
@@ -660,6 +688,7 @@ const App: React.FC = () => {
       <PricingPage
         subscriptionStatus={currentUser?.subscriptionStatus}
         menuServiceStatus={currentUser?.menuServiceStatus}
+        flyerServiceStatus={currentUser?.flyerServiceStatus}
         onBack={() => {
           window.location.hash = '';
           setHash('');
@@ -1029,22 +1058,44 @@ const App: React.FC = () => {
             />
           )}
           {activeTab === 'menu' && (
-            <MenuManager 
-              dishes={dishes} 
-              onToggleOnline={toggleStatus}
-              onToggleHotelHub={toggleHotelHubVisibility}
-              onUpdateHubAssignments={handleUpdateHubAssignments}
-              onUpdateVideo={handleUpdateSocialLink} 
-              onDelete={handleDeleteDish} 
-              onSelect={setSelectedDishId}
-              onUpdateMenuPrice={handleUpdateDishMenuPrice}
-              onUpdateCategory={handleUpdateDishCategory}
-              menuUserId={workingUserId}
-              hotelHubAvailable={hasHotelHubAccess}
-            />
+            <>
+              <MenuManager 
+                dishes={dishes} 
+                onToggleOnline={toggleStatus}
+                onToggleHotelHub={toggleHotelHubVisibility}
+                onUpdateHubAssignments={handleUpdateHubAssignments}
+                onUpdateVideo={handleUpdateSocialLink} 
+                onDelete={handleDeleteDish} 
+                onSelect={setSelectedDishId}
+                onUpdateMenuPrice={handleUpdateDishMenuPrice}
+                onUpdateCategory={handleUpdateDishCategory}
+                menuUserId={workingUserId}
+                hotelHubAvailable={hasHotelHubAccess}
+              />
+              {managingClient && (
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-10 space-y-3">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">
+                      Ustawienia klienta · Kelner / rachunek (Premium)
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Funkcja działa w Live Menu tylko przy planie Premium klienta. Podłączenie webhooka przez Ciebie jest gratis.
+                    </p>
+                  </div>
+                  <WaiterCallSettings
+                    userId={managingClient.clientUserId}
+                    clientLabel={managingClient.clientName}
+                  />
+                </div>
+              )}
+            </>
           )}
           {activeTab === 'orders' && isPlatformStaff && (
-            <AdminMenuOrdersPanel onManageClient={(order) => void enterClientManageMode(order)} />
+            <>
+              <AdminMenuOrdersPanel onManageClient={(order) => void enterClientManageMode(order)} />
+              <AdminPremiumClientsPanel onOpenClient={(client) => void openPremiumClientAccount(client)} />
+              <AdminFlyerOrdersPanel />
+            </>
           )}
           {activeTab === 'hotel-hub' && (
             hasHotelHubAccess ? (
@@ -1075,7 +1126,11 @@ const App: React.FC = () => {
             )
           )}
           {activeTab === 'stats' && (
-            <MenuStatsPanel userId={currentUser?.id ?? null} />
+            <MenuStatsPanel
+              userId={currentUser?.id ?? null}
+              dishClicksUnlocked={isPremium}
+              onRequestPremium={openPricingPage}
+            />
           )}
           {activeTab === 'promotions' && (
             <div className="space-y-6">

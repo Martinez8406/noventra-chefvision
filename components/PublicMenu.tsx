@@ -419,6 +419,28 @@ export const PublicMenu: React.FC<Props> = ({
     });
   }, [userId]);
 
+  // Otwarcie widoku szczegółowego dania → zdarzenie + clicks (1× na dzień / danie / przeglądarkę).
+  useEffect(() => {
+    const id = viewDishId ?? dishId;
+    if (!id) return;
+    const day = new Date().toISOString().slice(0, 10);
+    const key = `chefvision_dish_view_tracked:${id}:${day}`;
+    try {
+      if (sessionStorage.getItem(key) === '1') return;
+      sessionStorage.setItem(key, '1');
+    } catch {
+      /* ignore */
+    }
+
+    fetch('/api/track-dish-view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dishId: id }),
+    }).catch(() => {
+      /* ignore */
+    });
+  }, [viewDishId, dishId]);
+
   const navigateMenuMode = (mode: 'restaurant' | 'hub', sectionId?: string | null) => {
     setMenuMode(mode);
     setActiveHubSectionId(sectionId ?? null);

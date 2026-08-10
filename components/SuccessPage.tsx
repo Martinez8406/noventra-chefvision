@@ -47,6 +47,8 @@ export const SuccessPage: React.FC<Props> = ({ onBack, onPremiumActivated }) => 
   const successCopy =
     planType === 'menu_service'
       ? 'Dziękujemy! Zlecenie wykonania menu zostało opłacone. Nasz zespół zajmie się Twoją kartą.'
+      : planType === 'flyer_service'
+        ? 'Dziękujemy! Zlecenie ulotki QR zostało opłacone. Przygotujemy 3 warianty projektu.'
       : planType === 'tokens'
         ? 'Dziękujemy! Tokeny zostały dodane do konta.'
         : planType === 'start'

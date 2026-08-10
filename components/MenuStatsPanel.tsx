@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../services/supabaseService';
-import { BarChart3, CalendarDays, RefreshCw, Users } from 'lucide-react';
+import { BarChart3, CalendarDays, Crown, Lock, RefreshCw, TrendingUp, Users } from 'lucide-react';
+
+type DishViewsPeriod = '7d' | 'month' | 'all';
 
 interface Props {
   userId: string | null;
+  /** Ranking kliknięć w szczegóły dań — tylko Premium. */
+  dishClicksUnlocked?: boolean;
+  onRequestPremium?: () => void;
 }
 
 interface MenuOpenStats {
@@ -15,17 +20,31 @@ interface MenuOpenStats {
   dailySeries: { date: string; opens: number }[];
 }
 
-export const MenuStatsPanel: React.FC<Props> = ({ userId }) => {
+interface DishRankRow {
+  dishId: string;
+  name: string;
+  imageUrl: string | null;
+  views: number;
+}
+
+export const MenuStatsPanel: React.FC<Props> = ({
+  userId,
+  dishClicksUnlocked = false,
+  onRequestPremium,
+}) => {
   const { t } = useTranslation('stats');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<MenuOpenStats | null>(null);
+  const [topDishes, setTopDishes] = useState<DishRankRow[]>([]);
+  const [dishPeriod, setDishPeriod] = useState<DishViewsPeriod>('7d');
 
-  const loadStats = async (isManualRefresh = false) => {
+  const loadStats = async (isManualRefresh = false, period: DishViewsPeriod = dishPeriod) => {
     if (!userId) {
       setLoading(false);
       setStats(null);
+      setTopDishes([]);
       return;
     }
 
@@ -61,6 +80,28 @@ export const MenuStatsPanel: React.FC<Props> = ({ userId }) => {
             }))
           : [],
       });
+
+      if (dishClicksUnlocked) {
+        const dishRes = await fetch(
+          `/api/get-dish-view-stats?userId=${encodeURIComponent(userId)}&period=${encodeURIComponent(period)}`,
+          { method: 'GET', headers }
+        );
+        const dishData = await dishRes.json().catch(() => null);
+        if (!dishRes.ok) {
+          throw new Error(dishData?.error || `HTTP ${dishRes.status}`);
+        }
+        const ranking = Array.isArray(dishData?.ranking) ? dishData.ranking : [];
+        setTopDishes(
+          ranking.map((row: any) => ({
+            dishId: String(row?.dishId ?? ''),
+            name: String(row?.name ?? 'Danie'),
+            imageUrl: row?.imageUrl ? String(row.imageUrl) : null,
+            views: Number(row?.views ?? 0),
+          })).filter((r: DishRankRow) => r.dishId && r.views > 0)
+        );
+      } else {
+        setTopDishes([]);
+      }
     } catch (err: any) {
       setError(err?.message || t('errors.loadFailed'));
     } finally {
@@ -70,8 +111,8 @@ export const MenuStatsPanel: React.FC<Props> = ({ userId }) => {
   };
 
   useEffect(() => {
-    void loadStats();
-  }, [userId]);
+    void loadStats(false, dishPeriod);
+  }, [userId, dishClicksUnlocked, dishPeriod]);
 
   const dailySeries = stats?.dailySeries ?? [];
   const maxOpens = Math.max(1, ...dailySeries.map((x) => x.opens));
@@ -87,6 +128,13 @@ export const MenuStatsPanel: React.FC<Props> = ({ userId }) => {
     return { ...point, x, y };
   });
   const lineD = points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
+  const maxDishViews = Math.max(1, ...topDishes.map((d) => d.views || 0));
+
+  const periodTabs: { id: DishViewsPeriod; label: string }[] = [
+    { id: '7d', label: t('dishClicks.period7d') },
+    { id: 'month', label: t('dishClicks.periodMonth') },
+    { id: 'all', label: t('dishClicks.periodAll') },
+  ];
 
   return (
     <div className="space-y-8">
@@ -97,7 +145,7 @@ export const MenuStatsPanel: React.FC<Props> = ({ userId }) => {
         </div>
         <button
           type="button"
-          onClick={() => void loadStats(true)}
+          onClick={() => void loadStats(true, dishPeriod)}
           disabled={refreshing || loading || !userId}
           className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
         >
@@ -198,6 +246,90 @@ export const MenuStatsPanel: React.FC<Props> = ({ userId }) => {
               </>
             )}
           </div>
+
+          {dishClicksUnlocked ? (
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-7">
+              <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  {t('dishClicks.title')}
+                </span>
+                <TrendingUp size={18} className="text-emerald-500" />
+              </div>
+              <p className="text-sm text-slate-500 mb-4">{t('dishClicks.subtitle')}</p>
+              <div className="flex flex-wrap gap-2 mb-5">
+                {periodTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setDishPeriod(tab.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                      dishPeriod === tab.id
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              {topDishes.length === 0 ? (
+                <p className="text-sm text-slate-500">{t('dishClicks.empty')}</p>
+              ) : (
+                <ul className="space-y-3">
+                  {topDishes.map((dish, idx) => (
+                    <li key={dish.dishId} className="flex items-center gap-3">
+                      <span className="w-7 text-xs font-black text-slate-400 tabular-nums">
+                        {idx + 1}.
+                      </span>
+                      {dish.imageUrl ? (
+                        <img
+                          src={dish.imageUrl}
+                          alt=""
+                          className="h-10 w-10 rounded-xl object-cover shrink-0 bg-slate-100"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded-xl bg-slate-100 shrink-0" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-slate-900 truncate">{dish.name}</p>
+                        <div className="mt-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-emerald-500"
+                            style={{ width: `${(dish.views / maxDishViews) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className="text-sm font-black text-slate-800 tabular-nums shrink-0">
+                        {dish.views}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 text-center space-y-4">
+              <div className="mx-auto w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500">
+                <Lock size={22} />
+              </div>
+              <div className="space-y-1">
+                <p className="font-black text-slate-900 inline-flex items-center gap-2 justify-center">
+                  <Crown size={16} className="text-emerald-500" />
+                  {t('dishClicks.premiumTitle')}
+                </p>
+                <p className="text-sm text-slate-500 max-w-md mx-auto">{t('dishClicks.premiumHint')}</p>
+              </div>
+              {onRequestPremium && (
+                <button
+                  type="button"
+                  onClick={onRequestPremium}
+                  className="inline-flex px-6 py-3 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:from-emerald-300 hover:to-green-400 transition-all"
+                >
+                  {t('dishClicks.unlock')}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 

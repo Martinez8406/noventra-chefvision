@@ -167,6 +167,9 @@ export type PlatformRole = 'user' | 'admin' | 'staff';
 /** Status płatnego zlecenia wykonania menu cyfrowego. */
 export type MenuServiceStatus = 'paid' | 'in_progress' | 'done' | 'cancelled';
 
+/** Status płatnego zlecenia ulotki QR (ten sam cykl co menu). */
+export type FlyerServiceStatus = MenuServiceStatus;
+
 export interface MenuServiceOrder {
   id: string;
   clientUserId: string;
@@ -179,6 +182,28 @@ export interface MenuServiceOrder {
   completedAt?: string | null;
   createdAt: string;
 }
+
+/** Kontekst edycji konta klienta przez admina (ze zlecenia menu lub listy Premium). */
+export interface ManagingClientContext {
+  clientUserId: string;
+  clientName: string;
+  clientEmail?: string | null;
+  /** Jeśli otwarto ze zlecenia menu — ID i status zlecenia. */
+  menuOrderId?: string | null;
+  menuOrderStatus?: MenuServiceStatus | null;
+}
+
+export interface AdminClientProfile {
+  id: string;
+  name: string;
+  email: string | null;
+  plan: string;
+  subscriptionStatus: string;
+  waiterEnabled: boolean;
+  waiterConfigured: boolean;
+}
+
+export type FlyerServiceOrder = MenuServiceOrder;
 
 export interface UserProfile {
   id: string;
@@ -195,6 +220,8 @@ export interface UserProfile {
   platformRole?: PlatformRole;
   /** Najnowsze aktywne zlecenie wykonania menu (jeśli jest). */
   menuServiceStatus?: MenuServiceStatus | null;
+  /** Najnowsze aktywne zlecenie ulotki QR (jeśli jest). */
+  flyerServiceStatus?: FlyerServiceStatus | null;
 }
 
 export interface Backdrop {

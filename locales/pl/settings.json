@@ -20,7 +20,7 @@
     },
     "waiter": {
       "title": "Kelner / rachunek",
-      "description": "Połącz Discord i włącz przyciski „Poproś o kelnera” oraz „Poproś o rachunek” w Live Menu."
+      "description": "Funkcja planu Premium. Połącz Discord i włącz przyciski „Poproś o kelnera” oraz „Poproś o rachunek” w Live Menu. Zespół ChefVision może podłączyć webhook za Ciebie gratis."
     },
     "subscription": {
       "title": "Zarządzaj subskrypcją",
@@ -80,7 +80,7 @@
   },
   "waiterCall": {
     "title": "Kelner / rachunek (Discord)",
-    "intro": "Gdy gość otworzy Live Menu (nawet z jednego wspólnego QR), wybiera stolik i może poprosić o kelnera, dodatkowe zamówienie lub rachunek. Powiadomienie trafia na Discord.",
+    "intro": "Funkcja planu Premium. Gdy gość otworzy Live Menu, wybiera stolik i może poprosić o kelnera, dodatkowe zamówienie lub rachunek. Powiadomienie trafia na Discord. Podłączenie webhooka przez zespół ChefVision jest gratis.",
     "enableLabel": "Włącz wezwanie kelnera",
     "enableHelp": "Sekcja w Live Menu: wybór stolika + przyciski wezwania",
     "webhookLabel": "Discord Webhook URL",

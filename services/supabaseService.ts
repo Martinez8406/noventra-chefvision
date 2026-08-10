@@ -2,7 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import { TRIAL_TOKENS, SUBSCRIPTION_TOKENS, MAX_USER_BACKDROPS } from '../constants';
-import { Dish, DishRecommendation, UserProfile, DishStatus, SubscriptionStatus, Backdrop, RecommendationCurrency, PlatformRole, MenuServiceStatus, MenuServiceOrder } from '../types';
+import { Dish, DishRecommendation, UserProfile, DishStatus, SubscriptionStatus, Backdrop, RecommendationCurrency, PlatformRole, MenuServiceStatus, MenuServiceOrder, FlyerServiceStatus, FlyerServiceOrder, AdminClientProfile } from '../types';
 import { mapProfileTokens, normalizeProfileForTokenOps } from '../utils/tokens.js';
 import {
   DEFAULT_RECOMMENDATION_CURRENCY,
@@ -262,6 +262,7 @@ const mapRow = (row: any): Dish => ({
   })(),
   translations: row.translations ?? null,
   visibleInHotelHub: row.visible_in_hotel_hub ?? row.visibleInHotelHub ?? false,
+  clicks: typeof row.clicks === 'number' && Number.isFinite(row.clicks) ? row.clicks : 0,
 });
 
 function normalizePlatformRole(raw: unknown): PlatformRole {
@@ -276,11 +277,11 @@ function normalizeMenuServiceStatus(raw: unknown): MenuServiceStatus | null {
   return null;
 }
 
-function mapMenuServiceOrder(row: any, profile?: { name?: string; email?: string | null } | null): MenuServiceOrder {
+function mapMenuServiceOrder(row: any, profile?: { name?: string; email?: string | null; restaurant_name?: string | null } | null): MenuServiceOrder {
   return {
     id: row.id,
     clientUserId: row.client_user_id,
-    clientName: profile?.name || row.client_name || 'Restauracja',
+    clientName: profile?.restaurant_name || profile?.name || row.client_name || 'Restauracja',
     clientEmail: profile?.email ?? row.client_email ?? null,
     status: normalizeMenuServiceStatus(row.status) || 'paid',
     notes: row.notes ?? null,
@@ -308,6 +309,23 @@ async function fetchLatestMenuServiceStatus(userId: string): Promise<MenuService
   }
 }
 
+async function fetchLatestFlyerServiceStatus(userId: string): Promise<FlyerServiceStatus | null> {
+  if (!supabase) return null;
+  try {
+    const { data } = await supabase
+      .from('flyer_service_orders')
+      .select('status')
+      .eq('client_user_id', userId)
+      .neq('status', 'cancelled')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return normalizeMenuServiceStatus(data?.status);
+  } catch {
+    return null;
+  }
+}
+
 export const menuServiceDb = {
   async listOrders(): Promise<MenuServiceOrder[]> {
     if (!supabase) return [];
@@ -321,14 +339,14 @@ export const menuServiceDb = {
     }
 
     const clientIds = Array.from(new Set(orders.map((o: any) => o.client_user_id).filter(Boolean)));
-    let profilesById: Record<string, { name?: string; email?: string | null }> = {};
+    let profilesById: Record<string, { name?: string; email?: string | null; restaurant_name?: string | null }> = {};
     if (clientIds.length) {
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, name, email')
+        .select('id, restaurant_name, email')
         .in('id', clientIds);
       for (const p of profiles || []) {
-        profilesById[p.id] = { name: p.name, email: p.email };
+        profilesById[p.id] = { restaurant_name: p.restaurant_name, email: p.email };
       }
     }
 
@@ -370,6 +388,96 @@ export const menuServiceDb = {
       .maybeSingle();
     if (error || !data) return null;
     return mapMenuServiceOrder(data);
+  },
+};
+
+export const adminClientsDb = {
+  /** Lista kont Premium (do podłączenia kelnera / wejścia w konto). */
+  async listPremiumClients(): Promise<AdminClientProfile[]> {
+    if (!supabase) return [];
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(
+        'id, email, restaurant_name, plan, subscription_status, waiter_call_enabled, discord_waiter_webhook_url, platform_role',
+      )
+      .or('plan.eq.premium,subscription_status.eq.premium')
+      .order('email', { ascending: true });
+
+    if (error) {
+      console.warn('[adminClientsDb.listPremiumClients]', error.message);
+      return [];
+    }
+
+    return (data || [])
+      .filter((row: any) => {
+        const role = row.platform_role;
+        return role !== 'admin' && role !== 'staff';
+      })
+      .map((row: any): AdminClientProfile => {
+        const webhook =
+          typeof row.discord_waiter_webhook_url === 'string'
+            ? row.discord_waiter_webhook_url.trim()
+            : '';
+        const enabled = row.waiter_call_enabled === true;
+        return {
+          id: row.id,
+          name: row.restaurant_name || 'Restauracja',
+          email: row.email ?? null,
+          plan: row.plan || 'premium',
+          subscriptionStatus: row.subscription_status || 'premium',
+          waiterEnabled: enabled,
+          waiterConfigured: enabled && webhook.length > 0,
+        };
+      });
+  },
+};
+
+export const flyerServiceDb = {
+  async listOrders(): Promise<FlyerServiceOrder[]> {
+    if (!supabase) return [];
+    const { data: orders, error } = await supabase
+      .from('flyer_service_orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error || !orders?.length) {
+      if (error) console.warn('[flyerServiceDb.listOrders]', error.message);
+      return [];
+    }
+
+    const clientIds = Array.from(new Set(orders.map((o: any) => o.client_user_id).filter(Boolean)));
+    let profilesById: Record<string, { name?: string; email?: string | null; restaurant_name?: string | null }> = {};
+    if (clientIds.length) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, restaurant_name, email')
+        .in('id', clientIds);
+      for (const p of profiles || []) {
+        profilesById[p.id] = { restaurant_name: p.restaurant_name, email: p.email };
+      }
+    }
+
+    return orders.map((row: any) => mapMenuServiceOrder(row, profilesById[row.client_user_id]));
+  },
+
+  async updateOrderStatus(
+    orderId: string,
+    status: FlyerServiceStatus,
+    notes?: string | null,
+  ): Promise<boolean> {
+    if (!supabase) return false;
+    const patch: Record<string, unknown> = { status };
+    if (notes !== undefined) patch.notes = notes;
+    if (status === 'done') patch.completed_at = new Date().toISOString();
+    if (status === 'in_progress') patch.completed_at = null;
+    const { error } = await supabase
+      .from('flyer_service_orders')
+      .update(patch)
+      .eq('id', orderId);
+    if (error) {
+      console.error('[flyerServiceDb.updateOrderStatus]', error.message);
+      return false;
+    }
+    return true;
   },
 };
 
@@ -868,6 +976,7 @@ export const authService = {
         },
         platformRole: 'admin',
         menuServiceStatus: null,
+        flyerServiceStatus: null,
       };
     }
 
@@ -995,6 +1104,7 @@ export const authService = {
       const mapped = mapProfileTokens(normalizeProfileForTokenOps(profileData));
       const platformRole = normalizePlatformRole(profileData?.platform_role);
       const menuServiceStatus = await fetchLatestMenuServiceStatus(user.id);
+      const flyerServiceStatus = await fetchLatestFlyerServiceStatus(user.id);
 
       return {
         id: user.id,
@@ -1008,6 +1118,7 @@ export const authService = {
         trialEndsAt: mapped.trialEndsAt,
         platformRole,
         menuServiceStatus,
+        flyerServiceStatus,
       };
     } catch (e) { return null; }
   },

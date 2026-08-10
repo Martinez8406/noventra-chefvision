@@ -1,6 +1,6 @@
 {
   "title": "Statistics",
-  "subtitle": "Digital menu opens — today and this month.",
+  "subtitle": "Digital menu opens and (Premium) dish detail clicks.",
   "refresh": "Refresh",
   "loading": "Loading statistics...",
   "errors": {
@@ -17,5 +17,16 @@
     "empty": "No data for the chart.",
     "ariaLabel": "Line chart of menu opens over the last 30 days"
   },
-  "footnote": "Statistics count visits to the public menu URL (`/menu/[userId]`) and refresh when you click “Refresh”."
+  "dishClicks": {
+    "title": "Most opened dishes",
+    "subtitle": "How many times guests opened a dish detail view in Live Menu — pick a period.",
+    "period7d": "7 days",
+    "periodMonth": "This month",
+    "periodAll": "All time",
+    "empty": "No clicks in this period — once guests open dish cards, the ranking will appear here.",
+    "premiumTitle": "Dish ranking — Premium",
+    "premiumHint": "See which dishes guests open most often (7 days, this month, or all time).",
+    "unlock": "View plans"
+  },
+  "footnote": "Menu opens count visits to `/menu/[userId]`. Dish clicks (Premium) are recorded when the detail view opens — max. once per day per dish and browser."
 }

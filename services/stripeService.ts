@@ -1,6 +1,6 @@
 const API_BASE = '';
 
-export type CheckoutPlanType = 'premium' | 'start' | 'tokens' | 'menu_service';
+export type CheckoutPlanType = 'premium' | 'start' | 'tokens' | 'menu_service' | 'flyer_service';
 
 export interface CreateCheckoutOptions {
   userId?: string;

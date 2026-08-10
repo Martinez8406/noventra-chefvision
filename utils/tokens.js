@@ -80,7 +80,7 @@ export function canUseHotelHub(row) {
   return plan === 'premium' || plan === 'trial';
 }
 
-/** Kelner / rachunek — wyłącznie Premium. */
+/** Kelner / rachunek — wyłącznie Premium (admin może podłączyć webhook za klienta). */
 export function canUseWaiterCall(row) {
   return resolveEffectivePlan(row) === 'premium';
 }

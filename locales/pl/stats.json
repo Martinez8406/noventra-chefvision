@@ -1,6 +1,6 @@
 {
   "title": "Statystyki",
-  "subtitle": "Otwarcia menu cyfrowego — dzisiaj i w tym miesiącu.",
+  "subtitle": "Otwarcia menu cyfrowego oraz (Premium) kliknięcia w szczegóły dań.",
   "refresh": "Odśwież",
   "loading": "Ładowanie statystyk...",
   "errors": {
@@ -17,5 +17,16 @@
     "empty": "Brak danych do wykresu.",
     "ariaLabel": "Wykres liniowy otwarć menu z ostatnich 30 dni"
   },
-  "footnote": "Statystyki liczą wejścia do publicznego adresu menu (`/menu/[userId]`) i odświeżają się po kliknięciu „Odśwież”."
+  "dishClicks": {
+    "title": "Najczęściej otwierane dania",
+    "subtitle": "Ile razy goście otworzyli widok szczegółowy dania w Live Menu — wybierz okres.",
+    "period7d": "7 dni",
+    "periodMonth": "Ten miesiąc",
+    "periodAll": "Łącznie",
+    "empty": "Brak kliknięć w tym okresie — gdy goście zaczną otwierać karty dań, ranking pojawi się tutaj.",
+    "premiumTitle": "Ranking dań — Premium",
+    "premiumHint": "Zobacz, które dania goście otwierają najczęściej (7 dni, miesiąc lub łącznie).",
+    "unlock": "Zobacz plany"
+  },
+  "footnote": "Otwarcia menu liczą wejścia na `/menu/[userId]`. Kliknięcia w dania (Premium) zapisują się przy otwarciu widoku szczegółowego — max. 1× dziennie na danie i przeglądarkę."
 }

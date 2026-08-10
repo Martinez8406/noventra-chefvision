@@ -20,7 +20,7 @@
     },
     "waiter": {
       "title": "Waiter / bill",
-      "description": "Connect Discord and enable “Call waiter” and “Request the bill” buttons in Live Menu."
+      "description": "Premium feature. Connect Discord and enable “Call waiter” and “Request the bill” in Live Menu. ChefVision can set up the webhook for you at no extra charge."
     },
     "subscription": {
       "title": "Manage subscription",
@@ -80,7 +80,7 @@
   },
   "waiterCall": {
     "title": "Waiter / bill (Discord)",
-    "intro": "When a guest opens Live Menu (even from one shared QR), they pick their table and can call a waiter, request an extra order, or ask for the bill. The alert goes to Discord.",
+    "intro": "Premium feature. When a guest opens Live Menu, they pick their table and can call a waiter, request an extra order, or ask for the bill. The alert goes to Discord. ChefVision can connect the webhook for you free of charge.",
     "enableLabel": "Enable waiter call",
     "enableHelp": "Section in Live Menu: table picker + call buttons",
     "webhookLabel": "Discord Webhook URL",
