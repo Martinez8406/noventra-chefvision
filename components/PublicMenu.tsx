@@ -20,7 +20,7 @@ import { PublicMenuSkeleton } from './PublicMenuSkeleton';
 import { PublicMenuCategoryTabs } from './PublicMenuCategoryTabs';
 import { GuestFeedbackSection } from './GuestFeedbackSection';
 import { ServiceCallSection } from './ServiceCallSection';
-import { canUseWaiterCall } from '../utils/tokens';
+import { canUseWaiterCall, canUsePairings } from '../utils/tokens';
 import {
   fetchRecommendationTranslation,
   loadRecommendationTranslations,
@@ -111,6 +111,7 @@ export const PublicMenu: React.FC<Props> = ({
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [feedbackAvailable, setFeedbackAvailable] = useState(false);
   const [waiterCallAvailable, setWaiterCallAvailable] = useState(false);
+  const [pairingsAvailable, setPairingsAvailable] = useState(false);
   const [resolvedTableNumber, setResolvedTableNumber] = useState<string | null>(null);
   const [hotelHubEnabled, setHotelHubEnabled] = useState(false);
   const [hubData, setHubData] = useState<HotelHubData>({
@@ -208,7 +209,10 @@ export const PublicMenu: React.FC<Props> = ({
   }, [userId, showWatermark]);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !pairingsAvailable) {
+      setRecommendations([]);
+      return;
+    }
     let cancelled = false;
     fetchRecommendationsForPublicMenu(userId, dishes).then((list) => {
       if (!cancelled) setRecommendations(list);
@@ -216,7 +220,7 @@ export const PublicMenu: React.FC<Props> = ({
     return () => {
       cancelled = true;
     };
-  }, [userId, dishes]);
+  }, [userId, dishes, pairingsAvailable]);
 
   useEffect(() => {
     if (!userId) {
@@ -301,6 +305,7 @@ export const PublicMenu: React.FC<Props> = ({
     setProfileCategoryTranslations({});
     setFeedbackAvailable(false);
     setWaiterCallAvailable(false);
+    setPairingsAvailable(false);
 
     if (!supabase || !userId) {
       setProfileLoaded(true);
@@ -332,6 +337,7 @@ export const PublicMenu: React.FC<Props> = ({
               setGooglePlaceId(fallback?.google_place_id?.trim() || null);
               setFeedbackAvailable(false);
               setWaiterCallAvailable(false);
+              setPairingsAvailable(false);
               if (Array.isArray((fallback as { menu_categories?: unknown })?.menu_categories)) {
                 const list = (fallback as { menu_categories: unknown[] }).menu_categories
                   .map((x) => String(x).trim())
@@ -357,6 +363,7 @@ export const PublicMenu: React.FC<Props> = ({
         const waiterConfigured =
           waiterAvail === true || (waiterAvail == null && waiterEnabled === true);
         setWaiterCallAvailable(waiterConfigured && canUseWaiterCall(data as Record<string, unknown>));
+        setPairingsAvailable(canUsePairings(data as Record<string, unknown>));
         if (Array.isArray((data as any)?.menu_categories)) {
           const list = (data as any).menu_categories.map((x: any) => String(x).trim()).filter(Boolean);
           setProfileMenuCategories(list);

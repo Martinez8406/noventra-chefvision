@@ -26,7 +26,7 @@ import { PricingPage, type PricingPlanType } from './components/PricingPage';
 import { StartPlanPromoBar } from './components/StartPlanPromoBar';
 import { BRAND_LOGO_SRC, TRIAL_TOKENS } from './constants';
 import { useTranslation } from 'react-i18next';
-import { hasProFeatures, canUseHotelHub, canUseWaiterCall } from './utils/tokens';
+import { hasProFeatures, canUseHotelHub, canUseWaiterCall, canUsePairings } from './utils/tokens';
 import { formatTokenStatusI18n, formatPremiumTokenShort } from './utils/formatTokenStatusI18n';
 import { normalizeMenuPrice, resolveRecommendationCurrency } from './utils/recommendationCurrency';
 import { supabase, db, authService, uploadDishImage, menuServiceDb } from './services/supabaseService';
@@ -318,6 +318,15 @@ const App: React.FC = () => {
       : null,
   );
   const hasWaiterCallAccess = canUseWaiterCall(
+    currentUser
+      ? {
+          plan: currentUser.plan,
+          subscription_status: currentUser.subscriptionStatus,
+          trial_ends_at: currentUser.trialEndsAt ?? null,
+        }
+      : null,
+  );
+  const hasPairingsAccess = canUsePairings(
     currentUser
       ? {
           plan: currentUser.plan,
@@ -747,6 +756,11 @@ const App: React.FC = () => {
   const settingsMenuOpen = settingsExpanded || settingsSectionActive !== null;
 
   const handleNavClick = (tabId: AppTab, premiumLocked?: boolean) => {
+    if (tabId === 'promotions' && !hasPairingsAccess) {
+      openPremiumUpsell();
+      setIsSidebarOpen(false);
+      return;
+    }
     if (isFree && premiumLocked) {
       openPremiumUpsell();
       setIsSidebarOpen(false);
@@ -793,7 +807,8 @@ const App: React.FC = () => {
 
           <nav className="space-y-2">
             {NAV_ITEM_DEFS.map((tab) => {
-              const locked = isFree && tab.premiumLocked;
+              const locked =
+                tab.id === 'promotions' ? !hasPairingsAccess : isFree && tab.premiumLocked;
               return (
                 <button
                   key={tab.id}
@@ -1135,7 +1150,7 @@ const App: React.FC = () => {
           {activeTab === 'promotions' && (
             <div className="space-y-6">
               <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">{tPromotions('title')}</h2>
-              {hasProAccess ? (
+              {hasPairingsAccess ? (
                 <PromotionsManager
                   dishes={dishes}
                   userId={session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id ?? null}

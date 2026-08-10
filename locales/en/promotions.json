@@ -1,6 +1,6 @@
 {
-  "title": "Recommendations & promotions",
-  "premiumRequired": "Sales recommendations require Premium.",
+  "title": "Pairings & upselling",
+  "premiumRequired": "Pairings & upselling are available on the Premium plan.",
   "unlockPremium": "Unlock Premium",
   "intro": "Subtle suggestions on menu cards — no order buttons. One dish = one recommendation type.",
   "loginRequired": "Sign in to manage recommendations.",

@@ -1,7 +1,7 @@
 {
-  "title": "Recommendations & promotions",
-  "premiumRequired": "Sales recommendations require Premium.",
-  "unlockPremium": "Unlock Premium",
+  "title": "Pairingi i upselling",
+  "premiumRequired": "Pairingi i upselling są dostępne w planie Premium.",
+  "unlockPremium": "Odblokuj Premium",
   "intro": "Subtelne sugestie na kartach menu — bez przycisków zamówienia. Jedno danie = jeden typ rekomendacji.",
   "loginRequired": "Zaloguj się, aby zarządzać rekomendacjami.",
   "unknownDish": "Nieznane danie",
