@@ -18,13 +18,13 @@
     "ariaLabel": "Wykres liniowy otwarć menu z ostatnich 30 dni"
   },
   "dishClicks": {
-    "title": "Najczęściej otwierane dania",
+    "title": "Ranking popularności dań",
     "subtitle": "Ile razy goście otworzyli widok szczegółowy dania w Live Menu — wybierz okres.",
     "period7d": "7 dni",
     "periodMonth": "Ten miesiąc",
     "periodAll": "Łącznie",
-    "empty": "Brak kliknięć w tym okresie — gdy goście zaczną otwierać karty dań, ranking pojawi się tutaj.",
-    "premiumTitle": "Ranking dań — Premium",
+    "empty": "Brak danych w tym okresie — gdy goście zaczną otwierać karty dań, ranking pojawi się tutaj.",
+    "premiumTitle": "Ranking popularności dań — Premium",
     "premiumHint": "Zobacz, które dania goście otwierają najczęściej (7 dni, miesiąc lub łącznie).",
     "unlock": "Zobacz plany"
   },

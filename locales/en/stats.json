@@ -18,13 +18,13 @@
     "ariaLabel": "Line chart of menu opens over the last 30 days"
   },
   "dishClicks": {
-    "title": "Most opened dishes",
+    "title": "Dish popularity ranking",
     "subtitle": "How many times guests opened a dish detail view in Live Menu — pick a period.",
     "period7d": "7 days",
     "periodMonth": "This month",
     "periodAll": "All time",
-    "empty": "No clicks in this period — once guests open dish cards, the ranking will appear here.",
-    "premiumTitle": "Dish ranking — Premium",
+    "empty": "No data in this period — once guests open dish cards, the ranking will appear here.",
+    "premiumTitle": "Dish popularity ranking — Premium",
     "premiumHint": "See which dishes guests open most often (7 days, this month, or all time).",
     "unlock": "View plans"
   },

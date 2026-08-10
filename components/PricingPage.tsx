@@ -25,7 +25,7 @@ const PREMIUM_FEATURES = [
   'Pairingi i upselling',
   'Hotel Hub',
   'Poproś kelnera / rachunek',
-  'Ranking kliknięć w dania',
+  'Ranking popularności dań',
   '50 tokenów AI',
   'Pomoc we wdrożeniu',
 ] as const;
