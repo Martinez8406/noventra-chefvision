@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseServerCredentials } from '../lib/supabaseServerEnv.js';
+import { fetchDishViewRanking } from '../lib/dishViewStats.js';
 
 async function verifyToken(authHeader) {
   const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
@@ -28,6 +29,10 @@ export async function handleGetMenuOpenStats({ authorization, query = {} }) {
   const chartDays = 30;
   const startOfRange = new Date(startOfToday);
   startOfRange.setDate(startOfRange.getDate() - (chartDays - 1));
+
+  const periodRaw = typeof query?.dishPeriod === 'string' ? query.dishPeriod.trim() : '';
+  const dishPeriod =
+    periodRaw === 'month' || periodRaw === 'all' || periodRaw === '7d' ? periodRaw : null;
 
   const { url, key } = getSupabaseServerCredentials();
   if (!url || !key) {
@@ -87,16 +92,23 @@ export async function handleGetMenuOpenStats({ authorization, query = {} }) {
 
   const dailySeries = Array.from(byDay.entries()).map(([date, opens]) => ({ date, opens }));
 
-  return {
-    status: 200,
-    body: {
-      daily: todayQ.count || 0,
-      monthly: monthQ.count || 0,
-      today: startOfToday.toISOString().slice(0, 10),
-      month: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
-      dailySeries,
-    },
+  const body = {
+    daily: todayQ.count || 0,
+    monthly: monthQ.count || 0,
+    today: startOfToday.toISOString().slice(0, 10),
+    month: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
+    dailySeries,
   };
+
+  if (dishPeriod) {
+    const dishViews = await fetchDishViewRanking(client, ownerId, dishPeriod);
+    if (dishViews.error) {
+      return { status: 500, body: { error: dishViews.error } };
+    }
+    body.dishViews = dishViews;
+  }
+
+  return { status: 200, body };
 }
 
 export default async function handler(req, res) {
@@ -112,4 +124,3 @@ export default async function handler(req, res) {
   });
   return res.status(result.status).json(result.body);
 }
-

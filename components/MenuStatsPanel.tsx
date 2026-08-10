@@ -60,7 +60,10 @@ export const MenuStatsPanel: React.FC<Props> = ({
         if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
       }
 
-      const response = await fetch(`/api/get-menu-open-stats?userId=${encodeURIComponent(userId)}`, {
+      const statsUrl = dishClicksUnlocked
+        ? `/api/get-menu-open-stats?userId=${encodeURIComponent(userId)}&dishPeriod=${encodeURIComponent(period)}`
+        : `/api/get-menu-open-stats?userId=${encodeURIComponent(userId)}`;
+      const response = await fetch(statsUrl, {
         method: 'GET',
         headers,
       });
@@ -82,15 +85,7 @@ export const MenuStatsPanel: React.FC<Props> = ({
       });
 
       if (dishClicksUnlocked) {
-        const dishRes = await fetch(
-          `/api/get-dish-view-stats?userId=${encodeURIComponent(userId)}&period=${encodeURIComponent(period)}`,
-          { method: 'GET', headers }
-        );
-        const dishData = await dishRes.json().catch(() => null);
-        if (!dishRes.ok) {
-          throw new Error(dishData?.error || `HTTP ${dishRes.status}`);
-        }
-        const ranking = Array.isArray(dishData?.ranking) ? dishData.ranking : [];
+        const ranking = Array.isArray(data?.dishViews?.ranking) ? data.dishViews.ranking : [];
         setTopDishes(
           ranking.map((row: any) => ({
             dishId: String(row?.dishId ?? ''),

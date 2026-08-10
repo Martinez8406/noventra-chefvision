@@ -1,11 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseServerCredentials } from '../lib/supabaseServerEnv.js';
+import { handleTrackDishView } from '../lib/dishViewStats.js';
 
 function isValidUuid(value) {
   return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
+/**
+ * POST body:
+ * - { dishId } → track otwarcia szczegółu dania
+ * - { userId } → track otwarcia menu
+ */
 export async function handleTrackMenuOpen({ body = {} }) {
+  const dishId = typeof body?.dishId === 'string' ? body.dishId.trim() : '';
+  if (dishId) {
+    return handleTrackDishView({ body: { dishId } });
+  }
+
   const ownerId = typeof body?.userId === 'string' ? body.userId.trim() : '';
   if (!isValidUuid(ownerId)) {
     return { status: 400, body: { error: 'Nieprawidłowe userId.' } };
@@ -48,4 +59,3 @@ export default async function handler(req, res) {
   });
   return res.status(result.status).json(result.body);
 }
-

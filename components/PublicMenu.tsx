@@ -432,7 +432,7 @@ export const PublicMenu: React.FC<Props> = ({
       /* ignore */
     }
 
-    fetch('/api/track-dish-view', {
+    fetch('/api/track-menu-open', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ dishId: id }),

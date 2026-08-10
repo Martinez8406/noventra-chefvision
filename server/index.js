@@ -7,9 +7,7 @@ import { handleGenerateImage } from '../api/generate-image.js';
 import { handleTranslate } from '../api/translate.js';
 import { handleSaveMenuCategories } from '../api/save-menu-categories.js';
 import { handleTrackMenuOpen } from '../api/track-menu-open.js';
-import { handleTrackDishView } from '../api/track-dish-view.js';
 import { handleGetMenuOpenStats } from '../api/get-menu-open-stats.js';
-import { handleGetDishViewStats } from '../api/get-dish-view-stats.js';
 import { handleFeedback } from '../api/feedback.js';
 import { handleRequestService } from '../api/request-service.js';
 import { handleNotifyNewUser } from '../api/notify-new-user.js';
@@ -204,23 +202,8 @@ app.post('/api/track-menu-open', async (req, res) => {
   return res.status(result.status).json(result.body);
 });
 
-app.post('/api/track-dish-view', async (req, res) => {
-  const result = await handleTrackDishView({
-    body: req.body || {},
-  });
-  return res.status(result.status).json(result.body);
-});
-
 app.get('/api/get-menu-open-stats', async (req, res) => {
   const result = await handleGetMenuOpenStats({
-    authorization: req.headers.authorization,
-    query: req.query || {},
-  });
-  return res.status(result.status).json(result.body);
-});
-
-app.get('/api/get-dish-view-stats', async (req, res) => {
-  const result = await handleGetDishViewStats({
     authorization: req.headers.authorization,
     query: req.query || {},
   });
