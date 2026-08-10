@@ -23,13 +23,10 @@ const START_FEATURES = [
 
 const PREMIUM_FEATURES = [
   'Pairingi i upselling',
-  'Tłumaczenia menu',
   'Hotel Hub',
   'Poproś kelnera / rachunek',
-  'Ranking kliknięć w dania (7 dni / miesiąc / łącznie)',
-  '50 tokenów AI miesięcznie',
-  'Menu bez znaku wodnego',
-  'Statystyki otwarć menu',
+  'Ranking kliknięć w dania',
+  '50 tokenów AI',
   'Pomoc we wdrożeniu',
 ] as const;
 
@@ -129,15 +126,15 @@ export const PricingPage: React.FC<Props> = ({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-5 items-stretch">
-          <div className="flex flex-col rounded-[28px] border border-slate-200 bg-white p-6 sm:p-7 shadow-sm">
-            <p className="mt-1 text-3xl font-black text-slate-900">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
+          <div className="flex flex-col rounded-[28px] border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+            <p className="text-4xl font-black text-slate-900 tracking-tight">
               30 zł
-              <span className="text-base font-bold text-slate-500"> / miesiąc</span>
+              <span className="text-lg font-bold text-slate-500"> / miesiąc</span>
             </p>
-            <h2 className="mt-2 text-xl font-black text-slate-900">Plan Start</h2>
+            <h2 className="mt-3 text-2xl font-black text-slate-900">Plan Start</h2>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-              Więcej możliwości sprzedażowych i profesjonalne menu bez znaku wodnego.
+              Profesjonalne cyfrowe menu dla Twojej restauracji.
             </p>
             <ul className="mt-6 space-y-2.5 flex-1">
               {START_FEATURES.map((f) => (
@@ -164,16 +161,17 @@ export const PricingPage: React.FC<Props> = ({
             </button>
           </div>
 
-          <div className="relative flex flex-col rounded-[28px] border-2 border-emerald-400 bg-white p-6 sm:p-7 shadow-sm">
-            <p className="mt-1 text-4xl font-black text-slate-900">
+          <div className="flex flex-col rounded-[28px] border-2 border-emerald-400 bg-white p-6 sm:p-8 shadow-sm">
+            <p className="text-4xl font-black text-slate-900 tracking-tight">
               97 zł
               <span className="text-lg font-bold text-slate-500"> / miesiąc</span>
             </p>
-            <h2 className="mt-2 text-xl font-black text-slate-900">Plan Premium</h2>
+            <h2 className="mt-3 text-2xl font-black text-slate-900">Plan Premium</h2>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-              Pełny dostęp do wszystkich funkcji. Anuluj w dowolnym momencie — bez zobowiązań.
+              Dla restauracji, które chcą wykorzystać menu do zwiększania sprzedaży.
             </p>
-            <ul className="mt-6 space-y-2.5 flex-1">
+            <p className="mt-5 text-sm font-black text-slate-900">Wszystko ze Start +:</p>
+            <ul className="mt-3 space-y-2.5 flex-1">
               {PREMIUM_FEATURES.map((f) => (
                 <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
                   <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" strokeWidth={3} />
@@ -197,7 +195,9 @@ export const PricingPage: React.FC<Props> = ({
               )}
             </button>
           </div>
+        </div>
 
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
           <div className="flex flex-col rounded-[28px] border border-slate-200 bg-white p-6 sm:p-7 shadow-sm">
             <div className="inline-flex self-start items-center gap-1.5 rounded-full bg-slate-900 text-white px-3 py-1 text-[10px] font-black uppercase tracking-widest">
               <Wand2 size={12} />
@@ -301,7 +301,7 @@ export const PricingPage: React.FC<Props> = ({
           </div>
         </div>
 
-        <div className="mt-10 rounded-[28px] border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+        <div className="mt-10 rounded-[28px] border border-slate-200 bg-white p-6 sm:p-8 shadow-sm max-w-4xl mx-auto">
           <div className="flex flex-col lg:flex-row lg:items-center gap-8">
             <div className="flex-1 min-w-0">
               <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1 text-[10px] font-black uppercase tracking-widest">
