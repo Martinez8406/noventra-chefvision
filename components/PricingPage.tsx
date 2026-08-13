@@ -130,7 +130,7 @@ export const PricingPage: React.FC<Props> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
           <div className="flex flex-col rounded-[28px] border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
             <p className="text-4xl font-black text-slate-900 tracking-tight">
-              30 zł
+              39 zł
               <span className="text-lg font-bold text-slate-500"> / miesiąc</span>
             </p>
             <h2 className="mt-3 text-2xl font-black text-slate-900">Plan Start</h2>

@@ -70,7 +70,7 @@ export const StartPlanPromoBar: React.FC<Props> = ({
             </div>
             <div className="min-w-0">
               <p className="text-sm font-black text-white leading-snug">
-                Nowy plan Start — 30 zł/mies.
+                Nowy plan Start — 39 zł/mies.
                 <span className="text-zinc-500 font-bold mx-1.5">·</span>
                 <span className="text-emerald-300">Zleć wykonanie menu — 299 zł</span>
               </p>
