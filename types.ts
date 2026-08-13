@@ -298,3 +298,63 @@ export interface HotelHubData {
   categories: HotelHubCategory[];
   assignments: ProductSectionAssignment[];
 }
+
+export type RestaurantInfoWeekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+
+export interface RestaurantHoursDay {
+  closed: boolean;
+  from: string;
+  to: string;
+}
+
+export interface RestaurantHoursException {
+  id: string;
+  date: string;
+  note: string;
+  closed: boolean;
+}
+
+export interface RestaurantInfoEvent {
+  id: string;
+  title: string;
+  date: string;
+  description: string;
+  imageUrl?: string | null;
+}
+
+export interface RestaurantInfoContent {
+  about: { enabled: boolean; description: string; heroImageUrl: string | null };
+  hours: {
+    enabled: boolean;
+    weekly: Record<RestaurantInfoWeekday, RestaurantHoursDay>;
+    exceptions: RestaurantHoursException[];
+  };
+  contact: {
+    enabled: boolean;
+    phone: string;
+    email: string;
+    reservationUrl: string;
+    instagram: string;
+  };
+  access: {
+    enabled: boolean;
+    address: string;
+    mapsUrl: string;
+    parking: string;
+    directions: string;
+  };
+  events: { enabled: boolean; items: RestaurantInfoEvent[] };
+  extras: {
+    enabled: boolean;
+    dressCode: string;
+    allergies: string;
+    privateDining: string;
+  };
+}
+
+export interface RestaurantInfoData {
+  enabled: boolean;
+  content: RestaurantInfoContent;
+}
+
+export type PublicMenuMode = 'restaurant' | 'hub' | 'info';

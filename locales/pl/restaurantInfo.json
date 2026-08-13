@@ -1,0 +1,72 @@
+{
+  "title": "Panel informacyjny",
+  "intro": "Godziny otwarcia, dojazd, parking i wydarzenia — goście zobaczą to obok menu w Live Menu.",
+  "loginRequired": "Zaloguj się, aby zarządzać panelem informacyjnym.",
+  "enableLabel": "Pokaż w Live Menu",
+  "enableHelp": "Gdy włączone, goście zobaczą zakładkę Informacje obok karty dań.",
+  "save": "Zapisz",
+  "saving": "Zapisywanie…",
+  "saved": "Zapisano.",
+  "sqlHint": "Nie udało się zapisać. Uruchom supabase/restaurant_info.sql w Supabase SQL Editor.",
+  "planRequired": "Panel informacyjny wymaga planu Trial lub Premium.",
+  "imageUploadFailed": "Nie udało się wgrać zdjęcia.",
+  "blocks": {
+    "about": "O lokalu",
+    "hours": "Godziny otwarcia",
+    "contact": "Kontakt",
+    "access": "Jak dojechać",
+    "events": "Wydarzenia",
+    "extras": "Dodatkowo"
+  },
+  "about": {
+    "description": "Krótki opis",
+    "descriptionPlaceholder": "np. Kuchnia sezonowa w centrum miasta.",
+    "hero": "Zdjęcie lokalu",
+    "addHero": "Dodaj zdjęcie",
+    "changeHero": "Zmień zdjęcie",
+    "removeHero": "Usuń zdjęcie"
+  },
+  "hours": {
+    "closed": "Zamknięte",
+    "from": "Od",
+    "to": "Do",
+    "exceptions": "Wyjątki (święta, urlop)",
+    "exceptionDate": "Data",
+    "exceptionNote": "Notatka",
+    "addException": "Dodaj wyjątek",
+    "removeException": "Usuń"
+  },
+  "contact": {
+    "phone": "Telefon",
+    "email": "E-mail",
+    "reservationUrl": "Link do rezerwacji",
+    "instagram": "Instagram"
+  },
+  "access": {
+    "address": "Adres",
+    "mapsUrl": "Link Google Maps",
+    "parking": "Parking",
+    "parkingPlaceholder": "np. parking własny za budynkiem, 2h gratis",
+    "directions": "Jak dojechać",
+    "directionsPlaceholder": "np. tramwaj 8, 10 min od dworca"
+  },
+  "events": {
+    "title": "Tytuł",
+    "date": "Data",
+    "description": "Opis",
+    "add": "Dodaj wydarzenie",
+    "remove": "Usuń",
+    "empty": "Brak zaplanowanych wydarzeń."
+  },
+  "extras": {
+    "dressCode": "Dress code",
+    "allergies": "Alergie / diety",
+    "privateDining": "Prywatne sale / eventy"
+  },
+  "upsell": {
+    "beforePlans": "Panel informacyjny jest dostępny w planie",
+    "plansJoiner": "i",
+    "afterPlans": "W planie Start i darmowym goście widzą samo menu.",
+    "unlockPremium": "Odblokuj Premium"
+  }
+}

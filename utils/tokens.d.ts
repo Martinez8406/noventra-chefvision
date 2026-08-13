@@ -11,6 +11,8 @@ export function isTrialActive(row: Record<string, unknown> | null | undefined): 
 export function resolveEffectivePlan(row: Record<string, unknown> | null | undefined): 'trial' | 'premium' | 'free';
 export function hasProFeatures(subscriptionStatus: string | undefined): boolean;
 export function canUseHotelHub(row: Record<string, unknown> | null | undefined): boolean;
+/** Panel informacyjny restauracji — trial + Premium. */
+export function canUseRestaurantInfo(row: Record<string, unknown> | null | undefined): boolean;
 /** Pairingi i upselling — trial + Premium. */
 export function canUsePairings(row: Record<string, unknown> | null | undefined): boolean;
 /** Kelner / rachunek — wyłącznie Premium. */

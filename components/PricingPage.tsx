@@ -24,6 +24,7 @@ const START_FEATURES = [
 const PREMIUM_FEATURES = [
   'Pairingi i upselling',
   'Hotel Hub',
+  'Panel informacyjny',
   'Poproś kelnera / rachunek',
   'Ranking popularności dań',
   '50 tokenów AI',

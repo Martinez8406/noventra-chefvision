@@ -1,15 +1,17 @@
 import React from 'react';
 import { formatHotelHubAvailability } from '../utils/hotelHub';
-import type { HotelHubSection, PublicMenuLocale } from '../types';
+import type { HotelHubSection, PublicMenuLocale, PublicMenuMode } from '../types';
 import { HotelHubSectionIcon } from './HotelHubSectionIcon';
 
 interface Props {
-  active: 'restaurant' | 'hub';
-  onChange: (mode: 'restaurant' | 'hub') => void;
+  active: PublicMenuMode;
+  onChange: (mode: PublicMenuMode) => void;
   primaryColor: string;
   secondaryColor: string;
   locale?: PublicMenuLocale;
   sticky?: boolean;
+  showInfo?: boolean;
+  showHub?: boolean;
 }
 
 export const PublicMenuModeTabs: React.FC<Props> = ({
@@ -19,10 +21,17 @@ export const PublicMenuModeTabs: React.FC<Props> = ({
   secondaryColor,
   locale = 'pl',
   sticky = true,
+  showInfo = false,
+  showHub = true,
 }) => {
   const isPl = locale === 'pl';
-  const restaurantLabel = isPl ? 'Restauracja' : 'Restaurant';
-  const hubLabel = 'Hotel Hub';
+  const tabs: { id: PublicMenuMode; label: string }[] = [
+    { id: 'restaurant', label: isPl ? 'Menu' : 'Menu' },
+  ];
+  if (showInfo) tabs.push({ id: 'info', label: isPl ? 'Informacje' : 'Info' });
+  if (showHub) tabs.push({ id: 'hub', label: 'Hotel Hub' });
+
+  if (tabs.length < 2) return null;
 
   return (
     <div
@@ -30,35 +39,28 @@ export const PublicMenuModeTabs: React.FC<Props> = ({
       style={{ backgroundColor: secondaryColor }}
     >
       <div
-        className="flex rounded-2xl p-1 shadow-md border border-black/5 max-w-md mx-auto backdrop-blur-sm"
+        className={`flex rounded-2xl p-1 shadow-md border border-black/5 mx-auto backdrop-blur-sm ${
+          tabs.length > 2 ? 'max-w-lg' : 'max-w-md'
+        }`}
         style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}
         role="tablist"
         aria-label={isPl ? 'Nawigacja menu' : 'Menu navigation'}
       >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={active === 'restaurant'}
-          onClick={() => onChange('restaurant')}
-          className={`flex-1 py-3 px-4 rounded-xl text-sm font-black transition-all duration-200 ${
-            active === 'restaurant' ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'
-          }`}
-          style={active === 'restaurant' ? { backgroundColor: primaryColor } : undefined}
-        >
-          {restaurantLabel}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={active === 'hub'}
-          onClick={() => onChange('hub')}
-          className={`flex-1 py-3 px-4 rounded-xl text-sm font-black transition-all duration-200 ${
-            active === 'hub' ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'
-          }`}
-          style={active === 'hub' ? { backgroundColor: primaryColor } : undefined}
-        >
-          {hubLabel}
-        </button>
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={active === tab.id}
+            onClick={() => onChange(tab.id)}
+            className={`flex-1 py-3 px-3 rounded-xl text-sm font-black transition-all duration-200 ${
+              active === tab.id ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'
+            }`}
+            style={active === tab.id ? { backgroundColor: primaryColor } : undefined}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
     </div>
   );

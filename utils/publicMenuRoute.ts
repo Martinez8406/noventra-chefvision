@@ -1,8 +1,10 @@
+import type { PublicMenuMode } from '../types';
+
 export type PublicMenuRoute = {
   userId: string | null;
   hubSectionId: string | null;
   dishId: string | null;
-  mode: 'restaurant' | 'hub';
+  mode: PublicMenuMode;
 };
 
 function safeDecodeRouteParam(value: string | undefined): string | null {
@@ -14,12 +16,12 @@ function safeDecodeRouteParam(value: string | undefined): string | null {
   }
 }
 
-/** /menu/{userId}/dish/{dishId} lub /menu/{userId}/hub/.../dish/{dishId} */
+/** /menu/{userId}/dish/{dishId} | /hub/... | /info */
 const PUBLIC_MENU_PATH_RE =
-  /^\/menu\/([^/]+)(?:\/(?:dish\/([^/]+)|hub(?:\/([^/]+))?(?:\/dish\/([^/]+))?))?\/?$/;
+  /^\/menu\/([^/]+)(?:\/(?:dish\/([^/]+)|hub(?:\/([^/]+))?(?:\/dish\/([^/]+))?|info))?\/?$/;
 
 const PUBLIC_MENU_HASH_RE =
-  /#\/menu\/([^/?#]+)(?:\/(?:dish\/([^/?#]+)|hub(?:\/([^/?#]+))?(?:\/dish\/([^/?#]+))?)?)?/;
+  /#\/menu\/([^/?#]+)(?:\/(?:dish\/([^/?#]+)|hub(?:\/([^/?#]+))?(?:\/dish\/([^/?#]+))?|info)?)?/;
 
 function matchToRoute(
   match: RegExpMatchArray | null,
@@ -34,12 +36,13 @@ function matchToRoute(
   const hubSectionId = safeDecodeRouteParam(match[3]);
   const hubDishId = safeDecodeRouteParam(match[4]);
   const isHub = source.includes('/hub');
+  const isInfo = /\/info(?:\/|$|\?|#)/.test(source) || source.endsWith('/info');
 
   return {
     userId,
     hubSectionId: isHub ? hubSectionId : null,
     dishId: restaurantDishId || hubDishId,
-    mode: isHub ? 'hub' : 'restaurant',
+    mode: isHub ? 'hub' : isInfo ? 'info' : 'restaurant',
   };
 }
 
@@ -58,11 +61,12 @@ export function parsePublicMenuRoute(pathname: string, hash: string): PublicMenu
   }
 
   const isHub = pathname.includes('/hub') || hash.includes('/hub');
+  const isInfo = pathname.includes('/info') || hash.includes('/info');
 
   return {
     userId,
     hubSectionId: isHub ? fromPath?.hubSectionId ?? fromHash?.hubSectionId ?? null : null,
     dishId: fromPath?.dishId ?? fromHash?.dishId ?? null,
-    mode: isHub ? 'hub' : 'restaurant',
+    mode: isHub ? 'hub' : isInfo ? 'info' : 'restaurant',
   };
 }

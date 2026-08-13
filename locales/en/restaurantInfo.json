@@ -1,0 +1,72 @@
+{
+  "title": "Info panel",
+  "intro": "Opening hours, directions, parking and events — guests will see this next to the menu in Live Menu.",
+  "loginRequired": "Sign in to manage the info panel.",
+  "enableLabel": "Show in Live Menu",
+  "enableHelp": "When enabled, guests see an Info tab next to the dish list.",
+  "save": "Save",
+  "saving": "Saving…",
+  "saved": "Saved.",
+  "sqlHint": "Could not save. Run supabase/restaurant_info.sql in the Supabase SQL Editor.",
+  "planRequired": "The info panel requires Trial or Premium.",
+  "imageUploadFailed": "Could not upload the image.",
+  "blocks": {
+    "about": "About",
+    "hours": "Opening hours",
+    "contact": "Contact",
+    "access": "Getting here",
+    "events": "Events",
+    "extras": "Extra"
+  },
+  "about": {
+    "description": "Short description",
+    "descriptionPlaceholder": "e.g. Seasonal kitchen in the city centre.",
+    "hero": "Venue photo",
+    "addHero": "Add photo",
+    "changeHero": "Change photo",
+    "removeHero": "Remove photo"
+  },
+  "hours": {
+    "closed": "Closed",
+    "from": "From",
+    "to": "To",
+    "exceptions": "Exceptions (holidays, closures)",
+    "exceptionDate": "Date",
+    "exceptionNote": "Note",
+    "addException": "Add exception",
+    "removeException": "Remove"
+  },
+  "contact": {
+    "phone": "Phone",
+    "email": "Email",
+    "reservationUrl": "Reservation link",
+    "instagram": "Instagram"
+  },
+  "access": {
+    "address": "Address",
+    "mapsUrl": "Google Maps link",
+    "parking": "Parking",
+    "parkingPlaceholder": "e.g. private lot behind the building, 2h free",
+    "directions": "How to get here",
+    "directionsPlaceholder": "e.g. tram 8, 10 min from the station"
+  },
+  "events": {
+    "title": "Title",
+    "date": "Date",
+    "description": "Description",
+    "add": "Add event",
+    "remove": "Remove",
+    "empty": "No upcoming events."
+  },
+  "extras": {
+    "dressCode": "Dress code",
+    "allergies": "Allergies / diets",
+    "privateDining": "Private dining / events"
+  },
+  "upsell": {
+    "beforePlans": "The info panel is available on",
+    "plansJoiner": "and",
+    "afterPlans": "Start and free plans show the menu only.",
+    "unlockPremium": "Unlock Premium"
+  }
+}

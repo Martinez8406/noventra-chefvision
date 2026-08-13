@@ -80,6 +80,12 @@ export function canUseHotelHub(row) {
   return plan === 'premium' || plan === 'trial';
 }
 
+/** Panel informacyjny restauracji — trial (aktywny) i Premium. */
+export function canUseRestaurantInfo(row) {
+  const plan = resolveEffectivePlan(row);
+  return plan === 'premium' || plan === 'trial';
+}
+
 /** Pairingi i upselling — tylko trial (aktywny) i Premium. */
 export function canUsePairings(row) {
   const plan = resolveEffectivePlan(row);

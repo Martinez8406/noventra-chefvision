@@ -20,6 +20,8 @@ import plPromotions from '../locales/pl/promotions.json';
 import enPromotions from '../locales/en/promotions.json';
 import plHotelHub from '../locales/pl/hotelHub.json';
 import enHotelHub from '../locales/en/hotelHub.json';
+import plRestaurantInfo from '../locales/pl/restaurantInfo.json';
+import enRestaurantInfo from '../locales/en/restaurantInfo.json';
 import plSettings from '../locales/pl/settings.json';
 import enSettings from '../locales/en/settings.json';
 
@@ -44,13 +46,13 @@ function syncDocumentLanguage(lng: string) {
 
 void i18n.use(initReactI18next).init({
   resources: {
-    pl: { nav: plNav, sidebar: plSidebar, kitchen: plKitchen, studio: plStudio, themes: plThemes, backdrops: plBackdrops, menu: plMenu, stats: plStats, promotions: plPromotions, hotelHub: plHotelHub, settings: plSettings },
-    en: { nav: enNav, sidebar: enSidebar, kitchen: enKitchen, studio: enStudio, themes: enThemes, backdrops: enBackdrops, menu: enMenu, stats: enStats, promotions: enPromotions, hotelHub: enHotelHub, settings: enSettings },
+    pl: { nav: plNav, sidebar: plSidebar, kitchen: plKitchen, studio: plStudio, themes: plThemes, backdrops: plBackdrops, menu: plMenu, stats: plStats, promotions: plPromotions, hotelHub: plHotelHub, restaurantInfo: plRestaurantInfo, settings: plSettings },
+    en: { nav: enNav, sidebar: enSidebar, kitchen: enKitchen, studio: enStudio, themes: enThemes, backdrops: enBackdrops, menu: enMenu, stats: enStats, promotions: enPromotions, hotelHub: enHotelHub, restaurantInfo: enRestaurantInfo, settings: enSettings },
   },
   lng: resolveInitialLanguage(),
   fallbackLng: 'pl',
   defaultNS: 'nav',
-  ns: ['nav', 'sidebar', 'kitchen', 'studio', 'themes', 'backdrops', 'menu', 'stats', 'promotions', 'hotelHub', 'settings'],
+  ns: ['nav', 'sidebar', 'kitchen', 'studio', 'themes', 'backdrops', 'menu', 'stats', 'promotions', 'hotelHub', 'restaurantInfo', 'settings'],
   interpolation: { escapeValue: false },
 });
 

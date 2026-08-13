@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Dish, DishRecommendation, HotelHubData, PublicMenuLocale } from '../types';
+import { Dish, DishRecommendation, HotelHubData, PublicMenuLocale, PublicMenuMode, RestaurantInfoContent } from '../types';
 import { fetchRecommendationsForPublicMenu, recommendationsByDishId } from '../utils/dishRecommendations';
 import { PublicDishCard } from './PublicDishCard';
 import { PublicDishDetail } from './PublicDishDetail';
 import { PublicHotelHub } from './PublicHotelHub';
+import { PublicRestaurantInfo } from './PublicRestaurantInfo';
 import { PublicMenuModeTabs } from './PublicMenuModeTabs';
 import { MenuLanguageSwitcher } from './MenuLanguageSwitcher';
 import { supabase } from '../services/supabaseService';
 import { hotelHubDb } from '../services/hotelHubService';
+import { restaurantInfoDb } from '../services/restaurantInfoService';
+import { emptyRestaurantInfoContent } from '../utils/restaurantInfo';
 import { MENU_CATEGORIES } from '../constants';
 import { getPublicMenuCategoryDisplay, getPublicDishCopy, isRtlMenuLocale } from '../utils/menuTranslations';
 import { MenuHeroIdentityPreview } from './MenuHeroIdentityPreview';
@@ -41,8 +44,8 @@ interface Props {
   loading?: boolean;
   /** Aktywna sekcja Hotel Hub z URL (null = home hub) */
   hubSectionId?: string | null;
-  /** restaurant | hub — z URL */
-  initialMenuMode?: 'restaurant' | 'hub';
+  /** restaurant | hub | info — z URL */
+  initialMenuMode?: PublicMenuMode;
   /** Numer stolika z ?table= */
   tableNumber?: string | null;
 }
@@ -114,13 +117,15 @@ export const PublicMenu: React.FC<Props> = ({
   const [pairingsAvailable, setPairingsAvailable] = useState(false);
   const [resolvedTableNumber, setResolvedTableNumber] = useState<string | null>(null);
   const [hotelHubEnabled, setHotelHubEnabled] = useState(false);
+  const [restaurantInfoEnabled, setRestaurantInfoEnabled] = useState(false);
+  const [restaurantInfoContent, setRestaurantInfoContent] = useState<RestaurantInfoContent>(emptyRestaurantInfoContent());
   const [hubData, setHubData] = useState<HotelHubData>({
     enabled: false,
     sections: [],
     categories: [],
     assignments: [],
   });
-  const [menuMode, setMenuMode] = useState<'restaurant' | 'hub'>(initialMenuMode);
+  const [menuMode, setMenuMode] = useState<PublicMenuMode>(initialMenuMode);
   const [activeHubSectionId, setActiveHubSectionId] = useState<string | null>(hubSectionId);
   const [viewDishId, setViewDishId] = useState<string | null>(dishId);
 
@@ -167,11 +172,31 @@ export const PublicMenu: React.FC<Props> = ({
   }, [userId]);
 
   useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    restaurantInfoDb.getForPublicMenu(userId).then((data) => {
+      if (!cancelled) {
+        setRestaurantInfoEnabled(data.enabled);
+        setRestaurantInfoContent(data.content);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  useEffect(() => {
     if (!hotelHubEnabled && menuMode === 'hub') {
       setMenuMode('restaurant');
       setActiveHubSectionId(null);
     }
   }, [hotelHubEnabled, menuMode]);
+
+  useEffect(() => {
+    if (!restaurantInfoEnabled && menuMode === 'info') {
+      setMenuMode('restaurant');
+    }
+  }, [restaurantInfoEnabled, menuMode]);
 
   const translationLocales = showWatermark
     ? (MENU_TRANSLATION_LOCALES_FREE as PublicMenuLocale[])
@@ -448,12 +473,14 @@ export const PublicMenu: React.FC<Props> = ({
     });
   }, [viewDishId, dishId]);
 
-  const navigateMenuMode = (mode: 'restaurant' | 'hub', sectionId?: string | null) => {
+  const navigateMenuMode = (mode: PublicMenuMode, sectionId?: string | null) => {
     setMenuMode(mode);
-    setActiveHubSectionId(sectionId ?? null);
+    setActiveHubSectionId(mode === 'hub' ? sectionId ?? null : null);
     if (usePathRouting) {
       if (mode === 'restaurant') {
         history.pushState({}, '', menuBasePath);
+      } else if (mode === 'info') {
+        history.pushState({}, '', `${menuBasePath}/info`);
       } else if (sectionId) {
         history.pushState({}, '', `${menuBasePath}/hub/${encodeURIComponent(sectionId)}`);
       } else {
@@ -462,6 +489,8 @@ export const PublicMenu: React.FC<Props> = ({
       onPathChange?.();
     } else if (mode === 'restaurant') {
       window.location.hash = menuBaseHash;
+    } else if (mode === 'info') {
+      window.location.hash = `${menuBaseHash}/info`;
     } else if (sectionId) {
       window.location.hash = `${menuBaseHash}/hub/${encodeURIComponent(sectionId)}`;
     } else {
@@ -1013,17 +1042,26 @@ export const PublicMenu: React.FC<Props> = ({
         />
       </div>
 
-      {hotelHubEnabled && (
+      {(hotelHubEnabled || restaurantInfoEnabled) && (
         <PublicMenuModeTabs
           active={menuMode}
           onChange={(mode) => navigateMenuMode(mode, mode === 'hub' ? activeHubSectionId : null)}
           primaryColor={primaryColor}
           secondaryColor={secondaryColor}
           locale={menuLocale}
+          showInfo={restaurantInfoEnabled}
+          showHub={hotelHubEnabled}
         />
       )}
 
-      {menuMode === 'hub' && hotelHubEnabled ? (
+      {menuMode === 'info' && restaurantInfoEnabled ? (
+        <PublicRestaurantInfo
+          content={restaurantInfoContent}
+          menuLocale={menuLocale}
+          primaryColor={primaryColor}
+          restaurantTitle={restaurantTitle}
+        />
+      ) : menuMode === 'hub' && hotelHubEnabled ? (
         <PublicHotelHub
           userId={userId}
           hubData={hubData}

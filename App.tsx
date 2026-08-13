@@ -10,6 +10,7 @@ import { SettingsPanel, type SettingsSection } from './components/SettingsPanel'
 import { KitchenWall } from './components/KitchenWall';
 import { MenuManager } from './components/MenuManager';
 import { HotelHubManager } from './components/HotelHubManager';
+import { RestaurantInfoManager } from './components/RestaurantInfoManager';
 import { PromotionsManager } from './components/PromotionsManager';
 import { AdminMenuOrdersPanel } from './components/AdminMenuOrdersPanel';
 import { AdminFlyerOrdersPanel } from './components/AdminFlyerOrdersPanel';
@@ -26,7 +27,7 @@ import { PricingPage, type PricingPlanType } from './components/PricingPage';
 import { StartPlanPromoBar } from './components/StartPlanPromoBar';
 import { BRAND_LOGO_SRC, TRIAL_TOKENS } from './constants';
 import { useTranslation } from 'react-i18next';
-import { hasProFeatures, canUseHotelHub, canUseWaiterCall, canUsePairings } from './utils/tokens';
+import { hasProFeatures, canUseHotelHub, canUseWaiterCall, canUsePairings, canUseRestaurantInfo } from './utils/tokens';
 import { formatTokenStatusI18n, formatPremiumTokenShort } from './utils/formatTokenStatusI18n';
 import { normalizeMenuPrice, resolveRecommendationCurrency } from './utils/recommendationCurrency';
 import { supabase, db, authService, uploadDishImage, menuServiceDb } from './services/supabaseService';
@@ -56,7 +57,8 @@ import {
   ChevronDown,
   ChevronRight,
   Building2,
-  ClipboardList
+  ClipboardList,
+  Info
 } from 'lucide-react';
 
 type AppTab =
@@ -66,6 +68,7 @@ type AppTab =
   | 'backdrops'
   | 'menu'
   | 'hotel-hub'
+  | 'restaurant-info'
   | 'stats'
   | 'promotions'
   | 'orders'
@@ -97,6 +100,7 @@ const NAV_ITEM_DEFS: {
   { id: 'backdrops', labelKey: 'backdrops', icon: Layers, premiumLocked: true },
   { id: 'menu', labelKey: 'menu', icon: BookOpen },
   { id: 'hotel-hub', labelKey: 'hotelHub', icon: Building2, premiumLocked: true },
+  { id: 'restaurant-info', labelKey: 'restaurantInfo', icon: Info, premiumLocked: true },
   { id: 'stats', labelKey: 'stats', icon: BarChart3 },
   { id: 'promotions', labelKey: 'promotions', icon: Megaphone, premiumLocked: true },
 ];
@@ -154,6 +158,7 @@ const App: React.FC = () => {
   const { t: tThemes } = useTranslation('themes');
   const { t: tPromotions } = useTranslation('promotions');
   const { t: tHotelHub } = useTranslation('hotelHub');
+  const { t: tRestaurantInfo } = useTranslation('restaurantInfo');
   
   useEffect(() => {
     let subscription: any = null;
@@ -309,6 +314,15 @@ const App: React.FC = () => {
     null;
   const hasProAccess = hasProFeatures(currentUser?.subscriptionStatus);
   const hasHotelHubAccess = canUseHotelHub(
+    currentUser
+      ? {
+          plan: currentUser.plan,
+          subscription_status: currentUser.subscriptionStatus,
+          trial_ends_at: currentUser.trialEndsAt ?? null,
+        }
+      : null,
+  );
+  const hasRestaurantInfoAccess = canUseRestaurantInfo(
     currentUser
       ? {
           plan: currentUser.plan,
@@ -1135,6 +1149,34 @@ const App: React.FC = () => {
                     className="inline-flex px-6 py-3 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:from-emerald-300 hover:to-green-400 transition-all"
                   >
                     {tHotelHub('upsell.unlockPremium')}
+                  </button>
+                </div>
+              </div>
+            )
+          )}
+          {activeTab === 'restaurant-info' && (
+            hasRestaurantInfoAccess ? (
+              <RestaurantInfoManager
+                userId={session?.user?.id === 'demo' ? 'local-chef' : currentUser?.id ?? null}
+              />
+            ) : (
+              <div className="space-y-6">
+                <h2 className="text-3xl font-black text-slate-900 tracking-tight italic flex items-center gap-3">
+                  <Info className="text-chef-gold" size={32} />
+                  {tRestaurantInfo('title')}
+                </h2>
+                <div className="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm text-center space-y-4">
+                  <p className="text-slate-600 text-sm max-w-lg mx-auto">
+                    {tRestaurantInfo('upsell.beforePlans')}{' '}
+                    <strong>Trial</strong> {tRestaurantInfo('upsell.plansJoiner')} <strong>Premium</strong>.{' '}
+                    {tRestaurantInfo('upsell.afterPlans')}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={openPricingPage}
+                    className="inline-flex px-6 py-3 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:from-emerald-300 hover:to-green-400 transition-all"
+                  >
+                    {tRestaurantInfo('upsell.unlockPremium')}
                   </button>
                 </div>
               </div>
