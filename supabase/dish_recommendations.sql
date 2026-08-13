@@ -7,7 +7,7 @@ create table if not exists public.dish_recommendations (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   dish_id uuid not null references public.dishes (id) on delete cascade,
-  type text not null check (type in ('polecane', 'popularne', 'zestaw')),
+  type text not null check (type in ('polecane', 'popularne', 'zestaw', 'oferta_tygodnia')),
   is_active boolean not null default true,
   custom_header_text text null,
   bundle_price_outside text null,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Gift, Star } from 'lucide-react';
+import { Flame, Gift, Star, Tag } from 'lucide-react';
 import type { DishRecommendation, PublicMenuLocale } from '../types';
 import { calcSavingsPercent } from '../utils/dishRecommendations';
 import { formatRecommendationPrice, resolveRecommendationCurrency } from '../utils/recommendationCurrency';
@@ -12,7 +12,7 @@ import {
   getPublicSavingsLabel,
   type RecommendationTranslationCache,
 } from '../utils/recommendationTranslations';
-import { normalizePolecaneItems, POLECANE_SLOTS } from '../utils/dishRecommendations';
+import { normalizePolecaneItems, POLECANE_SLOTS, isRibbonOnlyRecommendation } from '../utils/dishRecommendations';
 
 interface Props {
   recommendation: DishRecommendation;
@@ -31,6 +31,10 @@ const TYPE_STYLES = {
   popularne: {
     box: 'bg-violet-50/70 border-violet-100',
     header: 'text-violet-700',
+  },
+  oferta_tygodnia: {
+    box: 'bg-amber-50/80 border-amber-100',
+    header: 'text-amber-800',
   },
   zestaw: {
     box: 'bg-emerald-50/80 border-emerald-100',
@@ -135,6 +139,7 @@ function RibbonIcon({ type }: { type: DishRecommendation['type'] }) {
   const cls = 'chefvision-gold-ribbon__icon';
   if (type === 'polecane') return <Star size={11} className={cls} strokeWidth={2.5} aria-hidden />;
   if (type === 'popularne') return <Flame size={11} className={cls} strokeWidth={2.5} aria-hidden />;
+  if (type === 'oferta_tygodnia') return <Tag size={11} className={cls} strokeWidth={2.5} aria-hidden />;
   return <Gift size={11} className={cls} strokeWidth={2.25} aria-hidden />;
 }
 
@@ -289,7 +294,7 @@ export const DishRecommendationBox: React.FC<Props> = ({
   className = '',
 }) => {
   const { type, items } = recommendation;
-  if (type === 'popularne') return null;
+  if (isRibbonOnlyRecommendation(type)) return null;
 
   const currency = resolveRecommendationCurrency(recommendation.currency);
   const styles = TYPE_STYLES[type];

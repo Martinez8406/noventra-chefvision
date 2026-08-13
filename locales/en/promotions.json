@@ -9,6 +9,7 @@
   "edit": "Edit",
   "delete": "Delete",
   "dish": "Dish",
+  "selectDishFromList": "Select a dish from the list:",
   "hasRecommendation": " (has recommendation)",
   "recommendationType": "Recommendation type",
   "activeOnMenu": "Active on menu",
@@ -68,6 +69,12 @@
       "desc": "Badge on dish photo only",
       "badge": "Best sellers",
       "defaultHeader": "Others often order with"
+    },
+    "oferta_tygodnia": {
+      "label": "Weekly special",
+      "desc": "Ribbon on dish photo only",
+      "badge": "Weekly special",
+      "defaultHeader": "Weekly special"
     },
     "zestaw": {
       "label": "Bundle deal",

@@ -9,6 +9,7 @@
   "edit": "Edytuj",
   "delete": "Usuń",
   "dish": "Danie",
+  "selectDishFromList": "Wybierz danie z listy:",
   "hasRecommendation": " (ma rekomendację)",
   "recommendationType": "Typ rekomendacji",
   "activeOnMenu": "Aktywna na menu",
@@ -68,6 +69,12 @@
       "desc": "Tylko odznaka na zdjęciu dania",
       "badge": "Najlepiej sprzedawane",
       "defaultHeader": "Inni często zamawiają z"
+    },
+    "oferta_tygodnia": {
+      "label": "Oferta tygodnia",
+      "desc": "Tylko wstążka na zdjęciu dania",
+      "badge": "Oferta tygodnia",
+      "defaultHeader": "Oferta tygodnia"
     },
     "zestaw": {
       "label": "W zestawie taniej",

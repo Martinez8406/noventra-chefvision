@@ -10,13 +10,20 @@ export const RECOMMENDATION_BADGE: Record<DishRecommendationType, string> = {
   polecane: 'Szef kuchni poleca',
   popularne: 'Najlepiej sprzedawane',
   zestaw: 'W zestawie taniej',
+  oferta_tygodnia: 'Oferta tygodnia',
 };
 
 export const RECOMMENDATION_DEFAULT_HEADER: Record<DishRecommendationType, string> = {
   polecane: 'Polecamy do tego dania',
   popularne: 'Inni często zamawiają z',
   zestaw: 'Najpopularniejszy zestaw',
+  oferta_tygodnia: 'Oferta tygodnia',
 };
+
+/** Tylko wstążka na zdjęciu — bez produktów powiązanych. */
+export function isRibbonOnlyRecommendation(type: DishRecommendationType): boolean {
+  return type === 'popularne' || type === 'oferta_tygodnia';
+}
 
 /** Stałe sloty rekomendacji „Szef kuchni poleca” — zawsze 3 pozycje w tej kolejności. */
 export const POLECANE_SLOT_IDS = ['polecane-perfect-with', 'polecane-finish-with', 'polecane-add-a'] as const;

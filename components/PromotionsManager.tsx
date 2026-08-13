@@ -9,6 +9,7 @@ import {
   persistRecommendations,
   POLECANE_SLOTS,
   RECOMMENDATION_DEFAULT_HEADER,
+  isRibbonOnlyRecommendation,
 } from '../utils/dishRecommendations';
 import {
   POLECANE_BEVERAGE_SLOT_OPTIONS,
@@ -28,11 +29,12 @@ interface Props {
   onRecommendationsChange?: (recommendations: DishRecommendation[]) => void;
 }
 
-const TYPE_OPTION_VALUES: DishRecommendationType[] = ['polecane', 'popularne', 'zestaw'];
+const TYPE_OPTION_VALUES: DishRecommendationType[] = ['polecane', 'popularne', 'oferta_tygodnia', 'zestaw'];
 
 const TYPE_OPTION_ICONS: Record<DishRecommendationType, string | undefined> = {
   polecane: undefined,
   popularne: '🔥',
+  oferta_tygodnia: '🏷️',
   zestaw: 'gift',
 };
 
@@ -148,14 +150,14 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
     const normalizedItems =
       editing.type === 'polecane'
         ? normalizePolecaneItems(editing.items)
-        : editing.type === 'popularne'
+        : isRibbonOnlyRecommendation(editing.type)
           ? []
           : editing.items.filter((i) => i.title.trim());
     const cleaned: DishRecommendation = {
       ...editing,
       items: normalizedItems,
       customHeaderText:
-        editing.type === 'popularne'
+        isRibbonOnlyRecommendation(editing.type)
           ? undefined
           : (() => {
               const trimmed = editing.customHeaderText?.trim();
@@ -169,7 +171,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
       editing.type === 'polecane'
         ? normalizedItems.filter((i) => i.title.trim()).length
         : cleaned.items.length;
-    if (editing.type !== 'popularne' && filledCount === 0) {
+    if (!isRibbonOnlyRecommendation(editing.type) && filledCount === 0) {
       alert(t('errors.minOneProduct'));
       return;
     }
@@ -256,25 +258,6 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
       {formOpen && editing && (
         <div className="bg-white rounded-[24px] border border-slate-100 p-5 sm:p-6 shadow-sm space-y-5">
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('dish')}</label>
-            <div className="relative">
-              <select
-                value={editing.dishId}
-                onChange={(e) => updateEditing({ dishId: e.target.value })}
-                className="w-full appearance-none bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 pr-10 text-sm font-medium text-slate-800"
-              >
-                {onlineDishes.map((d) => (
-                  <option key={d.id} value={d.id} disabled={dishesWithRec.has(d.id) && d.id !== editing.dishId}>
-                    {d.name}
-                    {dishesWithRec.has(d.id) && d.id !== editing.dishId ? t('hasRecommendation') : ''}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
-            </div>
-          </div>
-
-          <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('recommendationType')}</label>
             <div className="grid grid-cols-1 gap-2">
               {TYPE_OPTION_VALUES.map((optValue) => {
@@ -293,7 +276,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                             )
                         : optValue === 'polecane'
                           ? createPolecaneItems(editing.items)
-                          : optValue === 'popularne'
+                          : isRibbonOnlyRecommendation(optValue)
                             ? []
                             : editing.items.slice(0, 5);
                     updateEditing({
@@ -304,7 +287,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
                       customHeaderText:
                         optValue === 'polecane'
                           ? editing.customHeaderText?.trim() || RECOMMENDATION_DEFAULT_HEADER.polecane
-                          : optValue === 'popularne'
+                          : isRibbonOnlyRecommendation(optValue)
                             ? undefined
                             : editing.customHeaderText,
                     });
@@ -329,6 +312,25 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
             </div>
           </div>
 
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">{t('selectDishFromList')}</label>
+            <div className="relative">
+              <select
+                value={editing.dishId}
+                onChange={(e) => updateEditing({ dishId: e.target.value })}
+                className="w-full appearance-none bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 pr-10 text-sm font-medium text-slate-800"
+              >
+                {onlineDishes.map((d) => (
+                  <option key={d.id} value={d.id} disabled={dishesWithRec.has(d.id) && d.id !== editing.dishId}>
+                    {d.name}
+                    {dishesWithRec.has(d.id) && d.id !== editing.dishId ? t('hasRecommendation') : ''}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+            </div>
+          </div>
+
           <div className="flex items-center justify-between py-2">
             <span className="text-sm font-medium text-slate-700">{t('activeOnMenu')}</span>
             <button
@@ -340,7 +342,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
             </button>
           </div>
 
-          {editing.type !== 'popularne' && (
+          {!isRibbonOnlyRecommendation(editing.type) && (
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
               {t('customHeader')}
@@ -358,7 +360,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
           </div>
           )}
 
-          {editing.type !== 'popularne' && (
+          {!isRibbonOnlyRecommendation(editing.type) && (
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
               {t('currency')}
@@ -416,7 +418,7 @@ export const PromotionsManager: React.FC<Props> = ({ dishes, userId, onRecommend
             </div>
           )}
 
-          {editing.type !== 'popularne' && (
+          {!isRibbonOnlyRecommendation(editing.type) && (
           <div className="space-y-3">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
               {editing.type === 'polecane' ? t('types.polecane.label') : t('relatedProducts')}

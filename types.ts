@@ -68,7 +68,7 @@ export interface MenuTranslationEntry {
 }
 
 /** Typ rekomendacji sprzedażowej na karcie dania (max. jeden na danie). */
-export type DishRecommendationType = 'polecane' | 'popularne' | 'zestaw';
+export type DishRecommendationType = 'polecane' | 'popularne' | 'zestaw' | 'oferta_tygodnia';
 
 /** Waluta cen w rekomendacji sprzedażowej. */
 export type RecommendationCurrency =

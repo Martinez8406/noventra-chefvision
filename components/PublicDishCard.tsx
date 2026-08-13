@@ -19,6 +19,7 @@ import { SocialLinkButton } from './SocialLinkButton';
 import type { DishRecommendation } from '../types';
 import type { RecommendationTranslationCache } from '../utils/recommendationTranslations';
 import { dishImageStyle } from '../utils/dishFrame';
+import { isRibbonOnlyRecommendation } from '../utils/dishRecommendations';
 
 interface Props {
   dish: Dish;
@@ -140,7 +141,7 @@ export const PublicDishCard: React.FC<Props> = ({
           </div>
         </div>
 
-        {recommendation?.isActive && recommendation.type !== 'popularne' && (
+        {recommendation?.isActive && !isRibbonOnlyRecommendation(recommendation.type) && (
           <DishRecommendationBox
             recommendation={recommendation}
             dishName={copy.name}
