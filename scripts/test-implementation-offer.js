@@ -27,9 +27,10 @@ async function checkAsync(name, fn) {
   }
 }
 
-check('flag: menu and flyer are free, start is not', () => {
+check('flag: menu, flyer and bundle are free, start is not', () => {
   assert.strictEqual(isFreeImplementationPlan('menu_service'), true);
   assert.strictEqual(isFreeImplementationPlan('flyer_service'), true);
+  assert.strictEqual(isFreeImplementationPlan('implementation_bundle'), true);
   assert.strictEqual(isFreeImplementationPlan('start'), false);
   assert.strictEqual(isFreeImplementationPlan('premium'), false);
   assert.strictEqual(IMPLEMENTATION_OFFERS.menu_service.price, 0);
@@ -49,13 +50,15 @@ check('discord menu message', () => {
   assert.match(msg, /Oferta: Wdrożeniowa/);
 });
 
-check('discord flyer message', () => {
+check('discord bundle message', () => {
   const msg = buildImplementationOfferMessage({
-    kind: 'flyer',
+    kind: 'bundle',
     email: 'klient@example.com',
+    restaurantName: 'Bistro Test',
   });
-  assert.match(msg, /NOWE ZLECENIE — ULOTKA QR/);
-  assert.doesNotMatch(msg, /Restauracja:/);
+  assert.match(msg, /NOWE ZLECENIE — WDROŻENIE/);
+  assert.match(msg, /Wykonanie menu \+ Ulotka QR/);
+  assert.match(msg, /Cena: 0 zł/);
 });
 
 await checkAsync('TEST D: no auth → 401, no insert, no discord', async () => {
@@ -83,8 +86,8 @@ await checkAsync('TEST D: no auth → 401, no insert, no discord', async () => {
   assert.strictEqual(discorded, false);
 });
 
-function mockAdmin({ existing = null, insertError = null, inserted = { id: 'ord-1', status: 'pending' } } = {}) {
-  const calls = { inserts: 0, discords: 0 };
+function mockAdmin({ existing = null, existingByTable = {}, insertError = null, inserted = { id: 'ord-1', status: 'pending' } } = {}) {
+  const calls = { inserts: 0, discords: 0, insertedTables: [] };
   const admin = {
     from(table) {
       return {
@@ -104,18 +107,22 @@ function mockAdmin({ existing = null, insertError = null, inserted = { id: 'ord-
           if (table === 'profiles') {
             return { data: { email: 'klient@example.com', restaurant_name: 'Bistro' }, error: null };
           }
+          if (Object.prototype.hasOwnProperty.call(existingByTable, table)) {
+            return { data: existingByTable[table], error: null };
+          }
           return { data: existing, error: null };
         },
         insert(row) {
           calls.inserts += 1;
           calls.lastRow = row;
+          calls.insertedTables.push(table);
           return {
             select() {
               return this;
             },
             maybeSingle: async () => {
               if (insertError) return { data: null, error: insertError };
-              return { data: inserted, error: null };
+              return { data: { ...inserted, id: `${table}-1` }, error: null };
             },
           };
         },
@@ -164,6 +171,54 @@ await checkAsync('TEST B: flyer free order', async () => {
   assert.strictEqual(result.status, 200);
   assert.strictEqual(result.body.serviceType, 'qr_flyer');
   assert.strictEqual(calls.lastRow.price, 0);
+});
+
+await checkAsync('TEST BUNDLE: one click creates menu + flyer and one discord', async () => {
+  const { admin, calls } = mockAdmin();
+  let discordPayload = null;
+  const result = await createFreeImplementationOrder({
+    authorization: 'Bearer test',
+    planType: 'implementation_bundle',
+    deps: {
+      verifyToken: async () => ({ id: 'user-bundle', email: 'klient@example.com' }),
+      getAdmin: () => admin,
+      sendDiscord: async (msg) => {
+        discordPayload = msg;
+        return { ok: true };
+      },
+    },
+  });
+  assert.strictEqual(result.status, 200);
+  assert.strictEqual(result.body.free, true);
+  assert.strictEqual(result.body.serviceType, 'implementation_bundle');
+  assert.deepStrictEqual(result.body.created, ['menu_service', 'flyer_service']);
+  assert.strictEqual(calls.inserts, 2);
+  assert.match(discordPayload, /NOWE ZLECENIE — WDROŻENIE/);
+});
+
+await checkAsync('TEST BUNDLE duplicate → 409, no insert, no discord', async () => {
+  const { admin, calls } = mockAdmin({
+    existingByTable: {
+      menu_service_orders: { id: 'm1' },
+      flyer_service_orders: { id: 'f1' },
+    },
+  });
+  let discorded = false;
+  const result = await createFreeImplementationOrder({
+    authorization: 'Bearer test',
+    planType: 'implementation_bundle',
+    deps: {
+      verifyToken: async () => ({ id: 'user-bundle-2', email: 'klient@example.com' }),
+      getAdmin: () => admin,
+      sendDiscord: async () => {
+        discorded = true;
+        return { ok: true };
+      },
+    },
+  });
+  assert.strictEqual(result.status, 409);
+  assert.strictEqual(calls.inserts, 0);
+  assert.strictEqual(discorded, false);
 });
 
 await checkAsync('TEST C: duplicate active order → 409, no second insert', async () => {

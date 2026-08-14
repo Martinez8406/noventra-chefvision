@@ -692,7 +692,7 @@ const App: React.FC = () => {
         successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${window.location.origin}/#/cennik`,
       });
-      if (planType === 'menu_service' || planType === 'flyer_service') {
+      if (planType === 'implementation_bundle' || planType === 'menu_service' || planType === 'flyer_service') {
         const profile = await authService.getCurrentProfile();
         if (profile) setCurrentUser(profile);
       }

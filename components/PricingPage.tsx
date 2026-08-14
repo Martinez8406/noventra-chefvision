@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Check, Loader2, Package, Wand2, FileImage } from 'lucide-react';
+import { ArrowLeft, Check, Loader2, Package, Wand2 } from 'lucide-react';
 import { BRAND_LOGO_SRC } from '../constants';
 import { canPurchaseTokenPacks } from '../utils/tokens';
 import type { FlyerServiceStatus, MenuServiceStatus, SubscriptionStatus } from '../types';
 
-export type PricingPlanType = 'start' | 'premium' | 'tokens' | 'menu_service' | 'flyer_service';
+export type PricingPlanType = 'start' | 'premium' | 'tokens' | 'implementation_bundle';
 
 interface Props {
   subscriptionStatus?: SubscriptionStatus;
@@ -37,34 +37,13 @@ const TOKEN_PACK_FEATURES = [
   'Idealne na zmianę karty sezonowej',
 ] as const;
 
-const MENU_SERVICE_FEATURES = [
+const IMPLEMENTATION_FEATURES = [
   'Zespół ChefVision buduje Twoje menu cyfrowe',
   'Zdjęcia, opisy, kategorie i ceny',
   'Gotowe publiczne menu z linkiem i QR',
-  'Ty nadal masz własne konto i pełną kontrolę',
+  'Spersonalizowana ulotka QR do druku (PDF, A5)',
+  '3 warianty projektu i 3 drobne poprawki',
 ] as const;
-
-const FLYER_SERVICE_FEATURES = [
-  '3 warianty projektu do wyboru',
-  '3 drobne poprawki do wybranego wariantu (kolory, teksty, układ)',
-  'Plik gotowy do druku (PDF, format A5)',
-] as const;
-
-const MENU_SERVICE_STATUS_COPY: Record<MenuServiceStatus, string> = {
-  pending: 'Zlecenie przyjęte — realizujemy w ramach oferty wdrożeniowej.',
-  paid: 'Zlecenie opłacone — nasz zespół wkrótce zajmie się Twoim menu.',
-  in_progress: 'Pracujemy nad Twoim menu. Damy znać, gdy będzie gotowe.',
-  done: '',
-  cancelled: 'Zlecenie anulowane. Możesz zamówić ponownie.',
-};
-
-const FLYER_SERVICE_STATUS_COPY: Record<FlyerServiceStatus, string> = {
-  pending: 'Zlecenie przyjęte — realizujemy w ramach oferty wdrożeniowej.',
-  paid: 'Zlecenie opłacone — wkrótce przygotujemy warianty ulotki.',
-  in_progress: 'Pracujemy nad ulotką. Damy znać, gdy będzie gotowa.',
-  done: 'Ulotka gotowa — plik PDF został przekazany.',
-  cancelled: 'Zlecenie anulowane. Możesz zamówić ponownie.',
-};
 
 export const PricingPage: React.FC<Props> = ({
   subscriptionStatus,
@@ -75,39 +54,28 @@ export const PricingPage: React.FC<Props> = ({
 }) => {
   const [busy, setBusy] = useState<PricingPlanType | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [acceptedOffer, setAcceptedOffer] = useState<'menu_service' | 'flyer_service' | null>(null);
+  const [acceptedOffer, setAcceptedOffer] = useState(false);
   const canBuyTokens = canPurchaseTokenPacks(subscriptionStatus);
-  const hasActiveMenuOrder =
+  const menuActive =
     menuServiceStatus === 'pending' ||
     menuServiceStatus === 'paid' ||
-    menuServiceStatus === 'in_progress' ||
-    menuServiceStatus === 'done';
-  const hasActiveFlyerOrder =
+    menuServiceStatus === 'in_progress';
+  const flyerActive =
     flyerServiceStatus === 'pending' ||
     flyerServiceStatus === 'paid' ||
-    flyerServiceStatus === 'in_progress' ||
-    flyerServiceStatus === 'done';
+    flyerServiceStatus === 'in_progress';
+  const bundleActive = menuActive && flyerActive;
+  const bundleDone = menuServiceStatus === 'done' && flyerServiceStatus === 'done';
 
   const handleBuy = async (plan: PricingPlanType) => {
     if (plan === 'tokens' && !canBuyTokens) return;
-    if (
-      plan === 'menu_service' &&
-      (menuServiceStatus === 'pending' || menuServiceStatus === 'paid' || menuServiceStatus === 'in_progress')
-    ) {
-      return;
-    }
-    if (
-      plan === 'flyer_service' &&
-      (flyerServiceStatus === 'pending' || flyerServiceStatus === 'paid' || flyerServiceStatus === 'in_progress')
-    ) {
-      return;
-    }
+    if (plan === 'implementation_bundle' && bundleActive) return;
     setBusy(plan);
     setError(null);
     try {
       await onBuy(plan);
-      if (plan === 'menu_service' || plan === 'flyer_service') {
-        setAcceptedOffer(plan);
+      if (plan === 'implementation_bundle') {
+        setAcceptedOffer(true);
         setBusy(null);
       }
     } catch (e) {
@@ -216,7 +184,7 @@ export const PricingPage: React.FC<Props> = ({
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
+        <div className="mt-6 max-w-4xl mx-auto">
           <div className="flex flex-col rounded-[28px] border border-slate-200 bg-white p-6 sm:p-7 shadow-sm">
             <div className="inline-flex self-start items-center gap-1.5 rounded-full bg-slate-900 text-white px-3 py-1 text-[10px] font-black uppercase tracking-widest">
               <Wand2 size={12} />
@@ -227,72 +195,6 @@ export const PricingPage: React.FC<Props> = ({
                 <span className="text-lg font-semibold text-slate-400 line-through decoration-slate-300">
                   299 zł
                 </span>
-                <span className="text-3xl font-black text-slate-900 tracking-tight">GRATIS</span>
-              </p>
-              <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
-                Oferta wdrożeniowa dla nowych klientów.
-              </p>
-            </div>
-            <h2 className="mt-2 text-xl font-black text-slate-900">Zleć wykonanie menu</h2>
-            <ul className="mt-6 space-y-2.5 flex-1">
-              {MENU_SERVICE_FEATURES.map((f) => (
-                <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
-                  <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" strokeWidth={3} />
-                  <span>{f}</span>
-                </li>
-              ))}
-            </ul>
-            {menuServiceStatus && hasActiveMenuOrder && MENU_SERVICE_STATUS_COPY[menuServiceStatus] && (
-              <p className="mt-4 text-xs text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2">
-                {MENU_SERVICE_STATUS_COPY[menuServiceStatus]}
-              </p>
-            )}
-            {acceptedOffer === 'menu_service' && (
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
-                <p className="text-sm font-black text-slate-900">Zlecenie przyjęte ✓</p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                  Otrzymaliśmy Twoje zlecenie przygotowania menu.
-                  Usługa jest realizowana bezpłatnie w ramach oferty wdrożeniowej.
-                </p>
-              </div>
-            )}
-            <button
-              type="button"
-              disabled={
-                !!busy ||
-                acceptedOffer === 'menu_service' ||
-                menuServiceStatus === 'pending' ||
-                menuServiceStatus === 'paid' ||
-                menuServiceStatus === 'in_progress'
-              }
-              onClick={() => void handleBuy('menu_service')}
-              className="mt-6 w-full py-3.5 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-300 hover:to-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {busy === 'menu_service' ? (
-                <span className="inline-flex items-center justify-center gap-2">
-                  <Loader2 size={16} className="animate-spin" />
-                  Wysyłanie…
-                </span>
-              ) : acceptedOffer === 'menu_service' ||
-                menuServiceStatus === 'pending' ||
-                menuServiceStatus === 'paid' ||
-                menuServiceStatus === 'in_progress' ? (
-                'Zlecenie aktywne'
-              ) : menuServiceStatus === 'done' ? (
-                'Zamów ponownie'
-              ) : (
-                'Zlecam wykonanie'
-              )}
-            </button>
-          </div>
-
-          <div className="flex flex-col rounded-[28px] border border-slate-200 bg-white p-6 sm:p-7 shadow-sm">
-            <div className="inline-flex self-start items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1 text-[10px] font-black uppercase tracking-widest">
-              <FileImage size={12} />
-              Projekt graficzny
-            </div>
-            <div className="mt-5">
-              <p className="flex items-baseline gap-2.5 flex-wrap">
                 <span className="text-lg font-semibold text-slate-400 line-through decoration-slate-300">
                   149 zł
                 </span>
@@ -302,58 +204,41 @@ export const PricingPage: React.FC<Props> = ({
                 Oferta wdrożeniowa dla nowych klientów.
               </p>
             </div>
-            <h2 className="mt-2 text-xl font-black text-slate-900">Ulotka QR</h2>
-            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-              Spersonalizowany projekt z kodem QR do Twojego menu — gotowy do druku, w stylu Twojej marki.
-            </p>
+            <h2 className="mt-2 text-xl font-black text-slate-900">Wykonanie menu + ulotka QR</h2>
             <ul className="mt-6 space-y-2.5 flex-1">
-              {FLYER_SERVICE_FEATURES.map((f) => (
+              {IMPLEMENTATION_FEATURES.map((f) => (
                 <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
                   <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" strokeWidth={3} />
                   <span>{f}</span>
                 </li>
               ))}
             </ul>
-            {flyerServiceStatus && hasActiveFlyerOrder && FLYER_SERVICE_STATUS_COPY[flyerServiceStatus] && (
-              <p className="mt-4 text-xs text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2">
-                {FLYER_SERVICE_STATUS_COPY[flyerServiceStatus]}
-              </p>
-            )}
-            {acceptedOffer === 'flyer_service' && (
+            {(acceptedOffer || bundleActive) && (
               <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
                 <p className="text-sm font-black text-slate-900">Zlecenie przyjęte ✓</p>
                 <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                  Otrzymaliśmy Twoje zlecenie przygotowania ulotki QR.
+                  Otrzymaliśmy Twoje zlecenie przygotowania menu i ulotki QR.
                   Usługa jest realizowana bezpłatnie w ramach oferty wdrożeniowej.
                 </p>
               </div>
             )}
             <button
               type="button"
-              disabled={
-                !!busy ||
-                acceptedOffer === 'flyer_service' ||
-                flyerServiceStatus === 'pending' ||
-                flyerServiceStatus === 'paid' ||
-                flyerServiceStatus === 'in_progress'
-              }
-              onClick={() => void handleBuy('flyer_service')}
+              disabled={!!busy || acceptedOffer || bundleActive}
+              onClick={() => void handleBuy('implementation_bundle')}
               className="mt-6 w-full py-3.5 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-300 hover:to-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {busy === 'flyer_service' ? (
+              {busy === 'implementation_bundle' ? (
                 <span className="inline-flex items-center justify-center gap-2">
                   <Loader2 size={16} className="animate-spin" />
                   Wysyłanie…
                 </span>
-              ) : acceptedOffer === 'flyer_service' ||
-                flyerServiceStatus === 'pending' ||
-                flyerServiceStatus === 'paid' ||
-                flyerServiceStatus === 'in_progress' ? (
+              ) : acceptedOffer || bundleActive ? (
                 'Zlecenie aktywne'
-              ) : flyerServiceStatus === 'done' ? (
+              ) : bundleDone ? (
                 'Zamów ponownie'
               ) : (
-                'Zlecam ulotkę'
+                'Zlecam wdrożenie'
               )}
             </button>
           </div>
