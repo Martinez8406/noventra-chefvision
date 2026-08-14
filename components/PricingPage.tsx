@@ -48,13 +48,12 @@ const FLYER_SERVICE_FEATURES = [
   '3 warianty projektu do wyboru',
   '3 drobne poprawki do wybranego wariantu (kolory, teksty, układ)',
   'Plik gotowy do druku (PDF, format A5)',
-  'Realizacja w 3 dni robocze',
 ] as const;
 
 const MENU_SERVICE_STATUS_COPY: Record<MenuServiceStatus, string> = {
   paid: 'Zlecenie opłacone — nasz zespół wkrótce zajmie się Twoim menu.',
   in_progress: 'Pracujemy nad Twoim menu. Damy znać, gdy będzie gotowe.',
-  done: 'Menu zostało przygotowane. Możesz je dalej edytować w panelu.',
+  done: '',
   cancelled: 'Zlecenie anulowane. Możesz zamówić ponownie.',
 };
 
@@ -216,9 +215,6 @@ export const PricingPage: React.FC<Props> = ({
               </p>
             </div>
             <h2 className="mt-2 text-xl font-black text-slate-900">Zleć wykonanie menu</h2>
-            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-              Zakładasz konto jak zwykle — my zdalnie przygotujemy Twoją kartę cyfrową.
-            </p>
             <ul className="mt-6 space-y-2.5 flex-1">
               {MENU_SERVICE_FEATURES.map((f) => (
                 <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
@@ -227,7 +223,7 @@ export const PricingPage: React.FC<Props> = ({
                 </li>
               ))}
             </ul>
-            {menuServiceStatus && hasActiveMenuOrder && (
+            {menuServiceStatus && hasActiveMenuOrder && MENU_SERVICE_STATUS_COPY[menuServiceStatus] && (
               <p className="mt-4 text-xs text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2">
                 {MENU_SERVICE_STATUS_COPY[menuServiceStatus]}
               </p>
