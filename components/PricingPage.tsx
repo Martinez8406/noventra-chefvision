@@ -212,7 +212,7 @@ export const PricingPage: React.FC<Props> = ({
                 <span className="text-3xl font-black text-slate-900 tracking-tight">GRATIS</span>
               </p>
               <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
-                Oferta wdrożeniowa dla pierwszych klientów.
+                Oferta wdrożeniowa dla nowych klientów.
               </p>
             </div>
             <h2 className="mt-2 text-xl font-black text-slate-900">Zleć wykonanie menu</h2>
@@ -270,7 +270,7 @@ export const PricingPage: React.FC<Props> = ({
                 <span className="text-3xl font-black text-slate-900 tracking-tight">GRATIS</span>
               </p>
               <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
-                Oferta wdrożeniowa dla pierwszych klientów.
+                Oferta wdrożeniowa dla nowych klientów.
               </p>
             </div>
             <h2 className="mt-2 text-xl font-black text-slate-900">Ulotka QR</h2>
