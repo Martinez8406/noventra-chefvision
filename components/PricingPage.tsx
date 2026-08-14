@@ -51,6 +51,7 @@ const FLYER_SERVICE_FEATURES = [
 ] as const;
 
 const MENU_SERVICE_STATUS_COPY: Record<MenuServiceStatus, string> = {
+  pending: 'Zlecenie przyjęte — realizujemy w ramach oferty wdrożeniowej.',
   paid: 'Zlecenie opłacone — nasz zespół wkrótce zajmie się Twoim menu.',
   in_progress: 'Pracujemy nad Twoim menu. Damy znać, gdy będzie gotowe.',
   done: '',
@@ -58,6 +59,7 @@ const MENU_SERVICE_STATUS_COPY: Record<MenuServiceStatus, string> = {
 };
 
 const FLYER_SERVICE_STATUS_COPY: Record<FlyerServiceStatus, string> = {
+  pending: 'Zlecenie przyjęte — realizujemy w ramach oferty wdrożeniowej.',
   paid: 'Zlecenie opłacone — wkrótce przygotujemy warianty ulotki.',
   in_progress: 'Pracujemy nad ulotką. Damy znać, gdy będzie gotowa.',
   done: 'Ulotka gotowa — plik PDF został przekazany.',
@@ -73,24 +75,41 @@ export const PricingPage: React.FC<Props> = ({
 }) => {
   const [busy, setBusy] = useState<PricingPlanType | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [acceptedOffer, setAcceptedOffer] = useState<'menu_service' | 'flyer_service' | null>(null);
   const canBuyTokens = canPurchaseTokenPacks(subscriptionStatus);
   const hasActiveMenuOrder =
-    menuServiceStatus === 'paid' || menuServiceStatus === 'in_progress' || menuServiceStatus === 'done';
+    menuServiceStatus === 'pending' ||
+    menuServiceStatus === 'paid' ||
+    menuServiceStatus === 'in_progress' ||
+    menuServiceStatus === 'done';
   const hasActiveFlyerOrder =
-    flyerServiceStatus === 'paid' || flyerServiceStatus === 'in_progress' || flyerServiceStatus === 'done';
+    flyerServiceStatus === 'pending' ||
+    flyerServiceStatus === 'paid' ||
+    flyerServiceStatus === 'in_progress' ||
+    flyerServiceStatus === 'done';
 
   const handleBuy = async (plan: PricingPlanType) => {
     if (plan === 'tokens' && !canBuyTokens) return;
-    if (plan === 'menu_service' && (menuServiceStatus === 'paid' || menuServiceStatus === 'in_progress')) {
+    if (
+      plan === 'menu_service' &&
+      (menuServiceStatus === 'pending' || menuServiceStatus === 'paid' || menuServiceStatus === 'in_progress')
+    ) {
       return;
     }
-    if (plan === 'flyer_service' && (flyerServiceStatus === 'paid' || flyerServiceStatus === 'in_progress')) {
+    if (
+      plan === 'flyer_service' &&
+      (flyerServiceStatus === 'pending' || flyerServiceStatus === 'paid' || flyerServiceStatus === 'in_progress')
+    ) {
       return;
     }
     setBusy(plan);
     setError(null);
     try {
       await onBuy(plan);
+      if (plan === 'menu_service' || plan === 'flyer_service') {
+        setAcceptedOffer(plan);
+        setBusy(null);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Nie udało się otworzyć płatności.');
       setBusy(null);
@@ -228,22 +247,36 @@ export const PricingPage: React.FC<Props> = ({
                 {MENU_SERVICE_STATUS_COPY[menuServiceStatus]}
               </p>
             )}
+            {acceptedOffer === 'menu_service' && (
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
+                <p className="text-sm font-black text-slate-900">Zlecenie przyjęte ✓</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                  Otrzymaliśmy Twoje zlecenie przygotowania menu.
+                  Usługa jest realizowana bezpłatnie w ramach oferty wdrożeniowej.
+                </p>
+              </div>
+            )}
             <button
               type="button"
               disabled={
                 !!busy ||
+                acceptedOffer === 'menu_service' ||
+                menuServiceStatus === 'pending' ||
                 menuServiceStatus === 'paid' ||
                 menuServiceStatus === 'in_progress'
               }
               onClick={() => void handleBuy('menu_service')}
-              className="mt-6 w-full py-3.5 rounded-2xl font-black text-sm text-white bg-slate-900 hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-6 w-full py-3.5 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-300 hover:to-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {busy === 'menu_service' ? (
                 <span className="inline-flex items-center justify-center gap-2">
                   <Loader2 size={16} className="animate-spin" />
-                  Przekierowanie…
+                  Wysyłanie…
                 </span>
-              ) : menuServiceStatus === 'paid' || menuServiceStatus === 'in_progress' ? (
+              ) : acceptedOffer === 'menu_service' ||
+                menuServiceStatus === 'pending' ||
+                menuServiceStatus === 'paid' ||
+                menuServiceStatus === 'in_progress' ? (
                 'Zlecenie aktywne'
               ) : menuServiceStatus === 'done' ? (
                 'Zamów ponownie'
@@ -281,15 +314,26 @@ export const PricingPage: React.FC<Props> = ({
                 </li>
               ))}
             </ul>
-            {flyerServiceStatus && hasActiveFlyerOrder && (
+            {flyerServiceStatus && hasActiveFlyerOrder && FLYER_SERVICE_STATUS_COPY[flyerServiceStatus] && (
               <p className="mt-4 text-xs text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2">
                 {FLYER_SERVICE_STATUS_COPY[flyerServiceStatus]}
               </p>
+            )}
+            {acceptedOffer === 'flyer_service' && (
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
+                <p className="text-sm font-black text-slate-900">Zlecenie przyjęte ✓</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                  Otrzymaliśmy Twoje zlecenie przygotowania ulotki QR.
+                  Usługa jest realizowana bezpłatnie w ramach oferty wdrożeniowej.
+                </p>
+              </div>
             )}
             <button
               type="button"
               disabled={
                 !!busy ||
+                acceptedOffer === 'flyer_service' ||
+                flyerServiceStatus === 'pending' ||
                 flyerServiceStatus === 'paid' ||
                 flyerServiceStatus === 'in_progress'
               }
@@ -299,9 +343,12 @@ export const PricingPage: React.FC<Props> = ({
               {busy === 'flyer_service' ? (
                 <span className="inline-flex items-center justify-center gap-2">
                   <Loader2 size={16} className="animate-spin" />
-                  Przekierowanie…
+                  Wysyłanie…
                 </span>
-              ) : flyerServiceStatus === 'paid' || flyerServiceStatus === 'in_progress' ? (
+              ) : acceptedOffer === 'flyer_service' ||
+                flyerServiceStatus === 'pending' ||
+                flyerServiceStatus === 'paid' ||
+                flyerServiceStatus === 'in_progress' ? (
                 'Zlecenie aktywne'
               ) : flyerServiceStatus === 'done' ? (
                 'Zamów ponownie'

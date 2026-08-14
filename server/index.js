@@ -12,8 +12,9 @@ import { handleFeedback } from '../api/feedback.js';
 import { handleRequestService } from '../api/request-service.js';
 import { handleNotifyNewUser } from '../api/notify-new-user.js';
 import { handleStripeWebhook, readStripeWebhookBody } from '../lib/stripe/webhook.js';
+import { handleCreateCheckoutSession } from '../api/create-checkout-session.js';
 import { createBillingPortalSession } from '../lib/stripe/createBillingPortalSession.js';
-import { createCheckoutSession, getStripeClient } from '../lib/stripe/createCheckoutSession.js';
+import { getStripeClient } from '../lib/stripe/createCheckoutSession.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(__dirname, '..', '.env.local') });
@@ -87,18 +88,8 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 app.post('/api/create-checkout-session', async (req, res) => {
   try {
-    const { userId, successUrl, cancelUrl, planType } = req.body || {};
-    const result = await createCheckoutSession({
-      stripe,
-      userId,
-      successUrl,
-      cancelUrl,
-      planType,
-    });
-    if (!result.ok) {
-      return res.status(result.status).json({ error: result.error });
-    }
-    return res.json({ url: result.url });
+    const { status, body } = await handleCreateCheckoutSession(req);
+    return res.status(status).json(body);
   } catch (e) {
     console.error('Stripe create-checkout-session:', e);
     return res.status(500).json({ error: e.message || 'Błąd tworzenia sesji.' });

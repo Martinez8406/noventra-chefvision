@@ -271,7 +271,7 @@ function normalizePlatformRole(raw: unknown): PlatformRole {
 }
 
 function normalizeMenuServiceStatus(raw: unknown): MenuServiceStatus | null {
-  if (raw === 'paid' || raw === 'in_progress' || raw === 'done' || raw === 'cancelled') {
+  if (raw === 'pending' || raw === 'paid' || raw === 'in_progress' || raw === 'done' || raw === 'cancelled') {
     return raw;
   }
   return null;

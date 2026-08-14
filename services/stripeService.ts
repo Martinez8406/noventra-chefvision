@@ -1,3 +1,5 @@
+import { supabase } from './supabaseService';
+
 const API_BASE = '';
 
 export type CheckoutPlanType = 'premium' | 'start' | 'tokens' | 'menu_service' | 'flyer_service';
@@ -17,9 +19,18 @@ export async function createCheckoutSession(options: CreateCheckoutOptions = {})
   const successUrl = options.successUrl ?? `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`;
   const cancelUrl = options.cancelUrl ?? window.location.origin;
 
+  let accessToken: string | null = null;
+  if (supabase) {
+    const { data } = await supabase.auth.getSession();
+    accessToken = data.session?.access_token ?? null;
+  }
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+
   const res = await fetch(`${API_BASE}/api/create-checkout-session`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({
       userId: options.userId ?? null,
       successUrl,
@@ -28,12 +39,21 @@ export async function createCheckoutSession(options: CreateCheckoutOptions = {})
     }),
   });
 
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 409) {
+    throw new Error(typeof data.error === 'string' ? data.error : 'To zlecenie zostało już wysłane.');
+  }
+  if (res.status === 401) {
+    throw new Error('Musisz być zalogowany, aby złożyć zlecenie.');
+  }
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
     throw new Error(data.error || `Błąd API (${res.status})`);
   }
 
-  const data = await res.json();
+  if (data.free === true) {
+    return;
+  }
+
   if (!data.url) throw new Error('Brak URL sesji Stripe.');
   window.location.href = data.url;
 }

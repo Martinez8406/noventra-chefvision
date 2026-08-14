@@ -69,6 +69,38 @@ export function buildNewUserRegisteredMessage(email: string, at: Date = new Date
   ].join('\n');
 }
 
+export function buildImplementationOfferMessage(params: {
+  kind: 'menu' | 'flyer';
+  email?: string | null;
+  restaurantName?: string | null;
+}): string {
+  const restaurant = params.restaurantName?.trim() || null;
+  const email = params.email || 'unknown';
+  const lines =
+    params.kind === 'flyer'
+      ? [
+          '🎨 NOWE ZLECENIE — ULOTKA QR',
+          '',
+          `Klient: ${email}`,
+          ...(restaurant ? [`Restauracja: ${restaurant}`] : []),
+          'Usługa: Ulotka QR',
+          'Cena: 0 zł',
+          'Oferta: Wdrożeniowa',
+          'Status: Oczekuje na realizację',
+        ]
+      : [
+          '🛠️ NOWE ZLECENIE — MENU',
+          '',
+          `Klient: ${email}`,
+          ...(restaurant ? [`Restauracja: ${restaurant}`] : []),
+          'Usługa: Wykonanie menu',
+          'Cena: 0 zł',
+          'Oferta: Wdrożeniowa',
+          'Status: Oczekuje na realizację',
+        ];
+  return lines.join('\n');
+}
+
 const SERVICE_EMBED: Record<
   ServiceRequestAction,
   { title: string; color: number }

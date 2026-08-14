@@ -462,7 +462,7 @@ const App: React.FC = () => {
     setIsSidebarOpen(false);
     setIsSyncing(true);
     try {
-      if (ctx.menuOrderId && ctx.menuOrderStatus === 'paid') {
+      if (ctx.menuOrderId && (ctx.menuOrderStatus === 'paid' || ctx.menuOrderStatus === 'pending')) {
         await menuServiceDb.updateOrderStatus(ctx.menuOrderId, 'in_progress');
         setManagingClient({ ...ctx, menuOrderStatus: 'in_progress' });
       }
@@ -692,6 +692,10 @@ const App: React.FC = () => {
         successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${window.location.origin}/#/cennik`,
       });
+      if (planType === 'menu_service' || planType === 'flyer_service') {
+        const profile = await authService.getCurrentProfile();
+        if (profile) setCurrentUser(profile);
+      }
     } catch (err: any) {
       console.error('Stripe Checkout:', err);
       throw err;

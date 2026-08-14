@@ -9,6 +9,7 @@ interface Props {
 }
 
 const STATUS_LABEL: Record<MenuServiceStatus, string> = {
+  pending: 'Oczekuje — oferta wdrożeniowa',
   paid: 'Opłacone — do zrobienia',
   in_progress: 'W trakcie',
   done: 'Gotowe',
@@ -16,6 +17,7 @@ const STATUS_LABEL: Record<MenuServiceStatus, string> = {
 };
 
 const STATUS_CLASS: Record<MenuServiceStatus, string> = {
+  pending: 'bg-slate-50 text-slate-700 border-slate-200',
   paid: 'bg-amber-50 text-amber-800 border-amber-200',
   in_progress: 'bg-sky-50 text-sky-800 border-sky-200',
   done: 'bg-emerald-50 text-emerald-800 border-emerald-200',
@@ -133,7 +135,7 @@ export const AdminMenuOrdersPanel: React.FC<Props> = ({ onManageClient }) => {
                         Edytuj menu
                       </button>
                     )}
-                    {order.status === 'paid' && (
+                    {(order.status === 'paid' || order.status === 'pending') && (
                       <button
                         type="button"
                         disabled={busy}
@@ -144,7 +146,7 @@ export const AdminMenuOrdersPanel: React.FC<Props> = ({ onManageClient }) => {
                         Start
                       </button>
                     )}
-                    {(order.status === 'paid' || order.status === 'in_progress') && (
+                    {(order.status === 'paid' || order.status === 'pending' || order.status === 'in_progress') && (
                       <button
                         type="button"
                         disabled={busy}

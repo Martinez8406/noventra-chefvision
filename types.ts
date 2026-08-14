@@ -165,7 +165,7 @@ export interface GeneratorParams {
 export type PlatformRole = 'user' | 'admin' | 'staff';
 
 /** Status płatnego zlecenia wykonania menu cyfrowego. */
-export type MenuServiceStatus = 'paid' | 'in_progress' | 'done' | 'cancelled';
+export type MenuServiceStatus = 'pending' | 'paid' | 'in_progress' | 'done' | 'cancelled';
 
 /** Status płatnego zlecenia ulotki QR (ten sam cykl co menu). */
 export type FlyerServiceStatus = MenuServiceStatus;
