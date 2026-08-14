@@ -19,6 +19,37 @@ export async function sendDiscordNotification(
   });
 }
 
+function withWaitParam(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.searchParams.has('wait')) parsed.searchParams.set('wait', 'true');
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function retryAfterMs(response: Response, body: string, attempt: number): number {
+  try {
+    const parsed = JSON.parse(body) as { retry_after?: number };
+    if (typeof parsed.retry_after === 'number') {
+      return Math.min(Math.ceil(parsed.retry_after * 1000) + 250, 8000);
+    }
+  } catch {
+    /* ignore */
+  }
+  const header = response.headers.get('retry-after');
+  const n = header ? Number(header) : NaN;
+  if (Number.isFinite(n) && n > 0) {
+    return Math.min(n < 30 ? n * 1000 : n, 8000) + 250;
+  }
+  return Math.min(500 * attempt, 4000);
+}
+
 export async function sendDiscordWebhook(params: {
   content?: string;
   embeds?: Record<string, unknown>[];
@@ -38,25 +69,50 @@ export async function sendDiscordWebhook(params: {
     return { ok: false, skipped: true, reason: 'empty_payload' };
   }
 
-  try {
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+  const endpoint = withWaitParam(webhookUrl);
+  let lastFail: DiscordWebhookResult | null = null;
 
-    if (!response.ok) {
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        console.log('[discord] Webhook OK');
+        return { ok: true };
+      }
+
       const body = await response.text().catch(() => '');
-      console.error('[discord] Webhook failed:', response.status, body);
-      return { ok: false, status: response.status, body };
-    }
+      lastFail = { ok: false, status: response.status, body };
 
-    console.log('[discord] Webhook OK');
-    return { ok: true };
-  } catch (error) {
-    console.error('[discord] Webhook error:', error);
-    return { ok: false, error };
+      if (response.status === 429 && attempt < 4) {
+        const waitMs = retryAfterMs(response, body, attempt);
+        console.warn('[discord] Webhook 429, retrying', { attempt, waitMs });
+        await sleep(waitMs);
+        continue;
+      }
+      if (response.status >= 500 && attempt < 4) {
+        await sleep(400 * attempt);
+        continue;
+      }
+
+      console.error('[discord] Webhook failed:', response.status, body);
+      return lastFail;
+    } catch (error) {
+      lastFail = { ok: false, error };
+      if (attempt < 4) {
+        await sleep(400 * attempt);
+        continue;
+      }
+      console.error('[discord] Webhook error:', error);
+      return lastFail;
+    }
   }
+
+  return lastFail || { ok: false, reason: 'retries_exhausted' };
 }
 
 export function buildNewUserRegisteredMessage(email: string, at: Date = new Date()): string {
