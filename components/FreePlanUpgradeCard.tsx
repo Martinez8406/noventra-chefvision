@@ -11,7 +11,7 @@ export const FreePlanUpgradeCard: React.FC<Props> = ({ onUpgrade }) => {
   const features = t('freePlan.features', { returnObjects: true }) as string[];
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-chef-gold/25 bg-gradient-to-br from-[#1a1a1a] via-[#141414] to-[#0f0f0f] p-4 shadow-[0_8px_32px_rgba(0,0,0,0.35),0_0_24px_rgba(187,152,96,0.12)]">
+    <div className="relative overflow-hidden rounded-2xl border border-chef-gold/25 bg-gradient-to-br from-[#1a1a1a] via-[#141414] to-[#0f0f0f] p-3 lg:p-4 shadow-[0_8px_32px_rgba(0,0,0,0.35),0_0_24px_rgba(187,152,96,0.12)]">
       <div
         className="pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl"
         aria-hidden
@@ -30,9 +30,9 @@ export const FreePlanUpgradeCard: React.FC<Props> = ({ onUpgrade }) => {
         </div>
 
         <p className="text-sm font-bold text-white leading-snug">{t('freePlan.title')}</p>
-        <p className="mt-1.5 text-[11px] leading-relaxed text-zinc-400">{t('freePlan.description')}</p>
+        <p className="mt-1.5 hidden lg:block text-[11px] leading-relaxed text-zinc-400">{t('freePlan.description')}</p>
 
-        <ul className="mt-3 space-y-1.5">
+        <ul className="mt-3 hidden lg:block space-y-1.5">
           {features.map((feature) => (
             <li key={feature} className="flex items-start gap-2 text-[11px] text-zinc-300">
               <Check size={12} className="mt-0.5 shrink-0 text-emerald-400" strokeWidth={3} />
@@ -44,7 +44,7 @@ export const FreePlanUpgradeCard: React.FC<Props> = ({ onUpgrade }) => {
         <button
           type="button"
           onClick={onUpgrade}
-          className="mt-4 w-full py-3 rounded-xl font-black text-xs uppercase tracking-wide text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_20px_rgba(52,211,153,0.35)] hover:from-emerald-300 hover:to-green-400 transition-all active:scale-[0.98]"
+          className="mt-3 lg:mt-4 w-full py-2.5 lg:py-3 rounded-xl font-black text-xs uppercase tracking-wide text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_20px_rgba(52,211,153,0.35)] hover:from-emerald-300 hover:to-green-400 transition-all active:scale-[0.98]"
         >
           {t('freePlan.cta')}
         </button>
