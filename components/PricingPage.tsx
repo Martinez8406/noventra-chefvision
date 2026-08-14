@@ -204,10 +204,17 @@ export const PricingPage: React.FC<Props> = ({
               <Wand2 size={12} />
               Usługa zespołu
             </div>
-            <p className="mt-5 text-3xl font-black text-slate-900">
-              299 zł
-              <span className="text-base font-bold text-slate-500"> jednorazowo</span>
-            </p>
+            <div className="mt-5">
+              <p className="flex items-baseline gap-2.5 flex-wrap">
+                <span className="text-lg font-semibold text-slate-400 line-through decoration-slate-300">
+                  299 zł
+                </span>
+                <span className="text-3xl font-black text-slate-900 tracking-tight">GRATIS</span>
+              </p>
+              <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
+                Oferta wdrożeniowa dla pierwszych klientów.
+              </p>
+            </div>
             <h2 className="mt-2 text-xl font-black text-slate-900">Zleć wykonanie menu</h2>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed">
               Zakładasz konto jak zwykle — my zdalnie przygotujemy Twoją kartę cyfrową.
@@ -255,10 +262,17 @@ export const PricingPage: React.FC<Props> = ({
               <FileImage size={12} />
               Projekt graficzny
             </div>
-            <p className="mt-5 text-3xl font-black text-slate-900">
-              149 zł
-              <span className="text-base font-bold text-slate-500"> jednorazowo</span>
-            </p>
+            <div className="mt-5">
+              <p className="flex items-baseline gap-2.5 flex-wrap">
+                <span className="text-lg font-semibold text-slate-400 line-through decoration-slate-300">
+                  149 zł
+                </span>
+                <span className="text-3xl font-black text-slate-900 tracking-tight">GRATIS</span>
+              </p>
+              <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
+                Oferta wdrożeniowa dla pierwszych klientów.
+              </p>
+            </div>
             <h2 className="mt-2 text-xl font-black text-slate-900">Ulotka QR</h2>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed">
               Spersonalizowany projekt z kodem QR do Twojego menu — gotowy do druku, w stylu Twojej marki.
