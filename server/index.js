@@ -10,13 +10,15 @@ import { handleTrackMenuOpen } from '../api/track-menu-open.js';
 import { handleGetMenuOpenStats } from '../api/get-menu-open-stats.js';
 import { handleFeedback } from '../api/feedback.js';
 import { handleRequestService } from '../api/request-service.js';
-import { handleNotifyNewUser } from '../api/notify-new-user.js';
+import { handleNotifyNewUser } from '../lib/notifyNewUser.js';
 import { handleCreateClientAccount } from '../lib/createClientAccount.js';
-import { handlePromoCodes } from '../api/promo-codes.js';
-import { handlePromoPin } from '../api/promo-pin.js';
-import { handleVerifySession } from '../api/verify-session.js';
-import { handleVerifyCode } from '../api/verify-code.js';
-import { handleRedeemPromo } from '../api/redeem-promo.js';
+import {
+  handlePromoCodes,
+  handlePromoPin,
+  handleVerifySession,
+  handleVerifyCode,
+  handleRedeemPromo,
+} from '../lib/promoHttp.js';
 import { handleStripeWebhook, readStripeWebhookBody } from '../lib/stripe/webhook.js';
 import { handleCreateCheckoutSession, handleGetLifetimeOffer } from '../api/create-checkout-session.js';
 import { createBillingPortalSession } from '../lib/stripe/createBillingPortalSession.js';

@@ -22,6 +22,26 @@
       "source": "/api/confirm-premium",
       "destination": "/api/create-checkout-session"
     },
+    {
+      "source": "/api/notify-new-user",
+      "destination": "/api/create-client-account?op=notify-new-user"
+    },
+    {
+      "source": "/api/promo-pin",
+      "destination": "/api/promo-codes?op=pin"
+    },
+    {
+      "source": "/api/verify-session",
+      "destination": "/api/promo-codes?op=verify-session"
+    },
+    {
+      "source": "/api/verify-code",
+      "destination": "/api/promo-codes?op=verify-code"
+    },
+    {
+      "source": "/api/redeem-promo",
+      "destination": "/api/promo-codes?op=redeem"
+    },
     { "source": "/success", "destination": "/index.html" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
