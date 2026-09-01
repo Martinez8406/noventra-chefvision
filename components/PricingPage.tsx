@@ -31,14 +31,12 @@ const PREMIUM_FEATURES = [
   'Ranking popularności dań',
   '50 tokenów AI',
   'Pomoc we wdrożeniu',
-  'Wiadomość do managera z menu — zanim gość wystawi negatywną opinię w Google',
 ] as const;
 
 const LIFETIME_FEATURES = [
   'Wszystko z planu Premium',
   'Dożywotni dostęp do ChefVision',
   'Bez miesięcznego abonamentu',
-  'Wiadomość do managera z menu — zanim gość wystawi negatywną opinię w Google',
   '100 tokenów AI na poprawianie zdjęć dań i tworzenie profesjonalnego tła. Tokeny przyznawane jednorazowo i bez terminu ważności.',
 ] as const;
 
@@ -150,9 +148,6 @@ export const PricingPage: React.FC<Props> = ({
           </h1>
           <p className="mt-3 text-slate-600 text-sm sm:text-base">
             Rozwiń menu cyfrowe, zwiększ sprzedaż i obsłuż gości z całego świata.
-          </p>
-          <p className="mt-4 mx-auto max-w-xl rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 leading-relaxed">
-            W każdym planie: wiadomość do managera z menu. Gość zgłasza problem restauracji, zanim wystawi negatywną opinię w Google.
           </p>
         </div>
 
@@ -410,7 +405,6 @@ export const PricingPage: React.FC<Props> = ({
           i 100 bezterminowych tokenów AI (jednorazowo, bez miesięcznego odnawiania).
           Paczki +50 tokenów można dokupić w dowolnym momencie.
           Wezwanie kelnera / rachunek jest dostępne w planie Premium.
-          Wiadomość do managera z Live Menu jest w każdym planie — gość może zgłosić problem restauracji, zanim wystawi negatywną opinię w Google.
         </p>
       </main>
     </div>
