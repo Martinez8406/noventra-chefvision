@@ -13,8 +13,7 @@ import { handleRequestService } from '../api/request-service.js';
 import { handleNotifyNewUser } from '../api/notify-new-user.js';
 import { handleCreateClientAccount } from '../lib/createClientAccount.js';
 import { handleStripeWebhook, readStripeWebhookBody } from '../lib/stripe/webhook.js';
-import { handleCreateCheckoutSession } from '../api/create-checkout-session.js';
-import { handleGetLifetimeOffer } from '../api/lifetime-offer.js';
+import { handleCreateCheckoutSession, handleGetLifetimeOffer } from '../api/create-checkout-session.js';
 import { createBillingPortalSession } from '../lib/stripe/createBillingPortalSession.js';
 import { getStripeClient } from '../lib/stripe/createCheckoutSession.js';
 
