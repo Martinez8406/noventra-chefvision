@@ -22,6 +22,10 @@
       "title": "Kelner / rachunek",
       "description": "Funkcja planu Premium. Połącz Discord i włącz przyciski „Poproś o kelnera” oraz „Poproś o rachunek” w Live Menu. Zespół ChefVision może podłączyć webhook za Ciebie gratis."
     },
+    "promo": {
+      "title": "Kody promocyjne",
+      "description": "Jednorazowe kody dla gości i osobny widok Verify dla kelnerów. Kelner nie widzi e-maili ani panelu restauracji."
+    },
     "subscription": {
       "title": "Zarządzaj subskrypcją",
       "description": "Twój plan, płatności Stripe oraz przejście na Premium."
@@ -184,6 +188,53 @@
       "bottom_left": "Dół lewo",
       "bottom": "Dół",
       "bottom_right": "Dół prawo"
+    }
+  },
+  "promo": {
+    "loginRequired": "Zaloguj się, aby zarządzać kodami promocyjnymi.",
+    "verifyLinkTitle": "Link dla kelnerów",
+    "verifyLinkHint": "Kelner otwiera ten adres na telefonie. Nie daje dostępu do panelu ChefVision.",
+    "copyLink": "Kopiuj link /verify",
+    "copied": "Skopiowano",
+    "pinTitle": "PIN urządzenia Verify",
+    "pinHint": "PIN jest hashowany na serwerze. Kelner podaje go raz — sesja urządzenia działa 7 dni.",
+    "pinIsSet": "PIN jest ustawiony.",
+    "pinMissing": "PIN nie jest jeszcze ustawiony.",
+    "pinPlaceholder": "4–8 cyfr",
+    "savePin": "Zapisz PIN",
+    "pinSaved": "PIN został zapisany.",
+    "saving": "Zapisuję…",
+    "createTitle": "Nowy kod",
+    "createHint": "Kod powstaje na serwerze dopiero tutaj. Później ten sam generator można podłączyć po potwierdzeniu e-maila gościa.",
+    "rewardName": "Nazwa nagrody",
+    "rewardDescription": "Warunek / opis",
+    "specificCode": "Konkretny kod (opcjonalnie)",
+    "guestEmail": "E-mail gościa (opcjonalnie)",
+    "createCode": "Wygeneruj kod",
+    "createTestCode": "Utwórz kod testowy KT-4827",
+    "creating": "Tworzę…",
+    "codeCreated": "Utworzono kod {{code}}.",
+    "listTitle": "Kody",
+    "refresh": "Odśwież",
+    "loading": "Ładowanie kodów…",
+    "empty": "Brak kodów. Utwórz pierwszy, żeby przetestować /verify.",
+    "colCode": "Kod",
+    "colReward": "Nagroda",
+    "colStatus": "Status",
+    "colCreated": "Utworzono",
+    "colUsed": "Wykorzystano",
+    "cancel": "Anuluj",
+    "statuses": {
+      "active": "Aktywny",
+      "used": "Wykorzystany",
+      "expired": "Wygasły",
+      "cancelled": "Anulowany"
+    },
+    "errors": {
+      "loadFailed": "Nie udało się wczytać kodów.",
+      "pinFailed": "Nie udało się zapisać PIN-u.",
+      "createFailed": "Nie udało się utworzyć kodu.",
+      "cancelFailed": "Nie udało się anulować kodu."
     }
   }
 }

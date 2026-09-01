@@ -36,6 +36,8 @@ import { requestMenuTranslations } from './services/aiService';
 import { shouldRequestMenuTranslation } from './utils/menuTranslations';
 import { notifyNewUserRegistration } from './utils/notifyNewUserRegistration';
 import { parsePublicMenuRoute } from './utils/publicMenuRoute';
+import { parseVerifyRoute } from './utils/verifyRoute';
+import { VerifyApp } from './components/VerifyApp';
 import { createCheckoutSession, confirmPremiumSession } from './services/stripeService';
 import { 
   LayoutDashboard, 
@@ -77,11 +79,13 @@ type AppTab =
   | 'settings-google'
   | 'settings-feedback'
   | 'settings-waiter'
+  | 'settings-promo'
   | 'settings-subscription';
 
 const SETTINGS_SUB_NAV: { id: AppTab; labelKey: string }[] = [
   { id: 'settings-qr', labelKey: 'settingsQr' },
   { id: 'settings-waiter', labelKey: 'settingsWaiter' },
+  { id: 'settings-promo', labelKey: 'settingsPromo' },
   { id: 'settings-branding', labelKey: 'settingsBranding' },
   { id: 'settings-google', labelKey: 'settingsGoogle' },
   { id: 'settings-feedback', labelKey: 'settingsFeedback' },
@@ -111,6 +115,7 @@ function settingsSectionFromTab(tab: AppTab): SettingsSection | null {
   if (tab === 'settings-google') return 'google';
   if (tab === 'settings-feedback') return 'feedback';
   if (tab === 'settings-waiter') return 'waiter';
+  if (tab === 'settings-promo') return 'promo';
   if (tab === 'settings-subscription') return 'subscription';
   return null;
 }
@@ -215,8 +220,9 @@ const App: React.FC = () => {
     const menuUserId = route.userId;
     const isPublicMenuRoute =
       !!menuUserId || pathname.startsWith('/menu/') || hash.includes('#/menu/');
+    const isVerifyRoute = parseVerifyRoute(pathname, hash, search).isVerify;
 
-    if (!session && !isPublicMenuRoute) return;
+    if (!session && !isPublicMenuRoute && !isVerifyRoute) return;
 
     // Nie przeładowuj listy dań przy wejściu w szczegóły / hub — tylko przy zmianie restauracji
     if (menuUserId && menuUserId === loadedPublicMenuUserRef.current) {
@@ -230,6 +236,12 @@ const App: React.FC = () => {
   const syncData = async () => {
     // Nie ustawiamy isSyncing=true przy ponownych odświeżeniach (np. po token refresh),
     // żeby nie odmontowywać ChefsStudio i nie resetować stanu formularza.
+    const verifyRouteEarly = parseVerifyRoute(pathname, hash, search);
+    if (verifyRouteEarly.isVerify) {
+      setIsSyncing(false);
+      setPublicMenuLoading(false);
+      return;
+    }
     if (isInitialLoad) setIsSyncing(true);
     let loadingPublicMenu = false;
     try {
@@ -391,6 +403,8 @@ const App: React.FC = () => {
   })();
   const isSuccessPage = hash.includes('#/success');
   const isPricingPage = hash.includes('#/cennik') || pathname === '/cennik';
+  const verifyRoute = parseVerifyRoute(pathname, hash, search);
+  const isVerifyRoute = verifyRoute.isVerify;
 
   const refreshCurrentProfile = async () => {
     const profile = await authService.getCurrentProfile();
@@ -710,6 +724,10 @@ const App: React.FC = () => {
       alert(err.message || 'Nie udało się otworzyć płatności.');
     }
   };
+
+  if (isVerifyRoute) {
+    return <VerifyApp restaurantIdFromRoute={verifyRoute.restaurantId} />;
+  }
 
   if (isPricingPage && session) {
     return (

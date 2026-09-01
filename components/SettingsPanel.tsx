@@ -7,6 +7,7 @@ import { GoogleReviewsSettings } from './GoogleReviewsSettings';
 import { GuestFeedbackSettings } from './GuestFeedbackSettings';
 import { WaiterCallSettings } from './WaiterCallSettings';
 import { SubscriptionSettings } from './SubscriptionSettings';
+import { PromoCodesPanel } from './PromoCodesPanel';
 
 export type SettingsSection =
   | 'qr'
@@ -14,6 +15,7 @@ export type SettingsSection =
   | 'google'
   | 'feedback'
   | 'waiter'
+  | 'promo'
   | 'subscription';
 
 interface Props {
@@ -92,6 +94,8 @@ export const SettingsPanel: React.FC<Props> = ({
 
       {section === 'waiter' &&
         (waiterCallAllowed ? <WaiterCallSettings userId={userId} /> : waiterUpsell)}
+
+      {section === 'promo' && <PromoCodesPanel userId={userId} />}
 
       {section === 'subscription' && (
         <div className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100">

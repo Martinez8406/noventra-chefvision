@@ -38,7 +38,8 @@ export default defineConfig(({ mode }) => {
               if (
                 url === '/success' ||
                 url === '/success/' ||
-                url.startsWith('/menu')
+                url.startsWith('/menu') ||
+                url.startsWith('/verify')
               ) {
                 req.url = '/index.html';
               }

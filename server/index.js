@@ -12,6 +12,11 @@ import { handleFeedback } from '../api/feedback.js';
 import { handleRequestService } from '../api/request-service.js';
 import { handleNotifyNewUser } from '../api/notify-new-user.js';
 import { handleCreateClientAccount } from '../lib/createClientAccount.js';
+import { handlePromoCodes } from '../api/promo-codes.js';
+import { handlePromoPin } from '../api/promo-pin.js';
+import { handleVerifySession } from '../api/verify-session.js';
+import { handleVerifyCode } from '../api/verify-code.js';
+import { handleRedeemPromo } from '../api/redeem-promo.js';
 import { handleStripeWebhook, readStripeWebhookBody } from '../lib/stripe/webhook.js';
 import { handleCreateCheckoutSession, handleGetLifetimeOffer } from '../api/create-checkout-session.js';
 import { createBillingPortalSession } from '../lib/stripe/createBillingPortalSession.js';
@@ -42,8 +47,8 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Verify-Session');
     if (req.method === 'OPTIONS') return res.sendStatus(204);
   }
   next();
@@ -251,6 +256,85 @@ app.post('/api/create-client-account', async (req, res) => {
     console.error('[create-client-account] unhandled', err);
     return res.status(500).json({ error: err?.message || 'Błąd serwera.' });
   }
+});
+
+app.get('/api/promo-codes', async (req, res) => {
+  const result = await handlePromoCodes({
+    req,
+    authorization: req.headers.authorization,
+    query: req.query || {},
+    body: {},
+    method: 'GET',
+  });
+  return res.status(result.status).json(result.body);
+});
+
+app.post('/api/promo-codes', async (req, res) => {
+  const result = await handlePromoCodes({
+    req,
+    authorization: req.headers.authorization,
+    query: req.query || {},
+    body: req.body || {},
+    method: 'POST',
+  });
+  return res.status(result.status).json(result.body);
+});
+
+app.patch('/api/promo-codes', async (req, res) => {
+  const result = await handlePromoCodes({
+    req,
+    authorization: req.headers.authorization,
+    query: req.query || {},
+    body: req.body || {},
+    method: 'PATCH',
+  });
+  return res.status(result.status).json(result.body);
+});
+
+app.get('/api/promo-pin', async (req, res) => {
+  const result = await handlePromoPin({
+    req,
+    authorization: req.headers.authorization,
+    query: req.query || {},
+    body: {},
+    method: 'GET',
+  });
+  return res.status(result.status).json(result.body);
+});
+
+app.post('/api/promo-pin', async (req, res) => {
+  const result = await handlePromoPin({
+    req,
+    authorization: req.headers.authorization,
+    query: req.query || {},
+    body: req.body || {},
+    method: 'POST',
+  });
+  return res.status(result.status).json(result.body);
+});
+
+app.post('/api/verify-session', async (req, res) => {
+  const result = await handleVerifySession({
+    req,
+    body: req.body || {},
+  });
+  return res.status(result.status).json(result.body);
+});
+
+app.post('/api/verify-code', async (req, res) => {
+  const result = await handleVerifyCode({
+    req,
+    body: req.body || {},
+  });
+  return res.status(result.status).json(result.body);
+});
+
+app.post('/api/redeem-promo', async (req, res) => {
+  const result = await handleRedeemPromo({
+    req,
+    body: req.body || {},
+  });
+  return res.status(result.status).json(result.body);
 });
 
 // Domyślnie 3002 — 3001 często zajęty przez inną stronę (np. chefvision.pl) równolegle w dev.

@@ -22,6 +22,10 @@
       "title": "Waiter / bill",
       "description": "Premium feature. Connect Discord and enable “Call waiter” and “Request the bill” in Live Menu. ChefVision can set up the webhook for you at no extra charge."
     },
+    "promo": {
+      "title": "Promo codes",
+      "description": "One-time guest codes and a separate Verify view for waiters. Waiters never see emails or the restaurant dashboard."
+    },
     "subscription": {
       "title": "Manage subscription",
       "description": "Your plan, Stripe billing, and upgrading to Premium."
@@ -184,6 +188,53 @@
       "bottom_left": "Bottom left",
       "bottom": "Bottom",
       "bottom_right": "Bottom right"
+    }
+  },
+  "promo": {
+    "loginRequired": "Sign in to manage promo codes.",
+    "verifyLinkTitle": "Waiter link",
+    "verifyLinkHint": "Staff open this URL on a phone. It does not grant access to the ChefVision dashboard.",
+    "copyLink": "Copy /verify link",
+    "copied": "Copied",
+    "pinTitle": "Verify device PIN",
+    "pinHint": "The PIN is hashed on the server. Waiters enter it once — the device session lasts 7 days.",
+    "pinIsSet": "A PIN is set.",
+    "pinMissing": "No PIN has been set yet.",
+    "pinPlaceholder": "4–8 digits",
+    "savePin": "Save PIN",
+    "pinSaved": "PIN saved.",
+    "saving": "Saving…",
+    "createTitle": "New code",
+    "createHint": "Codes are generated on the server here. The same generator can later run after a guest confirms their email.",
+    "rewardName": "Reward name",
+    "rewardDescription": "Condition / description",
+    "specificCode": "Specific code (optional)",
+    "guestEmail": "Guest email (optional)",
+    "createCode": "Generate code",
+    "createTestCode": "Create test code KT-4827",
+    "creating": "Creating…",
+    "codeCreated": "Created code {{code}}.",
+    "listTitle": "Codes",
+    "refresh": "Refresh",
+    "loading": "Loading codes…",
+    "empty": "No codes yet. Create one to test /verify.",
+    "colCode": "Code",
+    "colReward": "Reward",
+    "colStatus": "Status",
+    "colCreated": "Created",
+    "colUsed": "Redeemed",
+    "cancel": "Cancel",
+    "statuses": {
+      "active": "Active",
+      "used": "Used",
+      "expired": "Expired",
+      "cancelled": "Cancelled"
+    },
+    "errors": {
+      "loadFailed": "Could not load codes.",
+      "pinFailed": "Could not save the PIN.",
+      "createFailed": "Could not create the code.",
+      "cancelFailed": "Could not cancel the code."
     }
   }
 }

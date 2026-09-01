@@ -360,3 +360,17 @@ export interface RestaurantInfoData {
 }
 
 export type PublicMenuMode = 'restaurant' | 'hub' | 'info';
+
+export type PromoCodeStatus = 'active' | 'used' | 'expired' | 'cancelled';
+
+export interface PromoCodeRecord {
+  id: string;
+  code: string;
+  rewardName: string;
+  rewardDescription: string | null;
+  status: PromoCodeStatus;
+  email?: string | null;
+  createdAt: string;
+  expiresAt: string | null;
+  usedAt: string | null;
+}

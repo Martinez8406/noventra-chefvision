@@ -24,6 +24,8 @@ import plRestaurantInfo from '../locales/pl/restaurantInfo.json';
 import enRestaurantInfo from '../locales/en/restaurantInfo.json';
 import plSettings from '../locales/pl/settings.json';
 import enSettings from '../locales/en/settings.json';
+import plVerify from '../locales/pl/verify.json';
+import enVerify from '../locales/en/verify.json';
 
 export const APP_LANG_STORAGE_KEY = 'chefvision_app_lang';
 
@@ -46,13 +48,13 @@ function syncDocumentLanguage(lng: string) {
 
 void i18n.use(initReactI18next).init({
   resources: {
-    pl: { nav: plNav, sidebar: plSidebar, kitchen: plKitchen, studio: plStudio, themes: plThemes, backdrops: plBackdrops, menu: plMenu, stats: plStats, promotions: plPromotions, hotelHub: plHotelHub, restaurantInfo: plRestaurantInfo, settings: plSettings },
-    en: { nav: enNav, sidebar: enSidebar, kitchen: enKitchen, studio: enStudio, themes: enThemes, backdrops: enBackdrops, menu: enMenu, stats: enStats, promotions: enPromotions, hotelHub: enHotelHub, restaurantInfo: enRestaurantInfo, settings: enSettings },
+    pl: { nav: plNav, sidebar: plSidebar, kitchen: plKitchen, studio: plStudio, themes: plThemes, backdrops: plBackdrops, menu: plMenu, stats: plStats, promotions: plPromotions, hotelHub: plHotelHub, restaurantInfo: plRestaurantInfo, settings: plSettings, verify: plVerify },
+    en: { nav: enNav, sidebar: enSidebar, kitchen: enKitchen, studio: enStudio, themes: enThemes, backdrops: enBackdrops, menu: enMenu, stats: enStats, promotions: enPromotions, hotelHub: enHotelHub, restaurantInfo: enRestaurantInfo, settings: enSettings, verify: enVerify },
   },
   lng: resolveInitialLanguage(),
   fallbackLng: 'pl',
   defaultNS: 'nav',
-  ns: ['nav', 'sidebar', 'kitchen', 'studio', 'themes', 'backdrops', 'menu', 'stats', 'promotions', 'hotelHub', 'restaurantInfo', 'settings'],
+  ns: ['nav', 'sidebar', 'kitchen', 'studio', 'themes', 'backdrops', 'menu', 'stats', 'promotions', 'hotelHub', 'restaurantInfo', 'settings', 'verify'],
   interpolation: { escapeValue: false },
 });
 
