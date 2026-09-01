@@ -8,7 +8,33 @@ export type CheckoutPlanType =
   | 'tokens'
   | 'menu_service'
   | 'flyer_service'
-  | 'implementation_bundle';
+  | 'implementation_bundle'
+  | 'founder_lifetime';
+
+export interface LifetimeOfferState {
+  soldOut: boolean;
+  pricePln: number | null;
+  tier: '599' | '799' | 'sold_out' | string;
+  badge: string;
+  nextTierNote: string | null;
+  buttonLabel: string;
+}
+
+export async function fetchLifetimeOffer(): Promise<LifetimeOfferState> {
+  const res = await fetch(`${API_BASE}/api/lifetime-offer`);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(typeof data.error === 'string' ? data.error : 'Nie udało się pobrać oferty Lifetime.');
+  }
+  return {
+    soldOut: data.soldOut === true,
+    pricePln: typeof data.pricePln === 'number' ? data.pricePln : data.soldOut ? null : 599,
+    tier: typeof data.tier === 'string' ? data.tier : '599',
+    badge: typeof data.badge === 'string' ? data.badge : 'Tylko 10 kont w tej cenie',
+    nextTierNote: typeof data.nextTierNote === 'string' ? data.nextTierNote : null,
+    buttonLabel: typeof data.buttonLabel === 'string' ? data.buttonLabel : 'Kupuję',
+  };
+}
 
 export interface CreateCheckoutOptions {
   userId?: string;

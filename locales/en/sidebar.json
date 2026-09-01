@@ -31,6 +31,8 @@
     "premium": "Premium · {{total}} tokens ({{subscription}} from subscription{{extraPart}})",
     "premiumExtra": " + {{extra}} extra",
     "premiumShort": "Premium · {{total}} tokens",
+    "lifetimeActive": "Founder Lifetime — active",
+    "lifetimeTokens": "AI tokens: {{total}}",
     "trial": "Trial · {{trial}}/{{max}} tokens",
     "trialDays_one": " · {{count}} day",
     "trialDays_other": " · {{count}} days",

@@ -125,6 +125,25 @@ export function buildNewUserRegisteredMessage(email: string, at: Date = new Date
   ].join('\n');
 }
 
+export function buildAdminProvisionedClientMessage(params: {
+  email?: string | null;
+  restaurantName?: string | null;
+  created?: boolean;
+  inviteSent?: boolean;
+}): string {
+  const restaurant = params.restaurantName?.trim() || null;
+  const created = params.created !== false;
+  return [
+    created ? '👤 Konto klienta założone przez admina' : '👤 Konto klienta podpięte przez admina',
+    '',
+    `Klient: ${params.email || 'unknown'}`,
+    ...(restaurant ? [`Restauracja: ${restaurant}`] : []),
+    'Usługi: Wykonanie menu + Ulotka QR',
+    'Cena: 0 zł',
+    `Zaproszenie: ${params.inviteSent ? 'wysłane' : 'nie wysłane'}`,
+  ].join('\n');
+}
+
 export function buildImplementationOfferMessage(params: {
   kind: 'menu' | 'flyer' | 'bundle';
   email?: string | null;

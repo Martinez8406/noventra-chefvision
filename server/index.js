@@ -11,8 +11,10 @@ import { handleGetMenuOpenStats } from '../api/get-menu-open-stats.js';
 import { handleFeedback } from '../api/feedback.js';
 import { handleRequestService } from '../api/request-service.js';
 import { handleNotifyNewUser } from '../api/notify-new-user.js';
+import { handleCreateClientAccount } from '../lib/createClientAccount.js';
 import { handleStripeWebhook, readStripeWebhookBody } from '../lib/stripe/webhook.js';
 import { handleCreateCheckoutSession } from '../api/create-checkout-session.js';
+import { handleGetLifetimeOffer } from '../api/lifetime-offer.js';
 import { createBillingPortalSession } from '../lib/stripe/createBillingPortalSession.js';
 import { getStripeClient } from '../lib/stripe/createCheckoutSession.js';
 
@@ -83,6 +85,11 @@ if (!process.env.STRIPE_MENU_SERVICE_PRICE_ID) {
 if (!process.env.STRIPE_FLYER_SERVICE_PRICE_ID) {
   console.warn('[SERVER] Brak STRIPE_FLYER_SERVICE_PRICE_ID — ulotka QR niedostępna w checkout.');
 }
+if (!process.env.STRIPE_LIFETIME_PRICE_ID_599 || !process.env.STRIPE_LIFETIME_PRICE_ID_799) {
+  console.warn(
+    '[SERVER] Brak STRIPE_LIFETIME_PRICE_ID_599 / STRIPE_LIFETIME_PRICE_ID_799 — oferta Founder Lifetime niedostępna w checkout.',
+  );
+}
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
@@ -93,6 +100,16 @@ app.post('/api/create-checkout-session', async (req, res) => {
   } catch (e) {
     console.error('Stripe create-checkout-session:', e);
     return res.status(500).json({ error: e.message || 'Błąd tworzenia sesji.' });
+  }
+});
+
+app.get('/api/lifetime-offer', async (_req, res) => {
+  try {
+    const { status, body } = await handleGetLifetimeOffer();
+    return res.status(status).json(body);
+  } catch (e) {
+    console.error('lifetime-offer:', e);
+    return res.status(500).json({ error: e.message || 'Nie udało się pobrać oferty Lifetime.' });
   }
 });
 
@@ -222,6 +239,19 @@ app.post('/api/notify-new-user', async (req, res) => {
     authorization: req.headers.authorization,
   });
   return res.status(result.status).json(result.body);
+});
+
+app.post('/api/create-client-account', async (req, res) => {
+  try {
+    const result = await handleCreateClientAccount({
+      authorization: req.headers.authorization,
+      body: req.body || {},
+    });
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error('[create-client-account] unhandled', err);
+    return res.status(500).json({ error: err?.message || 'Błąd serwera.' });
+  }
 });
 
 // Domyślnie 3002 — 3001 często zajęty przez inną stronę (np. chefvision.pl) równolegle w dev.

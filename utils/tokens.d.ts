@@ -6,6 +6,8 @@ export function getMenuTranslationLocales(
   row: Record<string, unknown> | null | undefined
 ): readonly string[];
 
+export const LIFETIME_STRIPE_SENTINEL: 'lifetime';
+export function isLifetimeProfile(row: Record<string, unknown> | null | undefined): boolean;
 export function inferPlan(row: Record<string, unknown> | null | undefined): 'trial' | 'premium' | 'free' | 'start';
 export function isTrialActive(row: Record<string, unknown> | null | undefined): boolean;
 export function resolveEffectivePlan(row: Record<string, unknown> | null | undefined): 'trial' | 'premium' | 'free';

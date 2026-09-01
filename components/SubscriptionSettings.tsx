@@ -54,6 +54,7 @@ export const SubscriptionSettings: React.FC<Props> = ({ userId }) => {
   }, [userId, t]);
 
   const isPremium = profile?.subscriptionStatus === 'premium';
+  const isLifetime = profile?.isLifetime === true;
   const isTrial = profile?.subscriptionStatus === 'trial';
   const isFree = profile?.subscriptionStatus === 'free_limited';
   const hasStripePortal =
@@ -123,15 +124,32 @@ export const SubscriptionSettings: React.FC<Props> = ({ userId }) => {
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
               {t('subscription.yourPlan')}
             </p>
-            <p className="text-lg font-black text-slate-900 mt-1">{statusLabel}</p>
-            {isPremium && hasStripePortal && (
-              <p className="text-xs text-slate-500 mt-2">{t('subscription.premiumStripeHelp')}</p>
+            {isLifetime ? (
+              <>
+                <p className="text-lg font-black text-slate-900 mt-1">
+                  {t('subscription.lifetimeActive')}
+                </p>
+                <p className="text-sm font-bold text-slate-700 mt-3">
+                  {t('subscription.lifetimeTokenBalance')}
+                </p>
+                <p className="text-2xl font-black text-slate-900 mt-0.5 tabular-nums">
+                  {profile?.tokens?.total ?? profile?.credits ?? 0}
+                </p>
+                <p className="text-xs text-slate-500 mt-2">{t('subscription.lifetimeHelp')}</p>
+              </>
+            ) : (
+              <>
+                <p className="text-lg font-black text-slate-900 mt-1">{statusLabel}</p>
+                {isPremium && hasStripePortal && (
+                  <p className="text-xs text-slate-500 mt-2">{t('subscription.premiumStripeHelp')}</p>
+                )}
+                {isPremium && !hasStripePortal && (
+                  <p className="text-xs text-slate-500 mt-2">{t('subscription.premiumManualHelp')}</p>
+                )}
+                {isTrial && <p className="text-xs text-slate-500 mt-2">{t('subscription.trialHelp')}</p>}
+                {isFree && <p className="text-xs text-slate-500 mt-2">{t('subscription.freeHelp')}</p>}
+              </>
             )}
-            {isPremium && !hasStripePortal && (
-              <p className="text-xs text-slate-500 mt-2">{t('subscription.premiumManualHelp')}</p>
-            )}
-            {isTrial && <p className="text-xs text-slate-500 mt-2">{t('subscription.trialHelp')}</p>}
-            {isFree && <p className="text-xs text-slate-500 mt-2">{t('subscription.freeHelp')}</p>}
           </div>
         </div>
       </div>
@@ -169,7 +187,9 @@ export const SubscriptionSettings: React.FC<Props> = ({ userId }) => {
 
       {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
 
-      <p className="text-[10px] text-slate-400 leading-relaxed max-w-lg">{t('subscription.stripePortalHelp')}</p>
+      {!isLifetime && (
+        <p className="text-[10px] text-slate-400 leading-relaxed max-w-lg">{t('subscription.stripePortalHelp')}</p>
+      )}
     </div>
   );
 };

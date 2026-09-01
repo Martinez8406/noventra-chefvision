@@ -303,6 +303,7 @@ const App: React.FC = () => {
   };
 
   const isPremium = currentUser?.subscriptionStatus === 'premium';
+  const isLifetime = currentUser?.isLifetime === true;
   const isTrial = currentUser?.subscriptionStatus === 'trial';
   const isStart = currentUser?.subscriptionStatus === 'start';
   const isFree = currentUser?.subscriptionStatus === 'free_limited';
@@ -948,6 +949,20 @@ const App: React.FC = () => {
               )}
               onUpgrade={openPricingPage}
             />
+          ) : isLifetime ? (
+            <div className="p-3 rounded-2xl border transition-all bg-amber-500/10 border-amber-500/20 text-amber-200">
+              <div className="flex items-center gap-2">
+                <Crown size={16} className="shrink-0" />
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  {tSidebar('tokenStatus.lifetimeActive')}
+                </span>
+              </div>
+              <p className="mt-2 text-[11px] font-bold text-amber-100/90">
+                {tSidebar('tokenStatus.lifetimeTokens', {
+                  total: currentUser?.tokens?.total ?? currentUser?.credits ?? 0,
+                })}
+              </p>
+            </div>
           ) : isStart ? (
             <div className="p-3 rounded-2xl border transition-all bg-emerald-500/10 border-emerald-500/20 text-emerald-300">
               <div className="flex items-center gap-2">

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Check, Loader2, Package, Wand2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowLeft, Check, Crown, Loader2, Package, Wand2 } from 'lucide-react';
 import { BRAND_LOGO_SRC } from '../constants';
 import { canPurchaseTokenPacks } from '../utils/tokens';
+import { fetchLifetimeOffer, type LifetimeOfferState } from '../services/stripeService';
 import type { FlyerServiceStatus, MenuServiceStatus, SubscriptionStatus } from '../types';
 
-export type PricingPlanType = 'start' | 'premium' | 'tokens' | 'implementation_bundle';
+export type PricingPlanType = 'start' | 'premium' | 'tokens' | 'implementation_bundle' | 'founder_lifetime';
 
 interface Props {
   subscriptionStatus?: SubscriptionStatus;
@@ -31,9 +32,25 @@ const PREMIUM_FEATURES = [
   'Pomoc we wdrożeniu',
 ] as const;
 
+const LIFETIME_FEATURES = [
+  'Wszystko z planu Premium',
+  'Dożywotni dostęp do ChefVision',
+  'Bez miesięcznego abonamentu',
+  '100 tokenów AI na poprawianie zdjęć dań i tworzenie profesjonalnego tła. Tokeny przyznawane jednorazowo i bez terminu ważności.',
+] as const;
+
+const DEFAULT_LIFETIME_OFFER: LifetimeOfferState = {
+  soldOut: false,
+  pricePln: 599,
+  tier: '599',
+  badge: 'Tylko 10 kont w tej cenie',
+  nextTierNote: 'Kolejne 10 kont: 799 zł',
+  buttonLabel: 'Kupuję',
+};
+
 const TOKEN_PACK_FEATURES = [
   'Bezterminowe',
-  'Dostępne w planie Start i Premium',
+  'Dostępne w planie Start, Premium i Founder Lifetime',
   'Idealne na zmianę karty sezonowej',
 ] as const;
 
@@ -55,6 +72,8 @@ export const PricingPage: React.FC<Props> = ({
   const [busy, setBusy] = useState<PricingPlanType | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [acceptedOffer, setAcceptedOffer] = useState(false);
+  const [lifetimeOffer, setLifetimeOffer] = useState<LifetimeOfferState>(DEFAULT_LIFETIME_OFFER);
+  const [lifetimeLoading, setLifetimeLoading] = useState(true);
   const canBuyTokens = canPurchaseTokenPacks(subscriptionStatus);
   const menuActive =
     menuServiceStatus === 'pending' ||
@@ -67,9 +86,27 @@ export const PricingPage: React.FC<Props> = ({
   const bundleActive = menuActive && flyerActive;
   const bundleDone = menuServiceStatus === 'done' && flyerServiceStatus === 'done';
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchLifetimeOffer()
+      .then((offer) => {
+        if (!cancelled) setLifetimeOffer(offer);
+      })
+      .catch(() => {
+        /* karta pokazuje domyślną pulę 599 — cenę i tak ustala serwer */
+      })
+      .finally(() => {
+        if (!cancelled) setLifetimeLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleBuy = async (plan: PricingPlanType) => {
     if (plan === 'tokens' && !canBuyTokens) return;
     if (plan === 'implementation_bundle' && bundleActive) return;
+    if (plan === 'founder_lifetime' && lifetimeOffer.soldOut) return;
     setBusy(plan);
     setError(null);
     try {
@@ -111,6 +148,69 @@ export const PricingPage: React.FC<Props> = ({
           <p className="mt-3 text-slate-600 text-sm sm:text-base">
             Rozwiń menu cyfrowe, zwiększ sprzedaż i obsłuż gości z całego świata.
           </p>
+        </div>
+
+        <div className="max-w-4xl mx-auto mb-6">
+          <div className="relative flex flex-col rounded-[28px] border-2 border-amber-400 bg-gradient-to-br from-amber-50 via-white to-white p-6 sm:p-8 shadow-sm">
+            <div className="inline-flex self-start items-center gap-1.5 rounded-full bg-amber-500 text-white px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+              <Crown size={12} />
+              {lifetimeOffer.soldOut
+                ? 'Oferta Founder Lifetime wyprzedana'
+                : lifetimeOffer.badge}
+            </div>
+            <p className="mt-5 text-4xl font-black text-slate-900 tracking-tight">
+              {lifetimeOffer.soldOut ? '—' : `${lifetimeOffer.pricePln ?? 599} zł`}
+              {!lifetimeOffer.soldOut && (
+                <span className="text-lg font-bold text-slate-500"> jednorazowo</span>
+              )}
+            </p>
+            <p className="mt-1.5 text-sm font-semibold text-slate-600">
+              Bez miesięcznego abonamentu
+            </p>
+            {lifetimeOffer.nextTierNote && !lifetimeOffer.soldOut && (
+              <p className="mt-1 text-sm text-slate-500">{lifetimeOffer.nextTierNote}</p>
+            )}
+            {lifetimeOffer.soldOut && (
+              <p className="mt-1 text-sm font-semibold text-slate-600">
+                Oferta Founder Lifetime wyprzedana
+              </p>
+            )}
+            <h2 className="mt-3 text-2xl font-black text-slate-900">Founder Lifetime</h2>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              ChefVision Founder Lifetime — dożywotni dostęp do funkcji Premium za jednorazową opłatę.
+              AI pozostaje na tokenach: bezterminowy dostęp nie oznacza nielimitowanego korzystania z generatora.
+            </p>
+            <ul className="mt-6 space-y-2.5">
+              {LIFETIME_FEATURES.map((f) => (
+                <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
+                  <Check size={16} className="mt-0.5 shrink-0 text-amber-500" strokeWidth={3} />
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              disabled={!!busy || lifetimeOffer.soldOut || lifetimeLoading}
+              onClick={() => void handleBuy('founder_lifetime')}
+              className="mt-8 w-full py-3.5 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {busy === 'founder_lifetime' ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <Loader2 size={16} className="animate-spin" />
+                  Przekierowanie…
+                </span>
+              ) : lifetimeLoading ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <Loader2 size={16} className="animate-spin" />
+                  Ładowanie oferty…
+                </span>
+              ) : lifetimeOffer.soldOut ? (
+                'Oferta wyprzedana'
+              ) : (
+                lifetimeOffer.buttonLabel || 'Kupuję'
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
@@ -265,7 +365,7 @@ export const PricingPage: React.FC<Props> = ({
               </ul>
               {!canBuyTokens && (
                 <p className="mt-4 text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">
-                  Paczka tokenów jest dostępna w aktywnym planie Start lub Premium.
+                  Paczka tokenów jest dostępna w aktywnym planie Start, Premium lub Founder Lifetime.
                 </p>
               )}
             </div>
@@ -300,6 +400,9 @@ export const PricingPage: React.FC<Props> = ({
         <p className="mt-10 text-center text-[11px] text-slate-400 leading-relaxed max-w-2xl mx-auto">
           Tokeny subskrypcyjne resetują się 1. dnia każdego miesiąca i nie przechodzą na kolejny okres.
           Tokeny z paczki są bezterminowe. Usługa wykonania menu oraz ulotka QR to płatności jednorazowe — nie zmieniają planu subskrypcji.
+          Founder Lifetime to płatność jednorazowa — daje dożywotni dostęp Premium bez abonamentu
+          i 100 bezterminowych tokenów AI (jednorazowo, bez miesięcznego odnawiania).
+          Paczki +50 tokenów można dokupić w dowolnym momencie.
           Wezwanie kelnera / rachunek jest dostępne w planie Premium.
         </p>
       </main>

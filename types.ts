@@ -222,6 +222,8 @@ export interface UserProfile {
   menuServiceStatus?: MenuServiceStatus | null;
   /** Najnowsze aktywne zlecenie ulotki QR (jeśli jest). */
   flyerServiceStatus?: FlyerServiceStatus | null;
+  /** Jednorazowy plan Founder Lifetime (Premium bez abonamentu). */
+  isLifetime?: boolean;
 }
 
 export interface Backdrop {

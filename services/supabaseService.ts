@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import { TRIAL_TOKENS, SUBSCRIPTION_TOKENS, MAX_USER_BACKDROPS } from '../constants';
 import { Dish, DishRecommendation, UserProfile, DishStatus, SubscriptionStatus, Backdrop, RecommendationCurrency, PlatformRole, MenuServiceStatus, MenuServiceOrder, FlyerServiceStatus, FlyerServiceOrder, AdminClientProfile } from '../types';
-import { mapProfileTokens, normalizeProfileForTokenOps } from '../utils/tokens.js';
+import { mapProfileTokens, normalizeProfileForTokenOps, isLifetimeProfile } from '../utils/tokens.js';
 import {
   DEFAULT_RECOMMENDATION_CURRENCY,
   normalizeRecommendation,
@@ -343,10 +343,10 @@ export const menuServiceDb = {
     if (clientIds.length) {
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, restaurant_name, email')
+        .select('id, restaurant_name, name, email')
         .in('id', clientIds);
       for (const p of profiles || []) {
-        profilesById[p.id] = { restaurant_name: p.restaurant_name, email: p.email };
+        profilesById[p.id] = { restaurant_name: p.restaurant_name, name: p.name, email: p.email };
       }
     }
 
@@ -449,10 +449,10 @@ export const flyerServiceDb = {
     if (clientIds.length) {
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, restaurant_name, email')
+        .select('id, restaurant_name, name, email')
         .in('id', clientIds);
       for (const p of profiles || []) {
-        profilesById[p.id] = { restaurant_name: p.restaurant_name, email: p.email };
+        profilesById[p.id] = { restaurant_name: p.restaurant_name, name: p.name, email: p.email };
       }
     }
 
@@ -977,6 +977,7 @@ export const authService = {
         platformRole: 'admin',
         menuServiceStatus: null,
         flyerServiceStatus: null,
+        isLifetime: false,
       };
     }
 
@@ -1016,16 +1017,19 @@ export const authService = {
         }
       }
 
+      const isLifetime = isLifetimeProfile(profileData);
+
       // Premium tylko z aktywną subskrypcją Stripe (nie sam status w bazie)
       const isPremiumFromDb =
-        profileData?.plan === 'premium' &&
-        !!profileData?.stripe_subscription_id;
+        (profileData?.plan === 'premium' && !!profileData?.stripe_subscription_id) ||
+        isLifetime;
 
       // Błędny stan: premium w bazie bez Stripe i bez tokenów → przywróć trial
       const isBrokenPremium =
         !isPremiumFromDb &&
         (profileData?.subscription_status === 'premium' || profileData?.plan === 'premium') &&
-        !profileData?.stripe_subscription_id;
+        !profileData?.stripe_subscription_id &&
+        !isLifetime;
 
       if (isBrokenPremium && profileData) {
         const trialEnds = new Date();
@@ -1077,7 +1081,8 @@ export const authService = {
         (profileData.plan === 'trial' || profileData.subscription_status === 'trial') &&
         profileData.trial_ends_at &&
         new Date(profileData.trial_ends_at).getTime() <= Date.now() &&
-        !profileData.stripe_subscription_id;
+        !profileData.stripe_subscription_id &&
+        !isLifetimeProfile(profileData);
 
       if (isExpiredTrial && profileData) {
         const { data: repaired } = await supabase
@@ -1119,6 +1124,7 @@ export const authService = {
         platformRole,
         menuServiceStatus,
         flyerServiceStatus,
+        isLifetime,
       };
     } catch (e) { return null; }
   },
@@ -1143,6 +1149,7 @@ export const authService = {
         credits: mapped.credits,
         tokens: mapped.tokens,
         trialEndsAt: mapped.trialEndsAt,
+        isLifetime: isLifetimeProfile(data),
       };
     } catch (e) {
       console.error('Błąd pobierania profilu po ID:', e);

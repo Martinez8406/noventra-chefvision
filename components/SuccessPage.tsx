@@ -53,6 +53,8 @@ export const SuccessPage: React.FC<Props> = ({ onBack, onPremiumActivated }) => 
         ? 'Dziękujemy! Tokeny zostały dodane do konta.'
         : planType === 'start'
           ? 'Dziękujemy! Plan Start jest aktywny.'
+          : planType === 'founder_lifetime'
+            ? 'Dziękujemy! Plan Founder Lifetime jest aktywny — bez miesięcznego abonamentu.'
           : 'Dziękujemy! Twoje konto Premium jest aktywne.';
 
   if (confirming) {

@@ -41,7 +41,19 @@ export function getMenuTranslationLocales(row) {
     : MENU_TRANSLATION_LOCALES_FULL;
 }
 
+/** Sentinel Stripe subscription id for one-time Founder Lifetime (no recurring sub). */
+export const LIFETIME_STRIPE_SENTINEL = 'lifetime';
+
+export function isLifetimeProfile(row) {
+  return Boolean(
+    row?.lifetime_purchased_at ||
+      row?.stripe_subscription_id === LIFETIME_STRIPE_SENTINEL ||
+      row?.stripe_subscription_status === 'lifetime',
+  );
+}
+
 export function inferPlan(row) {
+  if (isLifetimeProfile(row)) return 'premium';
   if (row?.plan === 'premium' || row?.plan === 'free' || row?.plan === 'trial' || row?.plan === 'start') {
     return row.plan;
   }
@@ -161,7 +173,12 @@ export function normalizeProfileForTokenOps(row) {
   const plan = inferPlan(next);
   const hasStripe = !!next.stripe_subscription_id;
 
-  if (plan === 'premium' && !hasStripe && (next.subscription_tokens ?? 0) === 0) {
+  if (
+    plan === 'premium' &&
+    !hasStripe &&
+    !isLifetimeProfile(next) &&
+    (next.subscription_tokens ?? 0) === 0
+  ) {
     next = {
       ...next,
       plan: 'trial',
