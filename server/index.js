@@ -15,6 +15,7 @@ import { handleCreateClientAccount } from '../lib/createClientAccount.js';
 import {
   handlePromoCodes,
   handlePromoPin,
+  handlePromoApi,
   handleVerifySession,
   handleVerifyCode,
   handleRedeemPromo,
@@ -261,7 +262,7 @@ app.post('/api/create-client-account', async (req, res) => {
 });
 
 app.get('/api/promo-codes', async (req, res) => {
-  const result = await handlePromoCodes({
+  const result = await handlePromoApi({
     req,
     authorization: req.headers.authorization,
     query: req.query || {},
@@ -272,7 +273,7 @@ app.get('/api/promo-codes', async (req, res) => {
 });
 
 app.post('/api/promo-codes', async (req, res) => {
-  const result = await handlePromoCodes({
+  const result = await handlePromoApi({
     req,
     authorization: req.headers.authorization,
     query: req.query || {},

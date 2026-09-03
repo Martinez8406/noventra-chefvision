@@ -22,6 +22,7 @@ import { navigateToPublicDish, navigateToPublicMenuList } from '../utils/publicM
 import { PublicMenuSkeleton } from './PublicMenuSkeleton';
 import { PublicMenuCategoryTabs } from './PublicMenuCategoryTabs';
 import { GuestFeedbackSection } from './GuestFeedbackSection';
+import { GuestPromoSection } from './GuestPromoSection';
 import { ServiceCallSection } from './ServiceCallSection';
 import { canUseWaiterCall, canUsePairings } from '../utils/tokens';
 import {
@@ -113,6 +114,7 @@ export const PublicMenu: React.FC<Props> = ({
   const [profileCategoryTranslations, setProfileCategoryTranslations] = useState<Record<string, Partial<Record<PublicMenuLocale, string>>>>({});
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [feedbackAvailable, setFeedbackAvailable] = useState(false);
+  const [guestPromoOffer, setGuestPromoOffer] = useState<{ rewardName: string; rewardDescription: string } | null>(null);
   const [waiterCallAvailable, setWaiterCallAvailable] = useState(false);
   const [pairingsAvailable, setPairingsAvailable] = useState(false);
   const [resolvedTableNumber, setResolvedTableNumber] = useState<string | null>(null);
@@ -329,6 +331,7 @@ export const PublicMenu: React.FC<Props> = ({
     setProfileMenuCategories([]);
     setProfileCategoryTranslations({});
     setFeedbackAvailable(false);
+    setGuestPromoOffer(null);
     setWaiterCallAvailable(false);
     setPairingsAvailable(false);
 
@@ -449,6 +452,33 @@ export const PublicMenu: React.FC<Props> = ({
     }).catch(() => {
       // brak blokowania UI przy błędzie trackingu
     });
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) {
+      setGuestPromoOffer(null);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/promo-codes?op=offer&restaurantId=${encodeURIComponent(userId)}`)
+      .then((res) => res.json().catch(() => null))
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.active && data?.rewardName) {
+          setGuestPromoOffer({
+            rewardName: String(data.rewardName),
+            rewardDescription: String(data.rewardDescription || ''),
+          });
+        } else {
+          setGuestPromoOffer(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setGuestPromoOffer(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   // Otwarcie widoku szczegółowego dania → zdarzenie + clicks (1× na dzień / danie / przeglądarkę).
@@ -1105,6 +1135,10 @@ export const PublicMenu: React.FC<Props> = ({
             primaryColor={primaryColor}
             menuLocale={menuLocale}
           />
+        )}
+
+        {guestPromoOffer && (
+          <GuestPromoSection restaurantId={userId} offer={guestPromoOffer} />
         )}
 
         {orderedKeys.map((category) => (

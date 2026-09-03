@@ -49,6 +49,11 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
   const [pinSet, setPinSet] = useState(false);
   const [pin, setPin] = useState('');
   const [codes, setCodes] = useState<PromoCodeRecord[]>([]);
+  const [offerActive, setOfferActive] = useState(false);
+  const [offerRewardName, setOfferRewardName] = useState('Darmowy deser');
+  const [offerRewardDescription, setOfferRewardDescription] = useState('Przy zamówieniu dowolnego dania głównego');
+  const [offerExpiresDays, setOfferExpiresDays] = useState('14');
+  const [savingOffer, setSavingOffer] = useState(false);
   const [rewardName, setRewardName] = useState('Darmowy deser');
   const [rewardDescription, setRewardDescription] = useState('Do zamówienia dania głównego');
   const [email, setEmail] = useState('');
@@ -68,16 +73,29 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
     setError(null);
     try {
       const headers = await ownerHeaders();
-      const [pinRes, codesRes] = await Promise.all([
+      const offerQs = `?op=offer-config${userId ? `&targetUserId=${encodeURIComponent(userId)}` : ''}`;
+      const [pinRes, codesRes, offerRes] = await Promise.all([
         fetch(`/api/promo-pin${targetQuery}`, { headers }),
         fetch(`/api/promo-codes${targetQuery}`, { headers }),
+        fetch(`/api/promo-codes${offerQs}`, { headers }),
       ]);
       const pinData = await pinRes.json().catch(() => null);
       const codesData = await codesRes.json().catch(() => null);
+      const offerData = await offerRes.json().catch(() => null);
       if (!pinRes.ok) throw new Error(pinData?.error || `PIN HTTP ${pinRes.status}`);
       if (!codesRes.ok) throw new Error(codesData?.error || `Codes HTTP ${codesRes.status}`);
       setPinSet(pinData?.pinSet === true);
       setCodes(Array.isArray(codesData?.codes) ? codesData.codes : []);
+      if (offerRes.ok && offerData) {
+        setOfferActive(offerData.active === true);
+        if (typeof offerData.rewardName === 'string' && offerData.rewardName.trim()) {
+          setOfferRewardName(offerData.rewardName);
+        }
+        if (typeof offerData.rewardDescription === 'string' && offerData.rewardDescription.trim()) {
+          setOfferRewardDescription(offerData.rewardDescription);
+        }
+        if (offerData.expiresInDays) setOfferExpiresDays(String(offerData.expiresInDays));
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t('promo.errors.loadFailed'));
     } finally {
@@ -111,6 +129,35 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
       setError(err instanceof Error ? err.message : t('promo.errors.pinFailed'));
     } finally {
       setSavingPin(false);
+    }
+  };
+
+  const handleSaveOffer = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!userId) return;
+    setSavingOffer(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const headers = await ownerHeaders();
+      const response = await fetch('/api/promo-codes?op=offer-config', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          targetUserId: userId,
+          active: offerActive,
+          rewardName: offerRewardName,
+          rewardDescription: offerRewardDescription,
+          expiresInDays: Number(offerExpiresDays) || 14,
+        }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || `HTTP ${response.status}`);
+      setNotice(t('promo.offerSaved'));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('promo.errors.loadFailed'));
+    } finally {
+      setSavingOffer(false);
     }
   };
 
@@ -244,6 +291,55 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
             className="px-5 py-3 rounded-2xl bg-slate-900 text-white text-sm font-black disabled:opacity-50"
           >
             {savingPin ? t('promo.saving') : t('promo.savePin')}
+          </button>
+        </form>
+      </section>
+
+      <section className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100 space-y-4">
+        <h3 className="text-lg font-black text-slate-900">{t('promo.offerTitle')}</h3>
+        <p className="text-sm text-slate-500">{t('promo.offerHint')}</p>
+        <form onSubmit={handleSaveOffer} className="space-y-4">
+          <label className="flex items-center gap-3 text-sm font-semibold text-slate-700">
+            <input
+              type="checkbox"
+              checked={offerActive}
+              onChange={(e) => setOfferActive(e.target.checked)}
+            />
+            {t('promo.offerActive')}
+          </label>
+          <label className="block space-y-1">
+            <span className="text-xs font-black uppercase tracking-widest text-slate-400">{t('promo.rewardName')}</span>
+            <input
+              value={offerRewardName}
+              onChange={(e) => setOfferRewardName(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-chef-gold/15"
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-xs font-black uppercase tracking-widest text-slate-400">{t('promo.rewardDescription')}</span>
+            <input
+              value={offerRewardDescription}
+              onChange={(e) => setOfferRewardDescription(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-chef-gold/15"
+            />
+          </label>
+          <label className="block space-y-1 max-w-[12rem]">
+            <span className="text-xs font-black uppercase tracking-widest text-slate-400">{t('promo.offerExpiresDays')}</span>
+            <input
+              type="number"
+              min={1}
+              max={90}
+              value={offerExpiresDays}
+              onChange={(e) => setOfferExpiresDays(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-chef-gold/15"
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={savingOffer || !offerRewardName.trim()}
+            className="px-5 py-3 rounded-2xl bg-slate-900 text-white text-sm font-black disabled:opacity-50"
+          >
+            {savingOffer ? t('promo.saving') : t('promo.saveOffer')}
           </button>
         </form>
       </section>

@@ -39,7 +39,8 @@ export default defineConfig(({ mode }) => {
                 url === '/success' ||
                 url === '/success/' ||
                 url.startsWith('/menu') ||
-                url.startsWith('/verify')
+                url.startsWith('/verify') ||
+                url.startsWith('/promo')
               ) {
                 req.url = '/index.html';
               }

@@ -26,6 +26,8 @@ import plSettings from '../locales/pl/settings.json';
 import enSettings from '../locales/en/settings.json';
 import plVerify from '../locales/pl/verify.json';
 import enVerify from '../locales/en/verify.json';
+import plGuestPromo from '../locales/pl/guestPromo.json';
+import enGuestPromo from '../locales/en/guestPromo.json';
 
 export const APP_LANG_STORAGE_KEY = 'chefvision_app_lang';
 
@@ -48,13 +50,13 @@ function syncDocumentLanguage(lng: string) {
 
 void i18n.use(initReactI18next).init({
   resources: {
-    pl: { nav: plNav, sidebar: plSidebar, kitchen: plKitchen, studio: plStudio, themes: plThemes, backdrops: plBackdrops, menu: plMenu, stats: plStats, promotions: plPromotions, hotelHub: plHotelHub, restaurantInfo: plRestaurantInfo, settings: plSettings, verify: plVerify },
-    en: { nav: enNav, sidebar: enSidebar, kitchen: enKitchen, studio: enStudio, themes: enThemes, backdrops: enBackdrops, menu: enMenu, stats: enStats, promotions: enPromotions, hotelHub: enHotelHub, restaurantInfo: enRestaurantInfo, settings: enSettings, verify: enVerify },
+    pl: { nav: plNav, sidebar: plSidebar, kitchen: plKitchen, studio: plStudio, themes: plThemes, backdrops: plBackdrops, menu: plMenu, stats: plStats, promotions: plPromotions, hotelHub: plHotelHub, restaurantInfo: plRestaurantInfo, settings: plSettings, verify: plVerify, guestPromo: plGuestPromo },
+    en: { nav: enNav, sidebar: enSidebar, kitchen: enKitchen, studio: enStudio, themes: enThemes, backdrops: enBackdrops, menu: enMenu, stats: enStats, promotions: enPromotions, hotelHub: enHotelHub, restaurantInfo: enRestaurantInfo, settings: enSettings, verify: enVerify, guestPromo: enGuestPromo },
   },
   lng: resolveInitialLanguage(),
   fallbackLng: 'pl',
   defaultNS: 'nav',
-  ns: ['nav', 'sidebar', 'kitchen', 'studio', 'themes', 'backdrops', 'menu', 'stats', 'promotions', 'hotelHub', 'restaurantInfo', 'settings', 'verify'],
+  ns: ['nav', 'sidebar', 'kitchen', 'studio', 'themes', 'backdrops', 'menu', 'stats', 'promotions', 'hotelHub', 'restaurantInfo', 'settings', 'verify', 'guestPromo'],
   interpolation: { escapeValue: false },
 });
 
