@@ -102,15 +102,15 @@ if (!userId || !admin) {
     await admin.from('promo_codes').delete().eq('user_id', userId).eq('code', 'KT-4827');
     const created = await issuePromoCodeAfterConfirmedOptIn(admin, {
       userId,
-      rewardName: 'Darmowy deser',
-      rewardDescription: 'Do zamówienia dania głównego',
+      rewardName: 'Oferta specjalna',
+      rewardDescription: 'Kod testowy Verify',
       code: 'KT-4827',
       metadata: { source: 'test' },
     });
     assert.strictEqual(created.ok, true, created.error);
     const lookup = await lookupPromoCode(admin, { userId, code: 'KT-4827' });
     assert.strictEqual(lookup.outcome, 'active');
-    assert.strictEqual(lookup.rewardName, 'Darmowy deser');
+    assert.strictEqual(lookup.rewardName, 'Oferta specjalna');
     assert.ok(!('email' in lookup) || lookup.email == null);
   });
 

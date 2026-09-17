@@ -75,7 +75,7 @@ export const PremiumUpsellModal: React.FC<Props> = ({ open, onClose, onUpgrade }
 
         <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-center">
           <p className="text-3xl font-black text-white tracking-tight">
-            97 zł
+            50 zł
             <span className="text-base font-bold text-zinc-400"> / miesiąc</span>
           </p>
         </div>

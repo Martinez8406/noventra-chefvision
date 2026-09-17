@@ -1,18 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Gift, Loader2, X } from 'lucide-react';
+import { Loader2, Users, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-
-interface Offer {
-  rewardName: string;
-  rewardDescription: string;
-}
 
 interface Props {
   restaurantId: string;
-  offer: Offer;
 }
 
-export const GuestPromoSection: React.FC<Props> = ({ restaurantId, offer }) => {
+export const GuestPromoSection: React.FC<Props> = ({ restaurantId }) => {
   const { t } = useTranslation('guestPromo');
   const [open, setOpen] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
@@ -31,8 +25,6 @@ export const GuestPromoSection: React.FC<Props> = ({ restaurantId, offer }) => {
     return () => window.clearTimeout(id);
   }, [cooldown]);
 
-  const isDessert = /deser|dessert/i.test(offer.rewardName || '');
-  const claimLabel = isDessert ? t('claim') : t('claimGeneric');
   const canSubmit = firstName.trim().length >= 2 && email.includes('@') && termsAccepted && marketingConsent && !busy;
 
   const submit = async (isResend = false) => {
@@ -70,18 +62,18 @@ export const GuestPromoSection: React.FC<Props> = ({ restaurantId, offer }) => {
       <section className="w-full max-w-2xl mx-auto mt-10 mb-4 px-2">
         <div className="rounded-[28px] border border-white/10 bg-gradient-to-b from-[#1c1c1c] to-[#121212] p-6 sm:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.18)] text-center">
           <div className="w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center border border-chef-gold/30 bg-chef-gold/15 text-chef-gold">
-            <Gift size={22} />
+            <Users size={22} />
           </div>
-          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-chef-gold">🎁 {offer.rewardName || t('boxFallbackTitle')}</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-chef-gold">{t('boxTitle')}</p>
           <p className="mt-3 text-sm text-zinc-300 leading-relaxed max-w-md mx-auto">
-            {offer.rewardDescription}
+            {t('boxBody')}
           </p>
           <button
             type="button"
             onClick={() => setOpen(true)}
             className="mt-6 inline-flex items-center justify-center px-8 py-3.5 rounded-2xl text-sm font-black uppercase tracking-wide text-[#0a1a12] bg-gradient-to-r from-chef-gold to-chef-gold2"
           >
-            {claimLabel}
+            {t('claim')}
           </button>
         </div>
       </section>
@@ -159,7 +151,7 @@ export const GuestPromoSection: React.FC<Props> = ({ restaurantId, offer }) => {
                   className="w-full py-3.5 rounded-2xl text-sm font-black uppercase text-[#0a1a12] bg-gradient-to-r from-chef-gold to-chef-gold2 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {busy ? <Loader2 className="animate-spin" size={16} /> : null}
-                  {busy ? t('submitting') : claimLabel}
+                  {busy ? t('submitting') : t('submit')}
                 </button>
               </form>
             )}
@@ -172,8 +164,6 @@ export const GuestPromoSection: React.FC<Props> = ({ restaurantId, offer }) => {
           <div className="w-full max-w-md bg-[#141414] text-white rounded-[28px] p-6 space-y-4">
             <h3 className="text-xl font-black">{t('termsTitle')}</h3>
             <p className="text-sm text-zinc-300 leading-relaxed">{t('termsBody')}</p>
-            <p className="text-sm font-semibold text-white">{offer.rewardName}</p>
-            <p className="text-sm text-zinc-400">{offer.rewardDescription}</p>
             <button type="button" onClick={() => setTermsOpen(false)} className="w-full py-3 rounded-2xl bg-white/10 font-bold">
               {t('close')}
             </button>

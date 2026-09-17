@@ -50,12 +50,9 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
   const [pin, setPin] = useState('');
   const [codes, setCodes] = useState<PromoCodeRecord[]>([]);
   const [offerActive, setOfferActive] = useState(false);
-  const [offerRewardName, setOfferRewardName] = useState('Darmowy deser');
-  const [offerRewardDescription, setOfferRewardDescription] = useState('Przy zamówieniu dowolnego dania głównego');
-  const [offerExpiresDays, setOfferExpiresDays] = useState('14');
   const [savingOffer, setSavingOffer] = useState(false);
-  const [rewardName, setRewardName] = useState('Darmowy deser');
-  const [rewardDescription, setRewardDescription] = useState('Do zamówienia dania głównego');
+  const [rewardName, setRewardName] = useState('Oferta specjalna');
+  const [rewardDescription, setRewardDescription] = useState('');
   const [email, setEmail] = useState('');
   const [specificCode, setSpecificCode] = useState('');
   const [copied, setCopied] = useState(false);
@@ -88,13 +85,6 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
       setCodes(Array.isArray(codesData?.codes) ? codesData.codes : []);
       if (offerRes.ok && offerData) {
         setOfferActive(offerData.active === true);
-        if (typeof offerData.rewardName === 'string' && offerData.rewardName.trim()) {
-          setOfferRewardName(offerData.rewardName);
-        }
-        if (typeof offerData.rewardDescription === 'string' && offerData.rewardDescription.trim()) {
-          setOfferRewardDescription(offerData.rewardDescription);
-        }
-        if (offerData.expiresInDays) setOfferExpiresDays(String(offerData.expiresInDays));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t('promo.errors.loadFailed'));
@@ -146,9 +136,6 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
         body: JSON.stringify({
           targetUserId: userId,
           active: offerActive,
-          rewardName: offerRewardName,
-          rewardDescription: offerRewardDescription,
-          expiresInDays: Number(offerExpiresDays) || 14,
         }),
       });
       const data = await response.json().catch(() => null);
@@ -198,8 +185,8 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
 
   const handleTestCode = async () => {
     await createCode({
-      rewardName: rewardName || 'Darmowy deser',
-      rewardDescription: rewardDescription || 'Do zamówienia dania głównego',
+      rewardName: rewardName || 'Oferta specjalna',
+      rewardDescription: rewardDescription || '',
       code: 'KT-4827',
       metadata: { source: 'test_seed' },
     });
@@ -307,36 +294,9 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
             />
             {t('promo.offerActive')}
           </label>
-          <label className="block space-y-1">
-            <span className="text-xs font-black uppercase tracking-widest text-slate-400">{t('promo.rewardName')}</span>
-            <input
-              value={offerRewardName}
-              onChange={(e) => setOfferRewardName(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-chef-gold/15"
-            />
-          </label>
-          <label className="block space-y-1">
-            <span className="text-xs font-black uppercase tracking-widest text-slate-400">{t('promo.rewardDescription')}</span>
-            <input
-              value={offerRewardDescription}
-              onChange={(e) => setOfferRewardDescription(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-chef-gold/15"
-            />
-          </label>
-          <label className="block space-y-1 max-w-[12rem]">
-            <span className="text-xs font-black uppercase tracking-widest text-slate-400">{t('promo.offerExpiresDays')}</span>
-            <input
-              type="number"
-              min={1}
-              max={90}
-              value={offerExpiresDays}
-              onChange={(e) => setOfferExpiresDays(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-chef-gold/15"
-            />
-          </label>
           <button
             type="submit"
-            disabled={savingOffer || !offerRewardName.trim()}
+            disabled={savingOffer}
             className="px-5 py-3 rounded-2xl bg-slate-900 text-white text-sm font-black disabled:opacity-50"
           >
             {savingOffer ? t('promo.saving') : t('promo.saveOffer')}

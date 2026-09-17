@@ -170,47 +170,11 @@ async function checkAsync(name, fn) {
 
 const { reserveLifetimeCheckout } = await import('../lib/stripe/lifetimeOffer.js');
 
-await checkAsync('checkout price comes from sold count, ignores client 799 at 0 sold', async () => {
-  process.env.STRIPE_LIFETIME_PRICE_ID_599 = 'price_599_server';
-  process.env.STRIPE_LIFETIME_PRICE_ID_799 = 'price_799_server';
-  const supabase = mockSupabase({ paid: 0, pending: 0, profile: { id: 'user-1' } });
-  const result = await reserveLifetimeCheckout({
-    supabase,
-    userId: 'user-1',
-    clientPricePln: 799,
-  });
-  assert.strictEqual(result.ok, true);
-  assert.strictEqual(result.pricePln, 599);
-  assert.strictEqual(result.priceId, 'price_599_server');
-  assert.strictEqual(result.tier, '599');
-});
-
-await checkAsync('checkout uses 799 after 10 sold', async () => {
-  process.env.STRIPE_LIFETIME_PRICE_ID_599 = 'price_599_server';
-  process.env.STRIPE_LIFETIME_PRICE_ID_799 = 'price_799_server';
-  const supabase = mockSupabase({ paid: 10, pending: 0, profile: { id: 'user-2' } });
-  const result = await reserveLifetimeCheckout({ supabase, userId: 'user-2' });
-  assert.strictEqual(result.ok, true);
-  assert.strictEqual(result.pricePln, 799);
-  assert.strictEqual(result.priceId, 'price_799_server');
-});
-
-await checkAsync('checkout blocked after 20 sold', async () => {
-  const supabase = mockSupabase({ paid: 20, pending: 0, profile: { id: 'user-3' } });
-  const result = await reserveLifetimeCheckout({ supabase, userId: 'user-3' });
+await checkAsync('new Founder Lifetime checkout is closed', async () => {
+  const result = await reserveLifetimeCheckout({ supabase: mockSupabase({ paid: 0 }), userId: 'user-1' });
   assert.strictEqual(result.ok, false);
-  assert.strictEqual(result.status, 409);
-  assert.match(result.error, /wyprzedana/i);
-});
-
-await checkAsync('existing lifetime buyer cannot buy again', async () => {
-  const supabase = mockSupabase({
-    paid: 3,
-    profile: { id: 'user-4', lifetime_purchased_at: '2026-01-01' },
-  });
-  const result = await reserveLifetimeCheckout({ supabase, userId: 'user-4' });
-  assert.strictEqual(result.ok, false);
-  assert.strictEqual(result.status, 409);
+  assert.strictEqual(result.status, 410);
+  assert.match(result.error, /nie jest już dostępna/i);
 });
 
 if (failed) {

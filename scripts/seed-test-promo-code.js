@@ -18,8 +18,8 @@ await admin.from('promo_codes').delete().eq('user_id', userId).eq('code', 'KT-48
 
 const result = await issuePromoCodeAfterConfirmedOptIn(admin, {
   userId,
-  rewardName: 'Darmowy deser',
-  rewardDescription: 'Do zamówienia dania głównego',
+  rewardName: 'Oferta specjalna',
+  rewardDescription: 'Kod testowy Verify',
   code: 'KT-4827',
   metadata: { source: 'seed_test' },
 });

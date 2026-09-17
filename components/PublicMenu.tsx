@@ -114,7 +114,7 @@ export const PublicMenu: React.FC<Props> = ({
   const [profileCategoryTranslations, setProfileCategoryTranslations] = useState<Record<string, Partial<Record<PublicMenuLocale, string>>>>({});
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [feedbackAvailable, setFeedbackAvailable] = useState(false);
-  const [guestPromoOffer, setGuestPromoOffer] = useState<{ rewardName: string; rewardDescription: string } | null>(null);
+  const [guestClubEnabled, setGuestClubEnabled] = useState(false);
   const [waiterCallAvailable, setWaiterCallAvailable] = useState(false);
   const [pairingsAvailable, setPairingsAvailable] = useState(false);
   const [resolvedTableNumber, setResolvedTableNumber] = useState<string | null>(null);
@@ -331,7 +331,7 @@ export const PublicMenu: React.FC<Props> = ({
     setProfileMenuCategories([]);
     setProfileCategoryTranslations({});
     setFeedbackAvailable(false);
-    setGuestPromoOffer(null);
+    setGuestClubEnabled(false);
     setWaiterCallAvailable(false);
     setPairingsAvailable(false);
 
@@ -456,7 +456,7 @@ export const PublicMenu: React.FC<Props> = ({
 
   useEffect(() => {
     if (!userId) {
-      setGuestPromoOffer(null);
+      setGuestClubEnabled(false);
       return;
     }
     let cancelled = false;
@@ -464,17 +464,10 @@ export const PublicMenu: React.FC<Props> = ({
       .then((res) => res.json().catch(() => null))
       .then((data) => {
         if (cancelled) return;
-        if (data?.active && data?.rewardName) {
-          setGuestPromoOffer({
-            rewardName: String(data.rewardName),
-            rewardDescription: String(data.rewardDescription || ''),
-          });
-        } else {
-          setGuestPromoOffer(null);
-        }
+        setGuestClubEnabled(data?.active === true);
       })
       .catch(() => {
-        if (!cancelled) setGuestPromoOffer(null);
+        if (!cancelled) setGuestClubEnabled(false);
       });
     return () => {
       cancelled = true;
@@ -1137,8 +1130,8 @@ export const PublicMenu: React.FC<Props> = ({
           />
         )}
 
-        {guestPromoOffer && (
-          <GuestPromoSection restaurantId={userId} offer={guestPromoOffer} />
+        {guestClubEnabled && (
+          <GuestPromoSection restaurantId={userId} />
         )}
 
         {orderedKeys.map((category) => (
