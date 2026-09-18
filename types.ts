@@ -374,3 +374,15 @@ export interface PromoCodeRecord {
   expiresAt: string | null;
   usedAt: string | null;
 }
+
+export type GuestClubLeadStatus = 'pending' | 'confirmed' | 'unsubscribed' | 'blocked';
+
+export interface GuestClubLead {
+  id: string;
+  firstName: string;
+  email: string;
+  status: GuestClubLeadStatus;
+  createdAt: string | null;
+  confirmedAt: string | null;
+  marketingConsentAt: string | null;
+}

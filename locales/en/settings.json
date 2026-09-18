@@ -23,8 +23,8 @@
       "description": "Premium feature. Connect Discord and enable “Call waiter” and “Request the bill” in Live Menu. ChefVision can set up the webhook for you at no extra charge."
     },
     "promo": {
-      "title": "Promo codes",
-      "description": "One-time guest codes and a separate Verify view for waiters. Waiters never see emails or the restaurant dashboard."
+      "title": "Premium Guest Club",
+      "description": "Guest Club, collected emails, one-time codes, and the waiter Verify view. Waiters never see emails or the restaurant dashboard."
     },
     "subscription": {
       "title": "Manage subscription",
@@ -209,6 +209,26 @@
     "offerActive": "Show the Guest Club in the menu",
     "saveOffer": "Save Guest Club",
     "offerSaved": "Guest Club settings saved.",
+    "leadsTitle": "Guest Club members",
+    "leadsHint": "Emails collected from Live Menu. Use confirmed addresses only for campaigns.",
+    "leadsLoading": "Loading members…",
+    "leadsEmpty": "No signups yet. Enable Guest Club in the menu and wait for a guest to confirm their email.",
+    "leadsEmptyFilter": "No signups in this view.",
+    "leadsCount": "{{confirmed}} confirmed · {{total}} total",
+    "leadsFilterConfirmed": "Confirmed",
+    "leadsFilterPending": "Pending",
+    "leadsFilterAll": "All",
+    "leadsExport": "Export CSV",
+    "leadsExported": "CSV downloaded.",
+    "colFirstName": "First name",
+    "colEmail": "Email",
+    "colConfirmed": "Confirmed",
+    "leadStatuses": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "unsubscribed": "Unsubscribed",
+      "blocked": "Blocked"
+    },
     "createTitle": "New code",
     "createHint": "Manual codes for Verify and future campaigns. Joining the Guest Club does not create a code automatically.",
     "rewardName": "Reward name",

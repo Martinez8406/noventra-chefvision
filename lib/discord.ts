@@ -115,12 +115,25 @@ export async function sendDiscordWebhook(params: {
   return lastFail || { ok: false, reason: 'retries_exhausted' };
 }
 
-export function buildNewUserRegisteredMessage(email: string, at: Date = new Date()): string {
+export function formatRegisteredPlanLabel(plan?: string | null): string {
+  const p = String(plan || '').trim().toLowerCase();
+  if (p === 'premium') return 'Premium';
+  if (p === 'start') return 'Start';
+  if (p === 'trial') return 'Trial';
+  if (p === 'free') return 'Free';
+  return plan ? String(plan) : 'Trial';
+}
+
+export function buildNewUserRegisteredMessage(
+  email: string,
+  at: Date = new Date(),
+  plan: string = 'Trial',
+): string {
   return [
     '🆕 New user registered',
     '',
     `Email: ${email}`,
-    'Plan: Free',
+    `Plan: ${formatRegisteredPlanLabel(plan)}`,
     `Time: ${at.toISOString()}`,
   ].join('\n');
 }

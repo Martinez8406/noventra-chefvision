@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QRCodeCanvas } from 'qrcode.react';
-import { Copy, KeyRound, Loader2, Ticket } from 'lucide-react';
+import { Copy, Download, KeyRound, Loader2, Ticket, Users } from 'lucide-react';
 import { supabase } from '../services/supabaseService';
 import { buildVerifyUrl } from '../utils/verifyRoute';
-import type { PromoCodeRecord } from '../types';
+import type { GuestClubLead, PromoCodeRecord } from '../types';
 
 interface Props {
   userId: string | null;
@@ -25,6 +25,20 @@ function statusLabel(status: string, t: (key: string) => string) {
   if (status === 'expired') return t('promo.statuses.expired');
   if (status === 'cancelled') return t('promo.statuses.cancelled');
   return status;
+}
+
+function leadStatusLabel(status: string, t: (key: string) => string) {
+  if (status === 'pending') return t('promo.leadStatuses.pending');
+  if (status === 'confirmed') return t('promo.leadStatuses.confirmed');
+  if (status === 'unsubscribed') return t('promo.leadStatuses.unsubscribed');
+  if (status === 'blocked') return t('promo.leadStatuses.blocked');
+  return status;
+}
+
+function csvCell(value: string) {
+  const text = String(value || '');
+  if (/[",\n;]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
+  return text;
 }
 
 function formatDate(value: string | null) {
@@ -56,6 +70,8 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
   const [email, setEmail] = useState('');
   const [specificCode, setSpecificCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const [leads, setLeads] = useState<GuestClubLead[]>([]);
+  const [leadFilter, setLeadFilter] = useState<'confirmed' | 'pending' | 'all'>('confirmed');
 
   const verifyUrl = userId ? buildVerifyUrl(userId, true) : '';
 
@@ -71,14 +87,17 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
     try {
       const headers = await ownerHeaders();
       const offerQs = `?op=offer-config${userId ? `&targetUserId=${encodeURIComponent(userId)}` : ''}`;
-      const [pinRes, codesRes, offerRes] = await Promise.all([
+      const leadsQs = `?op=leads${userId ? `&targetUserId=${encodeURIComponent(userId)}` : ''}`;
+      const [pinRes, codesRes, offerRes, leadsRes] = await Promise.all([
         fetch(`/api/promo-pin${targetQuery}`, { headers }),
         fetch(`/api/promo-codes${targetQuery}`, { headers }),
         fetch(`/api/promo-codes${offerQs}`, { headers }),
+        fetch(`/api/promo-codes${leadsQs}`, { headers }),
       ]);
       const pinData = await pinRes.json().catch(() => null);
       const codesData = await codesRes.json().catch(() => null);
       const offerData = await offerRes.json().catch(() => null);
+      const leadsData = await leadsRes.json().catch(() => null);
       if (!pinRes.ok) throw new Error(pinData?.error || `PIN HTTP ${pinRes.status}`);
       if (!codesRes.ok) throw new Error(codesData?.error || `Codes HTTP ${codesRes.status}`);
       setPinSet(pinData?.pinSet === true);
@@ -86,6 +105,11 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
       if (offerRes.ok && offerData) {
         setOfferActive(offerData.active === true);
       }
+      if (!leadsRes.ok) {
+        setLeads([]);
+        throw new Error(leadsData?.error || t('promo.errors.loadFailed'));
+      }
+      setLeads(Array.isArray(leadsData?.leads) ? leadsData.leads : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('promo.errors.loadFailed'));
     } finally {
@@ -221,6 +245,40 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
     }
   };
 
+  const visibleLeads = leads.filter((row) => {
+    if (leadFilter === 'all') return true;
+    return row.status === leadFilter;
+  });
+  const confirmedCount = leads.filter((row) => row.status === 'confirmed').length;
+
+  const exportLeadsCsv = () => {
+    if (visibleLeads.length === 0) return;
+    const header = [t('promo.colFirstName'), t('promo.colEmail'), t('promo.colStatus'), t('promo.colCreated'), t('promo.colConfirmed')];
+    const lines = [
+      header.map(csvCell).join(';'),
+      ...visibleLeads.map((row) =>
+        [
+          row.firstName,
+          row.email,
+          leadStatusLabel(row.status, t),
+          formatDate(row.createdAt),
+          formatDate(row.confirmedAt),
+        ]
+          .map(csvCell)
+          .join(';')
+      ),
+    ];
+    const blob = new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `klub-gosci-${stamp}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setNotice(t('promo.leadsExported'));
+  };
+
   if (!userId) {
     return <p className="text-sm text-slate-500">{t('promo.loginRequired')}</p>;
   }
@@ -302,6 +360,95 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
             {savingOffer ? t('promo.saving') : t('promo.saveOffer')}
           </button>
         </form>
+      </section>
+
+      <section className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100 space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-chef-gold/15 text-chef-gold flex items-center justify-center">
+              <Users size={20} />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-slate-900">{t('promo.leadsTitle')}</h3>
+              <p className="text-sm text-slate-500">{t('promo.leadsHint')}</p>
+            </div>
+          </div>
+        </div>
+        <p className="text-sm font-semibold text-slate-700">
+          {t('promo.leadsCount', { confirmed: confirmedCount, total: leads.length })}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          {(['confirmed', 'pending', 'all'] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setLeadFilter(key)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide ${
+                leadFilter === key ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              {t(`promo.leadsFilter${key === 'all' ? 'All' : key === 'pending' ? 'Pending' : 'Confirmed'}`)}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={exportLeadsCsv}
+            disabled={visibleLeads.length === 0}
+            className="ml-auto inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 disabled:opacity-40"
+          >
+            <Download size={16} />
+            {t('promo.leadsExport')}
+          </button>
+        </div>
+        {loading ? (
+          <div className="flex items-center gap-2 text-slate-500 text-sm">
+            <Loader2 className="animate-spin" size={16} />
+            {t('promo.leadsLoading')}
+          </div>
+        ) : leads.length === 0 ? (
+          <p className="text-sm text-slate-500">{t('promo.leadsEmpty')}</p>
+        ) : visibleLeads.length === 0 ? (
+          <p className="text-sm text-slate-500">{t('promo.leadsEmptyFilter')}</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  <th className="py-2 pr-3">{t('promo.colFirstName')}</th>
+                  <th className="py-2 pr-3">{t('promo.colEmail')}</th>
+                  <th className="py-2 pr-3">{t('promo.colStatus')}</th>
+                  <th className="py-2 pr-3">{t('promo.colCreated')}</th>
+                  <th className="py-2">{t('promo.colConfirmed')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleLeads.map((row) => (
+                  <tr key={row.id} className="border-t border-slate-100">
+                    <td className="py-3 pr-3 font-semibold text-slate-900">{row.firstName || '—'}</td>
+                    <td className="py-3 pr-3 font-mono text-slate-700 break-all">{row.email}</td>
+                    <td className="py-3 pr-3">
+                      <span
+                        className={`inline-flex px-2 py-1 rounded-lg text-[11px] font-black uppercase ${
+                          row.status === 'confirmed'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : row.status === 'pending'
+                              ? 'bg-amber-50 text-amber-700'
+                              : row.status === 'unsubscribed'
+                                ? 'bg-slate-100 text-slate-600'
+                                : 'bg-red-50 text-red-600'
+                        }`}
+                      >
+                        {leadStatusLabel(row.status, t)}
+                      </span>
+                    </td>
+                    <td className="py-3 pr-3 text-slate-500 whitespace-nowrap">{formatDate(row.createdAt)}</td>
+                    <td className="py-3 text-slate-500 whitespace-nowrap">{formatDate(row.confirmedAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <section className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100 space-y-4">

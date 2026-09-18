@@ -23,8 +23,8 @@
       "description": "Funkcja planu Premium. Połącz Discord i włącz przyciski „Poproś o kelnera” oraz „Poproś o rachunek” w Live Menu. Zespół ChefVision może podłączyć webhook za Ciebie gratis."
     },
     "promo": {
-      "title": "Kody promocyjne",
-      "description": "Jednorazowe kody dla gości i osobny widok Verify dla kelnerów. Kelner nie widzi e-maili ani panelu restauracji."
+      "title": "Klub gości Premium",
+      "description": "Klub Gości, zebrane e-maile, jednorazowe kody i widok Verify dla kelnerów. Kelner nie widzi e-maili ani panelu restauracji."
     },
     "subscription": {
       "title": "Zarządzaj subskrypcją",
@@ -209,6 +209,26 @@
     "offerActive": "Pokaż Klub Gości w menu",
     "saveOffer": "Zapisz Klub Gości",
     "offerSaved": "Ustawienia Klubu Gości zostały zapisane.",
+    "leadsTitle": "Członkowie Klubu Gości",
+    "leadsHint": "Lista e-maili zebranych z Live Menu. Do kampanii używaj tylko potwierdzonych adresów.",
+    "leadsLoading": "Ładowanie listy…",
+    "leadsEmpty": "Nie ma jeszcze zapisów. Włącz Klub Gości w menu i poczekaj, aż gość potwierdzi e-mail.",
+    "leadsEmptyFilter": "Brak zapisów w tym widoku.",
+    "leadsCount": "{{confirmed}} potwierdzonych · {{total}} łącznie",
+    "leadsFilterConfirmed": "Potwierdzeni",
+    "leadsFilterPending": "Oczekujący",
+    "leadsFilterAll": "Wszyscy",
+    "leadsExport": "Eksport CSV",
+    "leadsExported": "Pobrano plik CSV.",
+    "colFirstName": "Imię",
+    "colEmail": "E-mail",
+    "colConfirmed": "Potwierdzono",
+    "leadStatuses": {
+      "pending": "Oczekuje",
+      "confirmed": "Potwierdzony",
+      "unsubscribed": "Wypisany",
+      "blocked": "Zablokowany"
+    },
     "createTitle": "Nowy kod",
     "createHint": "Ręczne kody dla Verify i przyszłych kampanii. Zapis do Klubu Gości nie tworzy kodu automatycznie.",
     "rewardName": "Nazwa nagrody",
