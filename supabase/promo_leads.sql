@@ -1,4 +1,4 @@
--- Klub Gości (Double Opt-In). Uruchom w Supabase → SQL Editor (po supabase/promo_codes.sql).
+-- Klub gości Premium (Double Opt-In). Uruchom w Supabase → SQL Editor (po supabase/promo_codes.sql).
 -- Nie trzeba uruchamiać ponownie, jeśli tabela promo_leads już istnieje.
 
 begin;
@@ -7,7 +7,7 @@ alter table public.profiles
   add column if not exists guest_promo jsonb not null default '{}'::jsonb;
 
 comment on column public.profiles.guest_promo is
-  'Klub Gości w Live Menu: {active, ...}. Pola reward_* zostają pod przyszłe kampanie. Nie wystawiać hashy/PIN.';
+  'Klub gości Premium w Live Menu: {active, ...}. Pola reward_* zostają pod przyszłe kampanie. Nie wystawiać hashy/PIN.';
 
 create table if not exists public.promo_leads (
   id uuid primary key default gen_random_uuid(),
@@ -29,7 +29,7 @@ create table if not exists public.promo_leads (
 );
 
 comment on table public.promo_leads is
-  'Zapisy do Klubu Gości (DOI). promo_code_id zostaje null do przyszłych kampanii.';
+  'Zapisy do Klubu gości Premium (DOI). promo_code_id zostaje null do przyszłych kampanii.';
 comment on column public.promo_leads.confirmation_token_hash is
   'SHA-256 tokenu z maila. Surowego tokenu nie przechowujemy.';
 comment on column public.promo_leads.email is

@@ -273,7 +273,7 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
     const a = document.createElement('a');
     const stamp = new Date().toISOString().slice(0, 10);
     a.href = url;
-    a.download = `klub-gosci-${stamp}.csv`;
+    a.download = `klub-gosci-premium-${stamp}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     setNotice(t('promo.leadsExported'));
