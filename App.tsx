@@ -38,8 +38,10 @@ import { notifyNewUserRegistration } from './utils/notifyNewUserRegistration';
 import { parsePublicMenuRoute } from './utils/publicMenuRoute';
 import { parseVerifyRoute } from './utils/verifyRoute';
 import { parsePromoConfirmRoute } from './utils/promoConfirmRoute';
+import { parsePromoUnsubscribeRoute } from './utils/promoUnsubscribeRoute';
 import { VerifyApp } from './components/VerifyApp';
 import { PromoConfirmPage } from './components/PromoConfirmPage';
+import { PromoUnsubscribePage } from './components/PromoUnsubscribePage';
 import { createCheckoutSession, confirmPremiumSession } from './services/stripeService';
 import { 
   LayoutDashboard, 
@@ -224,8 +226,9 @@ const App: React.FC = () => {
       !!menuUserId || pathname.startsWith('/menu/') || hash.includes('#/menu/');
     const isVerifyRoute = parseVerifyRoute(pathname, hash, search).isVerify;
     const isPromoConfirmRoute = parsePromoConfirmRoute(pathname, hash, search).isConfirm;
+    const isPromoUnsubRoute = parsePromoUnsubscribeRoute(pathname, hash, search).isUnsubscribe;
 
-    if (!session && !isPublicMenuRoute && !isVerifyRoute && !isPromoConfirmRoute) return;
+    if (!session && !isPublicMenuRoute && !isVerifyRoute && !isPromoConfirmRoute && !isPromoUnsubRoute) return;
 
     // Nie przeładowuj listy dań przy wejściu w szczegóły / hub — tylko przy zmianie restauracji
     if (menuUserId && menuUserId === loadedPublicMenuUserRef.current) {
@@ -241,7 +244,8 @@ const App: React.FC = () => {
     // żeby nie odmontowywać ChefsStudio i nie resetować stanu formularza.
     const verifyRouteEarly = parseVerifyRoute(pathname, hash, search);
     const promoConfirmEarly = parsePromoConfirmRoute(pathname, hash, search);
-    if (verifyRouteEarly.isVerify || promoConfirmEarly.isConfirm) {
+    const promoUnsubEarly = parsePromoUnsubscribeRoute(pathname, hash, search);
+    if (verifyRouteEarly.isVerify || promoConfirmEarly.isConfirm || promoUnsubEarly.isUnsubscribe) {
       setIsSyncing(false);
       setPublicMenuLoading(false);
       return;
@@ -410,6 +414,7 @@ const App: React.FC = () => {
   const verifyRoute = parseVerifyRoute(pathname, hash, search);
   const isVerifyRoute = verifyRoute.isVerify;
   const promoConfirmRoute = parsePromoConfirmRoute(pathname, hash, search);
+  const promoUnsubRoute = parsePromoUnsubscribeRoute(pathname, hash, search);
 
   const refreshCurrentProfile = async () => {
     const profile = await authService.getCurrentProfile();
@@ -729,6 +734,10 @@ const App: React.FC = () => {
       alert(err.message || 'Nie udało się otworzyć płatności.');
     }
   };
+
+  if (promoUnsubRoute.isUnsubscribe) {
+    return <PromoUnsubscribePage token={promoUnsubRoute.token} />;
+  }
 
   if (promoConfirmRoute.isConfirm) {
     return <PromoConfirmPage token={promoConfirmRoute.token} />;

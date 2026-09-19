@@ -384,5 +384,19 @@ export interface GuestClubLead {
   status: GuestClubLeadStatus;
   createdAt: string | null;
   confirmedAt: string | null;
+  unsubscribedAt?: string | null;
   marketingConsentAt: string | null;
+}
+
+export type GuestCampaignStatus = 'draft' | 'sending' | 'sent' | 'failed';
+
+export interface GuestCampaignRecord {
+  id: string;
+  name: string;
+  templateType: string;
+  subject: string;
+  status: GuestCampaignStatus;
+  recipientCount: number;
+  createdAt: string;
+  sentAt: string | null;
 }

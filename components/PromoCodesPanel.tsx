@@ -4,7 +4,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { Copy, Download, KeyRound, Loader2, Ticket, Users } from 'lucide-react';
 import { supabase } from '../services/supabaseService';
 import { buildVerifyUrl } from '../utils/verifyRoute';
-import type { GuestClubLead, PromoCodeRecord } from '../types';
+import { GuestCampaignsPanel } from './GuestCampaignsPanel';
 
 interface Props {
   userId: string | null;
@@ -72,6 +72,7 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
   const [copied, setCopied] = useState(false);
   const [leads, setLeads] = useState<GuestClubLead[]>([]);
   const [leadFilter, setLeadFilter] = useState<'confirmed' | 'pending' | 'all'>('confirmed');
+  const [clubTab, setClubTab] = useState<'contacts' | 'campaigns' | 'history'>('contacts');
 
   const verifyUrl = userId ? buildVerifyUrl(userId, true) : '';
 
@@ -252,11 +253,12 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
   const confirmedCount = leads.filter((row) => row.status === 'confirmed').length;
 
   const exportLeadsCsv = () => {
-    if (visibleLeads.length === 0) return;
+    const exportRows = visibleLeads.filter((row) => row.status !== 'unsubscribed' && row.status !== 'blocked');
+    if (exportRows.length === 0) return;
     const header = [t('promo.colFirstName'), t('promo.colEmail'), t('promo.colStatus'), t('promo.colCreated'), t('promo.colConfirmed')];
     const lines = [
       header.map(csvCell).join(';'),
-      ...visibleLeads.map((row) =>
+      ...exportRows.map((row) =>
         [
           row.firstName,
           row.email,
@@ -283,8 +285,33 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
     return <p className="text-sm text-slate-500">{t('promo.loginRequired')}</p>;
   }
 
+  const clubTabs = [
+    { id: 'contacts' as const, label: t('promo.tabContacts') },
+    { id: 'campaigns' as const, label: t('promo.tabCampaigns') },
+    { id: 'history' as const, label: t('promo.tabHistory') },
+  ];
+
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap gap-2">
+        {clubTabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setClubTab(tab.id)}
+            className={`px-4 py-2 rounded-2xl text-sm font-black ${
+              clubTab === tab.id ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 border border-slate-200'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {clubTab === 'campaigns' && <GuestCampaignsPanel userId={userId} mode="create" />}
+      {clubTab === 'history' && <GuestCampaignsPanel userId={userId} mode="history" />}
+      {clubTab === 'contacts' && (
+      <>
       <section className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-slate-900 text-chef-gold flex items-center justify-center">
@@ -595,6 +622,8 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
           </div>
         )}
       </section>
+      </>
+      )}
     </div>
   );
 };

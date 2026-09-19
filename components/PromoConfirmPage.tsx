@@ -9,6 +9,7 @@ interface Props {
 type ConfirmBody = {
   outcome?: 'joined' | 'expired' | 'invalid';
   error?: string;
+  unsubscribeUrl?: string | null;
 };
 
 export const PromoConfirmPage: React.FC<Props> = ({ token }) => {
@@ -56,6 +57,13 @@ export const PromoConfirmPage: React.FC<Props> = ({ token }) => {
           <p className="text-3xl font-black">🎉 {t('readyTitle')}</p>
           <p className="text-2xl font-black">{t('joinedTitle')}</p>
           <p className="text-sm text-zinc-400 leading-relaxed">{t('joinedBody')}</p>
+          {data?.unsubscribeUrl ? (
+            <p className="text-sm text-zinc-500">
+              <a href={data.unsubscribeUrl} className="underline text-zinc-400 hover:text-white">
+                {t('unsubConfirm')}
+              </a>
+            </p>
+          ) : null}
           <p className="text-sm text-zinc-500">{t('closePage')}</p>
         </div>
       ) : outcome === 'expired' ? (
