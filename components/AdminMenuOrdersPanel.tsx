@@ -9,7 +9,7 @@ interface Props {
 }
 
 const STATUS_LABEL: Record<MenuServiceStatus, string> = {
-  pending: 'Oczekuje — oferta wdrożeniowa',
+  pending: 'Oczekuje na realizację',
   paid: 'Opłacone — do zrobienia',
   in_progress: 'W trakcie',
   done: 'Gotowe',

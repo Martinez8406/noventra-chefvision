@@ -1,15 +1,28 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Check, Loader2, Package, Wand2 } from 'lucide-react';
+import { ArrowLeft, Check, Loader2, Package } from 'lucide-react';
 import { BRAND_LOGO_SRC } from '../constants';
+import {
+  PREMIUM_YEAR_DISCOUNT_PERCENT,
+  PREMIUM_YEAR_LIST_PLN,
+  PREMIUM_YEAR_SAVINGS_PLN,
+  PRICES_PLN,
+  START_YEAR_LIST_PLN,
+  START_YEAR_SAVINGS_PLN,
+} from '../lib/pricingCatalog.js';
 import { canPurchaseTokenPacks } from '../utils/tokens';
 import type { FlyerServiceStatus, MenuServiceStatus, SubscriptionStatus } from '../types';
 
 export type PricingPlanType =
   | 'start'
+  | 'start_annual'
   | 'premium'
   | 'annual'
   | 'tokens'
+  | 'menu_service'
+  | 'flyer_service'
   | 'implementation_bundle';
+
+type BillingInterval = 'month' | 'year';
 
 interface Props {
   subscriptionStatus?: SubscriptionStatus;
@@ -37,28 +50,26 @@ const PREMIUM_FEATURES = [
   'Pomoc we wdrożeniu',
 ] as const;
 
-const ANNUAL_FEATURES = [
-  'Wszystko z planu Premium',
-  '12 miesięcy pełnego dostępu',
-  'Jedna płatność za cały rok',
-  'Gwarancja ceny 299 zł / rok przy kolejnych nieprzerwanych odnowieniach',
-  'Dostęp do nowych funkcji Premium w okresie aktywnego planu',
-  '100 tokenów AI',
-] as const;
-
 const TOKEN_PACK_FEATURES = [
   'Bezterminowe',
-  'Dostępne w planie Start, Premium i Plan Roczny',
+  'Dostępne w planie Start i Premium',
   'Idealne na zmianę karty sezonowej',
 ] as const;
 
-const IMPLEMENTATION_FEATURES = [
+const MENU_SERVICE_FEATURES = [
   'Zespół ChefVision buduje Twoje menu cyfrowe',
   'Zdjęcia, opisy, kategorie i ceny',
   'Gotowe publiczne menu z linkiem i QR',
+] as const;
+
+const FLYER_FEATURES = [
   'Spersonalizowana ulotka QR do druku (PDF, A5)',
   '3 warianty projektu i 3 drobne poprawki',
 ] as const;
+
+function isServiceActive(status?: MenuServiceStatus | FlyerServiceStatus | null) {
+  return status === 'pending' || status === 'paid' || status === 'in_progress';
+}
 
 export const PricingPage: React.FC<Props> = ({
   subscriptionStatus,
@@ -69,30 +80,20 @@ export const PricingPage: React.FC<Props> = ({
 }) => {
   const [busy, setBusy] = useState<PricingPlanType | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [acceptedOffer, setAcceptedOffer] = useState(false);
+  const [interval, setInterval] = useState<BillingInterval>('month');
   const canBuyTokens = canPurchaseTokenPacks(subscriptionStatus);
-  const menuActive =
-    menuServiceStatus === 'pending' ||
-    menuServiceStatus === 'paid' ||
-    menuServiceStatus === 'in_progress';
-  const flyerActive =
-    flyerServiceStatus === 'pending' ||
-    flyerServiceStatus === 'paid' ||
-    flyerServiceStatus === 'in_progress';
-  const bundleActive = menuActive && flyerActive;
-  const bundleDone = menuServiceStatus === 'done' && flyerServiceStatus === 'done';
+  const menuActive = isServiceActive(menuServiceStatus);
+  const flyerActive = isServiceActive(flyerServiceStatus);
+  const yearly = interval === 'year';
 
   const handleBuy = async (plan: PricingPlanType) => {
     if (plan === 'tokens' && !canBuyTokens) return;
-    if (plan === 'implementation_bundle' && bundleActive) return;
+    if (plan === 'menu_service' && menuActive) return;
+    if (plan === 'flyer_service' && flyerActive) return;
     setBusy(plan);
     setError(null);
     try {
       await onBuy(plan);
-      if (plan === 'implementation_bundle') {
-        setAcceptedOffer(true);
-        setBusy(null);
-      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Nie udało się otworzyć płatności.');
       setBusy(null);
@@ -119,25 +120,68 @@ export const PricingPage: React.FC<Props> = ({
       </header>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
-        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
+        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
             Wybierz plan dla swojej restauracji
           </h1>
           <p className="mt-3 text-slate-600 text-sm sm:text-base">
             Rozwiń menu cyfrowe, zwiększ sprzedaż i obsłuż gości z całego świata.
           </p>
+          <div
+            className="mt-6 inline-flex rounded-2xl border border-slate-200 bg-white p-1 shadow-sm"
+            role="group"
+            aria-label="Okres rozliczenia"
+          >
+            <button
+              type="button"
+              onClick={() => setInterval('month')}
+              className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-black transition-colors ${
+                interval === 'month' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Miesięcznie
+            </button>
+            <button
+              type="button"
+              onClick={() => setInterval('year')}
+              className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-black transition-colors ${
+                interval === 'year' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Rocznie
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
           <div className="flex flex-col rounded-[28px] border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
             <p className="text-4xl font-black text-slate-900 tracking-tight">
-              20 zł
-              <span className="text-lg font-bold text-slate-500"> / miesiąc</span>
+              {yearly ? PRICES_PLN.startYear : PRICES_PLN.startMonth} zł
+              <span className="text-lg font-bold text-slate-500"> {yearly ? '/ rok' : '/ miesiąc'}</span>
             </p>
+            {yearly ? (
+              <p className="mt-2 text-sm font-semibold text-emerald-700">
+                2 miesiące gratis — płacisz za 10 miesięcy, korzystasz 12
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">
+                Rocznie {PRICES_PLN.startYear} zł — 2 miesiące gratis
+              </p>
+            )}
             <h2 className="mt-3 text-2xl font-black text-slate-900">Start</h2>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed">
               Wszystko, czego potrzebujesz, aby stworzyć profesjonalne cyfrowe menu i lepiej obsługiwać gości.
             </p>
+            {yearly && (
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                <p>
+                  {PRICES_PLN.startMonth} zł × 12 = {START_YEAR_LIST_PLN} zł / rok
+                </p>
+                <p className="font-black text-slate-900">Plan roczny: {PRICES_PLN.startYear} zł / rok</p>
+                <p className="font-semibold text-emerald-700">Oszczędzasz {START_YEAR_SAVINGS_PLN} zł</p>
+                <p className="mt-2 text-slate-600">Ulotka QR w cenie.</p>
+              </div>
+            )}
             <ul className="mt-6 space-y-2.5 flex-1">
               {START_FEATURES.map((f) => (
                 <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
@@ -149,10 +193,10 @@ export const PricingPage: React.FC<Props> = ({
             <button
               type="button"
               disabled={!!busy}
-              onClick={() => void handleBuy('start')}
+              onClick={() => void handleBuy(yearly ? 'start_annual' : 'start')}
               className="mt-8 w-full py-3.5 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-300 hover:to-green-400 transition-all disabled:opacity-60"
             >
-              {busy === 'start' ? (
+              {busy === 'start' || busy === 'start_annual' ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 size={16} className="animate-spin" />
                   Przekierowanie…
@@ -164,14 +208,38 @@ export const PricingPage: React.FC<Props> = ({
           </div>
 
           <div className="flex flex-col rounded-[28px] border-2 border-emerald-400 bg-white p-6 sm:p-8 shadow-sm">
-            <p className="text-4xl font-black text-slate-900 tracking-tight">
-              50 zł
-              <span className="text-lg font-bold text-slate-500"> / miesiąc</span>
+            <div className="inline-flex self-start items-center rounded-full bg-emerald-500 text-white px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+              Najpopularniejszy
+            </div>
+            <p className="mt-5 text-4xl font-black text-slate-900 tracking-tight">
+              {yearly ? PRICES_PLN.premiumYear : PRICES_PLN.premiumMonth} zł
+              <span className="text-lg font-bold text-slate-500"> {yearly ? '/ rok' : '/ miesiąc'}</span>
             </p>
+            {yearly ? (
+              <p className="mt-2 text-sm font-semibold text-emerald-700">
+                {PREMIUM_YEAR_DISCOUNT_PERCENT}% taniej niż płatność miesięczna
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">
+                Rocznie {PRICES_PLN.premiumYear} zł — {PREMIUM_YEAR_DISCOUNT_PERCENT}% taniej
+              </p>
+            )}
             <h2 className="mt-3 text-2xl font-black text-slate-900">Premium</h2>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed">
               Dla restauracji i hoteli, które chcą zapewnić gościom pełniejsze doświadczenie i wykorzystać więcej możliwości ChefVision.
             </p>
+            {yearly && (
+              <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-slate-700">
+                <p>
+                  Premium miesięcznie: {PRICES_PLN.premiumMonth} zł × 12 = {PREMIUM_YEAR_LIST_PLN} zł / rok
+                </p>
+                <p className="font-black text-slate-900">Plan roczny: {PRICES_PLN.premiumYear} zł / rok</p>
+                <p className="font-semibold text-emerald-700">
+                  Oszczędzasz {PREMIUM_YEAR_SAVINGS_PLN} zł · {PREMIUM_YEAR_DISCOUNT_PERCENT}% taniej
+                </p>
+                <p className="mt-2 text-slate-600">Wdrożenie menu i ulotka QR w cenie.</p>
+              </div>
+            )}
             <p className="mt-5 text-sm font-black text-slate-900">Wszystko ze Start +</p>
             <ul className="mt-3 space-y-2.5 flex-1">
               {PREMIUM_FEATURES.map((f) => (
@@ -184,10 +252,10 @@ export const PricingPage: React.FC<Props> = ({
             <button
               type="button"
               disabled={!!busy}
-              onClick={() => void handleBuy('premium')}
+              onClick={() => void handleBuy(yearly ? 'annual' : 'premium')}
               className="mt-8 w-full py-3.5 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-300 hover:to-green-400 transition-all disabled:opacity-60"
             >
-              {busy === 'premium' ? (
+              {busy === 'premium' || busy === 'annual' ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 size={16} className="animate-spin" />
                   Przekierowanie…
@@ -197,118 +265,33 @@ export const PricingPage: React.FC<Props> = ({
               )}
             </button>
           </div>
-
-          <div className="flex flex-col rounded-[28px] border-2 border-amber-400 bg-white p-6 sm:p-8 shadow-sm">
-            <div className="inline-flex self-start items-center gap-1.5 rounded-full bg-amber-500 text-white px-3 py-1 text-[10px] font-black uppercase tracking-widest">
-              Oferta specjalna — tylko 10 kont
-            </div>
-            <p className="mt-5 text-4xl font-black text-slate-900 tracking-tight">
-              299 zł
-              <span className="text-lg font-bold text-slate-500"> / rok</span>
-            </p>
-            <p className="mt-1.5 text-sm font-semibold text-slate-700">
-              Jedna płatność za 12 miesięcy
-            </p>
-            <p className="mt-1 text-sm font-semibold text-slate-600">
-              Zachowujesz cenę 299 zł rocznie przy kolejnych nieprzerwanych odnowieniach.
-            </p>
-            <h2 className="mt-3 text-2xl font-black text-slate-900">Plan Roczny</h2>
-            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-              Pełny dostęp do planu Premium przez 12 miesięcy w specjalnej cenie dla pierwszych 10 klientów ChefVision.
-            </p>
-            <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-slate-700">
-              <p>Premium miesięcznie: 50 zł × 12 = 600 zł / rok</p>
-              <p className="font-black text-slate-900">Plan Roczny: 299 zł / rok</p>
-              <p className="font-semibold text-amber-700">Oszczędzasz 301 zł w pierwszym roku</p>
-            </div>
-            <ul className="mt-5 space-y-2.5 flex-1">
-              {ANNUAL_FEATURES.map((f) => (
-                <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
-                  <Check size={16} className="mt-0.5 shrink-0 text-amber-500" strokeWidth={3} />
-                  <span>{f}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
-              Cena 299 zł / rok pozostaje niezmienna przy kolejnych odnowieniach, o ile plan jest odnawiany bez przerwy.
-              Po rezygnacji i późniejszym ponownym zakupie obowiązuje aktualna cena oferty.
-            </p>
-            <button
-              type="button"
-              disabled={!!busy}
-              onClick={() => void handleBuy('annual')}
-              className="mt-6 w-full py-3.5 rounded-2xl font-black text-sm text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 transition-all disabled:opacity-60"
-            >
-              {busy === 'annual' ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 size={16} className="animate-spin" />
-                  Przekierowanie…
-                </span>
-              ) : (
-                'Wybieram Plan Roczny'
-              )}
-            </button>
-          </div>
         </div>
 
-        <div className="mt-6 max-w-4xl mx-auto">
-          <div className="flex flex-col rounded-[28px] border border-slate-200 bg-white p-6 sm:p-7 shadow-sm">
-            <div className="inline-flex self-start items-center gap-1.5 rounded-full bg-slate-900 text-white px-3 py-1 text-[10px] font-black uppercase tracking-widest">
-              <Wand2 size={12} />
-              Usługa zespołu
-            </div>
-            <div className="mt-5">
-              <p className="flex items-baseline gap-2.5 flex-wrap">
-                <span className="text-lg font-semibold text-slate-400 line-through decoration-slate-300">
-                  299 zł
-                </span>
-                <span className="text-lg font-semibold text-slate-400 line-through decoration-slate-300">
-                  149 zł
-                </span>
-                <span className="text-3xl font-black text-slate-900 tracking-tight">GRATIS</span>
-              </p>
-              <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
-                Oferta wdrożeniowa dla nowych klientów.
-              </p>
-            </div>
-            <h2 className="mt-2 text-xl font-black text-slate-900">Wykonanie menu + ulotka QR</h2>
-            <ul className="mt-6 space-y-2.5 flex-1">
-              {IMPLEMENTATION_FEATURES.map((f) => (
-                <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
-                  <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" strokeWidth={3} />
-                  <span>{f}</span>
-                </li>
-              ))}
-            </ul>
-            {(acceptedOffer || bundleActive) && (
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
-                <p className="text-sm font-black text-slate-900">Zlecenie przyjęte ✓</p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                  Otrzymaliśmy Twoje zlecenie przygotowania menu i ulotki QR.
-                  Usługa jest realizowana bezpłatnie w ramach oferty wdrożeniowej.
-                </p>
-              </div>
-            )}
-            <button
-              type="button"
-              disabled={!!busy || acceptedOffer || bundleActive}
-              onClick={() => void handleBuy('implementation_bundle')}
-              className="mt-6 w-full py-3.5 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-300 hover:to-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {busy === 'implementation_bundle' ? (
-                <span className="inline-flex items-center justify-center gap-2">
-                  <Loader2 size={16} className="animate-spin" />
-                  Wysyłanie…
-                </span>
-              ) : acceptedOffer || bundleActive ? (
-                'Zlecenie aktywne'
-              ) : bundleDone ? (
-                'Zamów ponownie'
-              ) : (
-                'Zlecam wdrożenie'
-              )}
-            </button>
-          </div>
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <ServiceCard
+            title="Wdrożenie menu"
+            price={PRICES_PLN.menuService}
+            note="Gratis przy zakupie rocznego planu Premium."
+            features={MENU_SERVICE_FEATURES}
+            active={menuActive}
+            done={menuServiceStatus === 'done'}
+            busy={busy === 'menu_service'}
+            disabled={!!busy || menuActive}
+            idleLabel="Zlecam wdrożenie"
+            onBuy={() => void handleBuy('menu_service')}
+          />
+          <ServiceCard
+            title="Ulotka QR"
+            price={PRICES_PLN.flyerService}
+            note="Gratis przy zakupie rocznego planu Start lub Premium."
+            features={FLYER_FEATURES}
+            active={flyerActive}
+            done={flyerServiceStatus === 'done'}
+            busy={busy === 'flyer_service'}
+            disabled={!!busy || flyerActive}
+            idleLabel="Zamawiam ulotkę"
+            onBuy={() => void handleBuy('flyer_service')}
+          />
         </div>
 
         <div className="mt-10 rounded-[28px] border border-slate-200 bg-white p-6 sm:p-8 shadow-sm max-w-4xl mx-auto">
@@ -332,7 +315,7 @@ export const PricingPage: React.FC<Props> = ({
               </ul>
               {!canBuyTokens && (
                 <p className="mt-4 text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">
-                  Paczka tokenów jest dostępna w aktywnym planie Start, Premium lub Rocznym.
+                  Paczka tokenów jest dostępna w aktywnym planie Start lub Premium.
                 </p>
               )}
             </div>
@@ -366,8 +349,9 @@ export const PricingPage: React.FC<Props> = ({
 
         <p className="mt-10 text-center text-[11px] text-slate-400 leading-relaxed max-w-2xl mx-auto">
           Tokeny subskrypcyjne resetują się 1. dnia każdego miesiąca i nie przechodzą na kolejny okres.
-          Tokeny z paczki są bezterminowe. Usługa wykonania menu oraz ulotka QR to płatności jednorazowe — nie zmieniają planu subskrypcji.
-          Plan Roczny to jedna płatność za 12 miesięcy pełnego dostępu Premium.
+          Tokeny z paczki są bezterminowe. Wdrożenie menu ({PRICES_PLN.menuService} zł) oraz ulotka QR ({PRICES_PLN.flyerService} zł) to płatności jednorazowe — nie zmieniają planu subskrypcji.
+          Wdrożenie menu jest gratis przy rocznym Premium. Ulotka QR jest gratis przy rocznym Start lub Premium.
+          Plan roczny to jedna płatność za 12 miesięcy.
           Paczki +50 tokenów można dokupić w dowolnym momencie.
           Wezwanie kelnera / rachunek jest dostępne w planie Premium.
         </p>
@@ -375,3 +359,74 @@ export const PricingPage: React.FC<Props> = ({
     </div>
   );
 };
+
+function ServiceCard({
+  title,
+  price,
+  note,
+  features,
+  active,
+  done,
+  busy,
+  disabled,
+  idleLabel,
+  onBuy,
+}: {
+  title: string;
+  price: number;
+  note: string;
+  features: readonly string[];
+  active: boolean;
+  done: boolean;
+  busy: boolean;
+  disabled: boolean;
+  idleLabel: string;
+  onBuy: () => void;
+}) {
+  return (
+    <div className="flex flex-col rounded-[28px] border border-slate-200 bg-white p-6 sm:p-7 shadow-sm">
+      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Usługa jednorazowa</p>
+      <p className="mt-3 text-3xl font-black text-slate-900 tracking-tight">
+        {price} zł
+        <span className="text-base font-bold text-slate-500"> jednorazowo</span>
+      </p>
+      <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">{note}</p>
+      <h2 className="mt-3 text-xl font-black text-slate-900">{title}</h2>
+      <ul className="mt-5 space-y-2.5 flex-1">
+        {features.map((f) => (
+          <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
+            <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" strokeWidth={3} />
+            <span>{f}</span>
+          </li>
+        ))}
+      </ul>
+      {active && (
+        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
+          <p className="text-sm font-black text-slate-900">Zlecenie w realizacji</p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-600">
+            Otrzymaliśmy zlecenie. Damy znać, gdy będzie gotowe.
+          </p>
+        </div>
+      )}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onBuy}
+        className="mt-6 w-full py-3.5 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-300 hover:to-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {busy ? (
+          <span className="inline-flex items-center justify-center gap-2">
+            <Loader2 size={16} className="animate-spin" />
+            Przekierowanie…
+          </span>
+        ) : active ? (
+          'Zlecenie aktywne'
+        ) : done ? (
+          'Zamów ponownie'
+        ) : (
+          idleLabel
+        )}
+      </button>
+    </div>
+  );
+}

@@ -83,8 +83,11 @@ if (!stripe || !process.env.STRIPE_PRICE_ID) {
 if (!process.env.STRIPE_START_PRICE_ID) {
   console.warn('[SERVER] Brak STRIPE_START_PRICE_ID — plan Start niedostępny w checkout.');
 }
+if (!process.env.STRIPE_START_ANNUAL_PRICE_ID) {
+  console.warn('[SERVER] Brak STRIPE_START_ANNUAL_PRICE_ID — Start roczny niedostępny w checkout.');
+}
 if (!process.env.STRIPE_ANNUAL_PRICE_ID) {
-  console.warn('[SERVER] Brak STRIPE_ANNUAL_PRICE_ID — Plan Roczny niedostępny w checkout.');
+  console.warn('[SERVER] Brak STRIPE_ANNUAL_PRICE_ID — Premium roczny niedostępny w checkout.');
 }
 if (!process.env.STRIPE_TOKEN_PACK_PRICE_ID) {
   console.warn('[SERVER] Brak STRIPE_TOKEN_PACK_PRICE_ID — paczka tokenów niedostępna w checkout.');

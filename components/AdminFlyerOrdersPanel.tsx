@@ -4,7 +4,7 @@ import type { FlyerServiceOrder, FlyerServiceStatus } from '../types';
 import { flyerServiceDb } from '../services/supabaseService';
 
 const STATUS_LABEL: Record<FlyerServiceStatus, string> = {
-  pending: 'Oczekuje — oferta wdrożeniowa',
+  pending: 'Oczekuje na realizację',
   paid: 'Opłacone — do zrobienia',
   in_progress: 'W trakcie',
   done: 'Gotowe',

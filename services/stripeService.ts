@@ -5,6 +5,7 @@ const API_BASE = '';
 export type CheckoutPlanType =
   | 'premium'
   | 'start'
+  | 'start_annual'
   | 'annual'
   | 'tokens'
   | 'menu_service'

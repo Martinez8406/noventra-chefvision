@@ -1,6 +1,7 @@
 import assert from 'assert';
 import {
   createFreeImplementationOrder,
+  complimentaryServicesForPlan,
   isFreeImplementationPlan,
   IMPLEMENTATION_OFFERS,
 } from '../lib/implementationOffer.js';
@@ -27,14 +28,18 @@ async function checkAsync(name, fn) {
   }
 }
 
-check('flag: menu, flyer and bundle are free, start is not', () => {
-  assert.strictEqual(isFreeImplementationPlan('menu_service'), true);
-  assert.strictEqual(isFreeImplementationPlan('flyer_service'), true);
-  assert.strictEqual(isFreeImplementationPlan('implementation_bundle'), true);
+check('public checkout is paid; complimentary only with annual plans', () => {
+  assert.strictEqual(isFreeImplementationPlan('menu_service'), false);
+  assert.strictEqual(isFreeImplementationPlan('flyer_service'), false);
+  assert.strictEqual(isFreeImplementationPlan('implementation_bundle'), false);
   assert.strictEqual(isFreeImplementationPlan('start'), false);
   assert.strictEqual(isFreeImplementationPlan('premium'), false);
-  assert.strictEqual(IMPLEMENTATION_OFFERS.menu_service.price, 0);
+  assert.strictEqual(IMPLEMENTATION_OFFERS.menu_service.paidPrice, 349);
   assert.strictEqual(IMPLEMENTATION_OFFERS.flyer_service.paidPrice, 149);
+  assert.deepStrictEqual(complimentaryServicesForPlan('annual'), ['menu_service', 'flyer_service']);
+  assert.deepStrictEqual(complimentaryServicesForPlan('start_annual'), ['flyer_service']);
+  assert.deepStrictEqual(complimentaryServicesForPlan('premium'), []);
+  assert.deepStrictEqual(complimentaryServicesForPlan('start'), []);
 });
 
 check('discord menu message', () => {
@@ -132,12 +137,27 @@ function mockAdmin({ existing = null, existingByTable = {}, insertError = null, 
   return { admin, calls };
 }
 
+await checkAsync('public menu click is not a free offer', async () => {
+  const result = await createFreeImplementationOrder({
+    authorization: 'Bearer test',
+    planType: 'menu_service',
+    deps: {
+      verifyToken: async () => ({ id: 'user-public', email: 'klient@example.com' }),
+      getAdmin: () => {
+        throw new Error('should not touch db');
+      },
+    },
+  });
+  assert.strictEqual(result.status, 400);
+});
+
 await checkAsync('TEST A: menu free order, no stripe, discord after insert', async () => {
   const { admin, calls } = mockAdmin();
   let discordPayload = null;
   const result = await createFreeImplementationOrder({
     authorization: 'Bearer test',
     planType: 'menu_service',
+    force: true,
     deps: {
       verifyToken: async () => ({ id: 'user-1', email: 'klient@example.com' }),
       getAdmin: () => admin,
@@ -162,6 +182,7 @@ await checkAsync('TEST B: flyer free order', async () => {
   const result = await createFreeImplementationOrder({
     authorization: 'Bearer test',
     planType: 'flyer_service',
+    force: true,
     deps: {
       verifyToken: async () => ({ id: 'user-2', email: 'klient@example.com' }),
       getAdmin: () => admin,
@@ -179,6 +200,7 @@ await checkAsync('TEST BUNDLE: one click creates menu + flyer and one discord', 
   const result = await createFreeImplementationOrder({
     authorization: 'Bearer test',
     planType: 'implementation_bundle',
+    force: true,
     deps: {
       verifyToken: async () => ({ id: 'user-bundle', email: 'klient@example.com' }),
       getAdmin: () => admin,
@@ -207,6 +229,7 @@ await checkAsync('TEST BUNDLE duplicate → 409, no insert, no discord', async (
   const result = await createFreeImplementationOrder({
     authorization: 'Bearer test',
     planType: 'implementation_bundle',
+    force: true,
     deps: {
       verifyToken: async () => ({ id: 'user-bundle-2', email: 'klient@example.com' }),
       getAdmin: () => admin,
@@ -227,6 +250,7 @@ await checkAsync('TEST C: duplicate active order → 409, no second insert', asy
   const result = await createFreeImplementationOrder({
     authorization: 'Bearer test',
     planType: 'menu_service',
+    force: true,
     deps: {
       verifyToken: async () => ({ id: 'user-3', email: 'klient@example.com' }),
       getAdmin: () => admin,
@@ -247,6 +271,7 @@ await checkAsync('TEST E: discord fails, order still accepted', async () => {
   const result = await createFreeImplementationOrder({
     authorization: 'Bearer test',
     planType: 'flyer_service',
+    force: true,
     deps: {
       verifyToken: async () => ({ id: 'user-4', email: 'klient@example.com' }),
       getAdmin: () => admin,
@@ -264,6 +289,7 @@ await checkAsync('insert failure → 500, no discord', async () => {
   const result = await createFreeImplementationOrder({
     authorization: 'Bearer test',
     planType: 'menu_service',
+    force: true,
     deps: {
       verifyToken: async () => ({ id: 'user-5', email: 'klient@example.com' }),
       getAdmin: () => admin,

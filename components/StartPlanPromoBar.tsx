@@ -70,14 +70,14 @@ export const StartPlanPromoBar: React.FC<Props> = ({
             </div>
             <div className="min-w-0">
               <p className="text-sm font-black text-white leading-snug">
-                Nowy plan Start — 20 zł/mies.
+                Plan Start — 49 zł/mies.
                 <span className="text-zinc-500 font-bold mx-1.5">·</span>
-                <span className="text-emerald-300">Menu + ulotka QR — GRATIS</span>
+                <span className="text-emerald-300">490 zł rocznie, 2 miesiące gratis</span>
               </p>
               <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed">
                 {isTrial
-                  ? 'Po trialu wybierz Start/Premium albo zleć nam zbudowanie cyfrowego menu.'
-                  : 'Menu bez znaku wodnego i tokeny AI — albo jednorazowo zleć wykonanie karty naszemu zespołowi.'}
+                  ? 'Po trialu wybierz Start albo Premium. Przy rocznym Premium wdrożenie menu jest w cenie.'
+                  : 'Menu bez znaku wodnego i tokeny AI. Wdrożenie menu i ulotkę QR można zlecić osobno.'}
               </p>
             </div>
           </div>

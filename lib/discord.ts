@@ -161,11 +161,16 @@ export function buildImplementationOfferMessage(params: {
   kind: 'menu' | 'flyer' | 'bundle';
   email?: string | null;
   restaurantName?: string | null;
+  offerLabel?: string | null;
 }): string {
   const restaurant = params.restaurantName?.trim() || null;
   const email = params.email || 'unknown';
   const clientLines = [`Klient: ${email}`, ...(restaurant ? [`Restauracja: ${restaurant}`] : [])];
-  const footer = ['Cena: 0 zł', 'Oferta: Wdrożeniowa', 'Status: Oczekuje na realizację'];
+  const footer = [
+    'Cena: 0 zł',
+    `Oferta: ${params.offerLabel?.trim() || 'Wdrożeniowa'}`,
+    'Status: Oczekuje na realizację',
+  ];
 
   if (params.kind === 'bundle') {
     return [
