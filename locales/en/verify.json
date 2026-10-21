@@ -26,5 +26,7 @@
   "redeemedBody": "Code {{code}} has been redeemed.",
   "sessionExpired": "Session expired. Enter the PIN again.",
   "formatHint": "Format: two letters, a hyphen, four digits.",
-  "conditionLabel": "Condition"
+  "conditionLabel": "Condition",
+  "welcomeBill": "{{percent}}% off the whole bill",
+  "validUntil": "Valid until {{date}}"
 }

@@ -24,6 +24,8 @@ interface Props {
   restaurantName?: string;
   /** Kelner / rachunek — tylko Premium. */
   waiterCallAllowed?: boolean;
+  /** Klub gości Premium — tylko Premium. Kody Verify zostają. */
+  guestClubAllowed?: boolean;
   onRequestPremium?: () => void;
 }
 
@@ -32,6 +34,7 @@ export const SettingsPanel: React.FC<Props> = ({
   userId,
   restaurantName,
   waiterCallAllowed = false,
+  guestClubAllowed = false,
   onRequestPremium,
 }) => {
   const { t } = useTranslation('settings');
@@ -95,7 +98,13 @@ export const SettingsPanel: React.FC<Props> = ({
       {section === 'waiter' &&
         (waiterCallAllowed ? <WaiterCallSettings userId={userId} /> : waiterUpsell)}
 
-      {section === 'promo' && <PromoCodesPanel userId={userId} />}
+      {section === 'promo' && (
+        <PromoCodesPanel
+          userId={userId}
+          guestClubAllowed={guestClubAllowed}
+          onRequestPremium={onRequestPremium}
+        />
+      )}
 
       {section === 'subscription' && (
         <div className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100">

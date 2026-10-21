@@ -4,10 +4,11 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { Copy, Download, KeyRound, Loader2, Ticket, Users } from 'lucide-react';
 import { supabase } from '../services/supabaseService';
 import { buildVerifyUrl } from '../utils/verifyRoute';
-import { GuestCampaignsPanel } from './GuestCampaignsPanel';
 
 interface Props {
   userId: string | null;
+  guestClubAllowed?: boolean;
+  onRequestPremium?: () => void;
 }
 
 async function ownerHeaders(): Promise<Record<string, string>> {
@@ -53,8 +54,8 @@ function formatDate(value: string | null) {
   }
 }
 
-export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
-  const { t } = useTranslation('settings');
+export const PromoCodesPanel: React.FC<Props> = ({ userId, guestClubAllowed = false, onRequestPremium }) => {
+  const { t } = useTranslation(['settings', 'guestPromo']);
   const [loading, setLoading] = useState(true);
   const [savingPin, setSavingPin] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -65,6 +66,9 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
   const [codes, setCodes] = useState<PromoCodeRecord[]>([]);
   const [offerActive, setOfferActive] = useState(false);
   const [savingOffer, setSavingOffer] = useState(false);
+  const [welcomeEnabled, setWelcomeEnabled] = useState(false);
+  const [welcomePercentInput, setWelcomePercentInput] = useState('');
+  const [savingWelcome, setSavingWelcome] = useState(false);
   const [rewardName, setRewardName] = useState('Oferta specjalna');
   const [rewardDescription, setRewardDescription] = useState('');
   const [email, setEmail] = useState('');
@@ -72,7 +76,6 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
   const [copied, setCopied] = useState(false);
   const [leads, setLeads] = useState<GuestClubLead[]>([]);
   const [leadFilter, setLeadFilter] = useState<'confirmed' | 'pending' | 'all'>('confirmed');
-  const [clubTab, setClubTab] = useState<'contacts' | 'campaigns' | 'history'>('contacts');
 
   const verifyUrl = userId ? buildVerifyUrl(userId, true) : '';
 
@@ -105,6 +108,8 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
       setCodes(Array.isArray(codesData?.codes) ? codesData.codes : []);
       if (offerRes.ok && offerData) {
         setOfferActive(offerData.active === true);
+        setWelcomeEnabled(offerData.welcomeEnabled === true);
+        setWelcomePercentInput(offerData.welcomePercent ? String(offerData.welcomePercent) : '');
       }
       if (!leadsRes.ok) {
         setLeads([]);
@@ -170,6 +175,35 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
       setError(err instanceof Error ? err.message : t('promo.errors.loadFailed'));
     } finally {
       setSavingOffer(false);
+    }
+  };
+
+  const handleSaveWelcome = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!userId) return;
+    setSavingWelcome(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const headers = await ownerHeaders();
+      const response = await fetch('/api/promo-codes?op=offer-config', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          targetUserId: userId,
+          welcomeEnabled,
+          welcomePercent: welcomePercentInput.trim() === '' ? null : Number(welcomePercentInput),
+        }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || t('promo.errors.loadFailed'));
+      setWelcomeEnabled(data?.welcomeEnabled === true);
+      setWelcomePercentInput(data?.welcomePercent ? String(data.welcomePercent) : '');
+      setNotice(t('promo.welcomeSaved'));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('promo.errors.loadFailed'));
+    } finally {
+      setSavingWelcome(false);
     }
   };
 
@@ -285,33 +319,11 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
     return <p className="text-sm text-slate-500">{t('promo.loginRequired')}</p>;
   }
 
-  const clubTabs = [
-    { id: 'contacts' as const, label: t('promo.tabContacts') },
-    { id: 'campaigns' as const, label: t('promo.tabCampaigns') },
-    { id: 'history' as const, label: t('promo.tabHistory') },
-  ];
+  const previewPercent = Number(welcomePercentInput);
+  const previewReady = Number.isInteger(previewPercent) && previewPercent >= 1 && previewPercent <= 90;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-2">
-        {clubTabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setClubTab(tab.id)}
-            className={`px-4 py-2 rounded-2xl text-sm font-black ${
-              clubTab === tab.id ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 border border-slate-200'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {clubTab === 'campaigns' && <GuestCampaignsPanel userId={userId} mode="create" />}
-      {clubTab === 'history' && <GuestCampaignsPanel userId={userId} mode="history" />}
-      {clubTab === 'contacts' && (
-      <>
       <section className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-slate-900 text-chef-gold flex items-center justify-center">
@@ -367,6 +379,8 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
         </form>
       </section>
 
+      {guestClubAllowed ? (
+      <>
       <section className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100 space-y-4">
         <h3 className="text-lg font-black text-slate-900">{t('promo.offerTitle')}</h3>
         <p className="text-sm text-slate-500">{t('promo.offerHint')}</p>
@@ -388,6 +402,60 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
           </button>
         </form>
       </section>
+
+      <section className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100 space-y-4">
+        <h3 className="text-lg font-black text-slate-900">{t('promo.welcomeTitle')}</h3>
+        <p className="text-sm text-slate-500">{t('promo.welcomeHint')}</p>
+        <form onSubmit={handleSaveWelcome} className="space-y-4">
+          <label className="flex items-center gap-3 text-sm font-semibold text-slate-700">
+            <input type="checkbox" checked={welcomeEnabled} onChange={(e) => setWelcomeEnabled(e.target.checked)} />
+            {t('promo.welcomeEnabled')}
+          </label>
+          <label className="block space-y-1 max-w-xs">
+            <span className="text-xs font-black uppercase tracking-widest text-slate-400">{t('promo.welcomePercent')}</span>
+            <input
+              inputMode="numeric"
+              value={welcomePercentInput}
+              onChange={(e) => setWelcomePercentInput(e.target.value.replace(/\D/g, '').slice(0, 2))}
+              placeholder={t('promo.welcomePercentPlaceholder')}
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-chef-gold/15"
+            />
+          </label>
+          <div className="rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3 text-sm text-slate-600 space-y-2">
+            <p className="font-semibold text-slate-800">{t('promo.welcomePreview')}</p>
+            {previewReady ? (
+              <>
+                <p>{t('welcomeHeadline', { ns: 'guestPromo', percent: previewPercent })}</p>
+                <p>{t('welcomeTerms', { ns: 'guestPromo' })}</p>
+              </>
+            ) : (
+              <p>{t('promo.welcomePreviewEmpty')}</p>
+            )}
+          </div>
+          <button
+            type="submit"
+            disabled={savingWelcome || (welcomeEnabled && !previewReady)}
+            className="px-5 py-3 rounded-2xl bg-slate-900 text-white text-sm font-black disabled:opacity-50"
+          >
+            {savingWelcome ? t('promo.saving') : t('promo.welcomeSave')}
+          </button>
+        </form>
+      </section>
+      </>
+      ) : (
+        <section className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100 text-center space-y-4">
+          <p className="text-slate-600 text-sm max-w-md mx-auto">{t('promo.premiumOnly')}</p>
+          {onRequestPremium && (
+            <button
+              type="button"
+              onClick={onRequestPremium}
+              className="inline-flex px-6 py-3 rounded-2xl font-black text-sm text-[#0a1a12] bg-gradient-to-r from-emerald-400 to-green-500"
+            >
+              {t('promo.seePlans')}
+            </button>
+          )}
+        </section>
+      )}
 
       <section className="bg-white p-6 sm:p-8 rounded-[32px] shadow-sm border border-slate-100 space-y-4">
         <div className="flex items-start justify-between gap-3">
@@ -622,8 +690,6 @@ export const PromoCodesPanel: React.FC<Props> = ({ userId }) => {
           </div>
         )}
       </section>
-      </>
-      )}
     </div>
   );
 };

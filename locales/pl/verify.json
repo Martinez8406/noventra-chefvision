@@ -26,5 +26,7 @@
   "redeemedBody": "Kod {{code}} został wykorzystany.",
   "sessionExpired": "Sesja wygasła. Wpisz PIN ponownie.",
   "formatHint": "Format: dwie litery, myślnik, cztery cyfry.",
-  "conditionLabel": "Warunek"
+  "conditionLabel": "Warunek",
+  "welcomeBill": "{{percent}}% na cały rachunek",
+  "validUntil": "Ważny do {{date}}"
 }

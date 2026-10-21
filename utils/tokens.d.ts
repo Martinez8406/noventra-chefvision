@@ -19,6 +19,8 @@ export function canUseRestaurantInfo(row: Record<string, unknown> | null | undef
 export function canUsePairings(row: Record<string, unknown> | null | undefined): boolean;
 /** Kelner / rachunek — wyłącznie Premium. */
 export function canUseWaiterCall(row: Record<string, unknown> | null | undefined): boolean;
+/** Klub gości Premium — wyłącznie Premium (Lifetime wliczone). */
+export function canUseGuestClub(row: Record<string, unknown> | null | undefined): boolean;
 export function canPurchaseTokenPacks(subscriptionStatus: string | undefined): boolean;
 export function canUseAiGeneration(row: Record<string, unknown> | null | undefined): boolean;
 export function getTokenBalances(row: Record<string, unknown> | null | undefined): {

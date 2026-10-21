@@ -115,6 +115,7 @@ export const PublicMenu: React.FC<Props> = ({
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [feedbackAvailable, setFeedbackAvailable] = useState(false);
   const [guestClubEnabled, setGuestClubEnabled] = useState(false);
+  const [welcomePercent, setWelcomePercent] = useState<number | null>(null);
   const [waiterCallAvailable, setWaiterCallAvailable] = useState(false);
   const [pairingsAvailable, setPairingsAvailable] = useState(false);
   const [resolvedTableNumber, setResolvedTableNumber] = useState<string | null>(null);
@@ -332,6 +333,7 @@ export const PublicMenu: React.FC<Props> = ({
     setProfileCategoryTranslations({});
     setFeedbackAvailable(false);
     setGuestClubEnabled(false);
+    setWelcomePercent(null);
     setWaiterCallAvailable(false);
     setPairingsAvailable(false);
 
@@ -457,6 +459,7 @@ export const PublicMenu: React.FC<Props> = ({
   useEffect(() => {
     if (!userId) {
       setGuestClubEnabled(false);
+      setWelcomePercent(null);
       return;
     }
     let cancelled = false;
@@ -465,9 +468,14 @@ export const PublicMenu: React.FC<Props> = ({
       .then((data) => {
         if (cancelled) return;
         setGuestClubEnabled(data?.active === true);
+        const percent = Number(data?.welcomePercent);
+        setWelcomePercent(Number.isInteger(percent) && percent > 0 ? percent : null);
       })
       .catch(() => {
-        if (!cancelled) setGuestClubEnabled(false);
+        if (!cancelled) {
+          setGuestClubEnabled(false);
+          setWelcomePercent(null);
+        }
       });
     return () => {
       cancelled = true;
@@ -1131,7 +1139,7 @@ export const PublicMenu: React.FC<Props> = ({
         )}
 
         {guestClubEnabled && (
-          <GuestPromoSection restaurantId={userId} />
+          <GuestPromoSection restaurantId={userId} welcomePercent={welcomePercent} />
         )}
 
         {orderedKeys.map((category) => (

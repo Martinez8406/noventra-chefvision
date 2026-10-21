@@ -19,10 +19,21 @@ type LookupResult = {
   code: string | null;
   rewardName: string | null;
   rewardDescription: string | null;
+  expiresAt?: string | null;
+  welcomePercent?: number | null;
+  welcomeScope?: string | null;
 };
 
 interface Props {
   restaurantIdFromRoute: string | null;
+}
+
+function formatWelcomeExpiry(value: string) {
+  try {
+    return new Date(value).toLocaleString('pl-PL', { dateStyle: 'medium', timeStyle: 'short' });
+  } catch {
+    return value;
+  }
 }
 
 function readStoredSession(restaurantId: string | null): StoredSession | null {
@@ -140,6 +151,9 @@ export const VerifyApp: React.FC<Props> = ({ restaurantIdFromRoute }) => {
         code: data.code,
         rewardName: data.rewardName,
         rewardDescription: data.rewardDescription,
+        expiresAt: data.expiresAt || null,
+        welcomePercent: data.welcomePercent ?? null,
+        welcomeScope: data.welcomeScope || null,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('invalidTitle'));
@@ -175,6 +189,9 @@ export const VerifyApp: React.FC<Props> = ({ restaurantIdFromRoute }) => {
         code: data.code || result.code,
         rewardName: data.rewardName,
         rewardDescription: data.rewardDescription,
+        expiresAt: data.expiresAt || result.expiresAt || null,
+        welcomePercent: data.welcomePercent ?? result.welcomePercent ?? null,
+        welcomeScope: data.welcomeScope || result.welcomeScope || null,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('invalidTitle'));
@@ -267,6 +284,12 @@ export const VerifyApp: React.FC<Props> = ({ restaurantIdFromRoute }) => {
               {result.outcome === 'active' && result.rewardName && (
                 <div className="mt-5 space-y-2">
                   <p className="text-2xl font-black text-white">{result.rewardName}</p>
+                  {result.welcomePercent ? (
+                    <p className="text-base text-zinc-200">{t('welcomeBill', { percent: result.welcomePercent })}</p>
+                  ) : null}
+                  {result.expiresAt ? (
+                    <p className="text-base text-zinc-300">{t('validUntil', { date: formatWelcomeExpiry(result.expiresAt) })}</p>
+                  ) : null}
                   {result.rewardDescription && (
                     <p className="text-base text-zinc-300 leading-relaxed">
                       {t('conditionLabel')}: {result.rewardDescription}
@@ -286,6 +309,14 @@ export const VerifyApp: React.FC<Props> = ({ restaurantIdFromRoute }) => {
               {result.outcome === 'redeemed' && (
                 <p className="mt-4 text-base text-zinc-200">{t('redeemedBody', { code: result.code })}</p>
               )}
+              {result.welcomePercent && result.outcome !== 'active' ? (
+                <div className="mt-4 space-y-1">
+                  <p className="text-base text-zinc-200">{t('welcomeBill', { percent: result.welcomePercent })}</p>
+                  {result.expiresAt ? (
+                    <p className="text-base text-zinc-300">{t('validUntil', { date: formatWelcomeExpiry(result.expiresAt) })}</p>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
 
             {error && <p className="text-red-300 text-sm font-semibold">{error}</p>}

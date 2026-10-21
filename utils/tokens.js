@@ -109,6 +109,11 @@ export function canUseWaiterCall(row) {
   return resolveEffectivePlan(row) === 'premium';
 }
 
+/** Klub gości Premium — wyłącznie Premium. Founder Lifetime liczy się jako Premium. */
+export function canUseGuestClub(row) {
+  return resolveEffectivePlan(row) === 'premium';
+}
+
 /** Paczki tokenów — aktywny plan Start lub Premium. */
 export function canPurchaseTokenPacks(subscriptionStatus) {
   return subscriptionStatus === 'premium' || subscriptionStatus === 'start';

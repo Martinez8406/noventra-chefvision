@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next';
 
 interface Props {
   restaurantId: string;
+  welcomePercent?: number | null;
 }
 
-export const GuestPromoSection: React.FC<Props> = ({ restaurantId }) => {
+export const GuestPromoSection: React.FC<Props> = ({ restaurantId, welcomePercent = null }) => {
   const { t } = useTranslation('guestPromo');
   const [open, setOpen] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
@@ -66,8 +67,13 @@ export const GuestPromoSection: React.FC<Props> = ({ restaurantId }) => {
           </div>
           <p className="text-[11px] font-black uppercase tracking-[0.2em] text-chef-gold">{t('boxTitle')}</p>
           <p className="mt-3 text-sm text-zinc-300 leading-relaxed max-w-md mx-auto">
-            {t('boxBody')}
+            {welcomePercent
+              ? t('welcomeHeadline', { percent: welcomePercent })
+              : t('boxBody')}
           </p>
+          {welcomePercent ? (
+            <p className="mt-3 text-xs text-zinc-400 leading-relaxed max-w-md mx-auto">{t('welcomeTerms')}</p>
+          ) : null}
           <button
             type="button"
             onClick={() => setOpen(true)}
@@ -163,7 +169,7 @@ export const GuestPromoSection: React.FC<Props> = ({ restaurantId }) => {
         <div className="fixed inset-0 z-[90] bg-black/70 flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-[#141414] text-white rounded-[28px] p-6 space-y-4">
             <h3 className="text-xl font-black">{t('termsTitle')}</h3>
-            <p className="text-sm text-zinc-300 leading-relaxed">{t('termsBody')}</p>
+            <p className="text-sm text-zinc-300 leading-relaxed">{welcomePercent ? t('welcomeTermsBody', { percent: welcomePercent }) : t('termsBody')}</p>
             <button type="button" onClick={() => setTermsOpen(false)} className="w-full py-3 rounded-2xl bg-white/10 font-bold">
               {t('close')}
             </button>

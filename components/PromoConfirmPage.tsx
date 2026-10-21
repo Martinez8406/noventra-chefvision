@@ -10,7 +10,22 @@ type ConfirmBody = {
   outcome?: 'joined' | 'expired' | 'invalid';
   error?: string;
   unsubscribeUrl?: string | null;
+  restaurantName?: string;
+  welcome?: {
+    code?: string;
+    percent?: number | null;
+    expiresAt?: string | null;
+    status?: string;
+  } | null;
 };
+
+function formatExpiry(value: string) {
+  try {
+    return new Date(value).toLocaleString('pl-PL', { dateStyle: 'medium', timeStyle: 'short' });
+  } catch {
+    return value;
+  }
+}
 
 export const PromoConfirmPage: React.FC<Props> = ({ token }) => {
   const { t } = useTranslation('guestPromo');
@@ -56,7 +71,28 @@ export const PromoConfirmPage: React.FC<Props> = ({ token }) => {
         <div className="w-full max-w-md text-center space-y-5">
           <p className="text-3xl font-black">🎉 {t('readyTitle')}</p>
           <p className="text-2xl font-black">{t('joinedTitle')}</p>
-          <p className="text-sm text-zinc-400 leading-relaxed">{t('joinedBody')}</p>
+          {data?.restaurantName ? <p className="text-sm text-zinc-300">{data.restaurantName}</p> : null}
+          {data?.welcome?.code ? (
+            <div className="rounded-3xl border border-white/10 bg-white/5 px-5 py-6 space-y-2 text-left">
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-chef-gold">{t('bonusCode')}</p>
+              <p className="font-mono text-4xl font-black tracking-[0.14em] text-center">{data.welcome.code}</p>
+              {data.welcome.percent ? <p className="text-sm text-zinc-200">{t('bonusScope', { percent: data.welcome.percent })}</p> : null}
+              {data.welcome.expiresAt ? <p className="text-sm text-zinc-300">{t('bonusUntil', { date: formatExpiry(data.welcome.expiresAt) })}</p> : null}
+              <p className="text-sm text-zinc-300">
+                {t('bonusStatus', {
+                  status:
+                    data.welcome.status === 'used'
+                      ? t('bonusStatusUsed')
+                      : data.welcome.status === 'expired'
+                        ? t('bonusStatusExpired')
+                        : t('bonusStatusActive'),
+                })}
+              </p>
+              <p className="text-sm text-zinc-400 leading-relaxed">{t('bonusHint')}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-400 leading-relaxed">{t('joinedBody')}</p>
+          )}
           {data?.unsubscribeUrl ? (
             <p className="text-sm text-zinc-500">
               <a href={data.unsubscribeUrl} className="underline text-zinc-400 hover:text-white">

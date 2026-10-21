@@ -27,7 +27,7 @@ import { PricingPage, type PricingPlanType } from './components/PricingPage';
 import { StartPlanPromoBar } from './components/StartPlanPromoBar';
 import { BRAND_LOGO_SRC, TRIAL_TOKENS } from './constants';
 import { useTranslation } from 'react-i18next';
-import { hasProFeatures, canUseHotelHub, canUseWaiterCall, canUsePairings, canUseRestaurantInfo } from './utils/tokens';
+import { hasProFeatures, canUseHotelHub, canUseWaiterCall, canUsePairings, canUseRestaurantInfo, canUseGuestClub } from './utils/tokens';
 import { formatTokenStatusI18n, formatPremiumTokenShort } from './utils/formatTokenStatusI18n';
 import { normalizeMenuPrice, resolveRecommendationCurrency } from './utils/recommendationCurrency';
 import { supabase, db, authService, uploadDishImage, menuServiceDb } from './services/supabaseService';
@@ -358,6 +358,16 @@ const App: React.FC = () => {
           plan: currentUser.plan,
           subscription_status: currentUser.subscriptionStatus,
           trial_ends_at: currentUser.trialEndsAt ?? null,
+        }
+      : null,
+  );
+  const hasGuestClubAccess = canUseGuestClub(
+    currentUser
+      ? {
+          plan: currentUser.plan,
+          subscription_status: currentUser.subscriptionStatus,
+          trial_ends_at: currentUser.trialEndsAt ?? null,
+          lifetime_purchased_at: currentUser.isLifetime ? 'lifetime' : null,
         }
       : null,
   );
@@ -816,6 +826,11 @@ const App: React.FC = () => {
       setIsSidebarOpen(false);
       return;
     }
+    if (tabId === 'hotel-hub' && !hasHotelHubAccess) {
+      openPremiumUpsell();
+      setIsSidebarOpen(false);
+      return;
+    }
     if (isFree && premiumLocked) {
       openPremiumUpsell();
       setIsSidebarOpen(false);
@@ -863,7 +878,11 @@ const App: React.FC = () => {
           <nav className="space-y-2">
             {NAV_ITEM_DEFS.map((tab) => {
               const locked =
-                tab.id === 'promotions' ? !hasPairingsAccess : isFree && tab.premiumLocked;
+                tab.id === 'hotel-hub'
+                  ? !hasHotelHubAccess
+                  : tab.id === 'promotions'
+                    ? !hasPairingsAccess
+                    : isFree && tab.premiumLocked;
               return (
                 <button
                   key={tab.id}
@@ -946,9 +965,9 @@ const App: React.FC = () => {
                             ? tNav('settingsWaiter', { defaultValue: 'Kelner / rachunek' })
                             : tNav(sub.labelKey)}
                         </span>
-                        {waiterLocked && (
+                        {waiterLocked ? (
                           <Lock size={12} className="shrink-0 text-zinc-500" aria-hidden />
-                        )}
+                        ) : null}
                       </button>
                     );
                   })}
@@ -1272,6 +1291,7 @@ const App: React.FC = () => {
               userId={currentUser?.id ?? null}
               restaurantName={currentUser?.name}
               waiterCallAllowed={hasWaiterCallAccess}
+              guestClubAllowed={hasGuestClubAccess}
               onRequestPremium={openPricingPage}
             />
           )}
