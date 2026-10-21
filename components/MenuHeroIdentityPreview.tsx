@@ -21,6 +21,11 @@ interface Props {
   primaryColor?: string;
   /** Mniejsza wysokość covera w panelu ustawień (proporcje jak Live Menu). */
   compactCover?: boolean;
+  /**
+   * Wymusza układ telefonu (wąski kadr Live Menu na mobile) —
+   * bez breakpointów sm/lg, żeby podgląd na desktopie odpowiadał telefonowi.
+   */
+  phoneLayout?: boolean;
   /** W Live Menu użyj <h1>; w edytorze <h2>. */
   titleAsH1?: boolean;
 }
@@ -38,17 +43,27 @@ export const MenuHeroIdentityPreview: React.FC<Props> = ({
   coverScale,
   primaryColor = '#6366f1',
   compactCover = false,
+  phoneLayout = false,
   titleAsH1 = false,
 }) => {
-  const coverHeight = compactCover ? 'h-40 sm:h-48' : 'h-56 sm:h-72 lg:h-80';
-  const logoOverlap = compactCover ? '-mt-12 sm:-mt-14' : '-mt-14 sm:-mt-16';
+  const coverHeight = phoneLayout
+    ? 'h-56'
+    : compactCover
+      ? 'h-40 sm:h-48'
+      : 'h-56 sm:h-72 lg:h-80';
+  const logoOverlap = phoneLayout
+    ? '-mt-14'
+    : compactCover
+      ? '-mt-12 sm:-mt-14'
+      : '-mt-14 sm:-mt-16';
+  const coverRadius = phoneLayout ? 'rounded-[22px]' : 'rounded-[30px]';
   const coverPos = normalizeCoverPosition(coverPosition ?? DEFAULT_COVER_POSITION);
   const coverZoom = normalizeCoverScale(coverScale ?? DEFAULT_COVER_SCALE);
 
   return (
     <section className="relative pointer-events-none select-none">
       <div
-        className={`relative ${coverHeight} rounded-[30px] overflow-hidden shadow-2xl border border-black/5`}
+        className={`relative ${coverHeight} ${coverRadius} overflow-hidden shadow-2xl border border-black/5`}
       >
         {coverUrl ? (
           <>
@@ -66,22 +81,33 @@ export const MenuHeroIdentityPreview: React.FC<Props> = ({
         )}
       </div>
 
-      <div className="px-2 sm:px-6 relative z-10">
-        <div className="flex items-end gap-4 sm:gap-5 mt-4 sm:mt-5">
+      <div className={`relative z-10 ${phoneLayout ? 'px-3' : 'px-2 sm:px-6'}`}>
+        <div
+          className={`flex items-end ${phoneLayout ? 'gap-3 mt-4' : 'gap-4 sm:gap-5 mt-4 sm:mt-5'}`}
+        >
           <MenuLogoBadge
             logoUrl={logoUrl}
             logoPosition={logoPosition}
             logoScale={logoScale}
             restaurantTitle={restaurantTitle}
             className={logoOverlap}
+            phoneLayout={phoneLayout}
           />
           <div className="min-w-0 pb-2">
             {titleAsH1 ? (
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-tight">
+              <h1
+                className={`font-black tracking-tight text-slate-900 leading-tight ${
+                  phoneLayout ? 'text-2xl' : 'text-3xl sm:text-4xl'
+                }`}
+              >
                 {restaurantTitle}
               </h1>
             ) : (
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 leading-tight truncate">
+              <h2
+                className={`font-black tracking-tight text-slate-900 leading-tight truncate ${
+                  phoneLayout ? 'text-xl' : 'text-2xl sm:text-3xl'
+                }`}
+              >
                 {restaurantTitle}
               </h2>
             )}

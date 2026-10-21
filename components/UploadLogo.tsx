@@ -471,18 +471,54 @@ alter table public.profiles
             <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">
               {t('branding.previewTitle')}
             </p>
-            <div className="rounded-[28px] border border-slate-100 bg-chef-cream/50 p-4 sm:p-6 overflow-hidden">
-              <MenuHeroIdentityPreview
-                logoUrl={logoUrl}
-                logoPosition={logoPosition}
-                logoScale={logoScale}
-                restaurantTitle={restaurantName}
-                coverUrl={coverUrl}
-                coverPosition={coverPosition}
-                coverScale={coverScale}
-                primaryColor={primaryColor}
-                compactCover
-              />
+            <p className="text-xs text-slate-500 mb-4">{t('branding.previewHint')}</p>
+            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_auto] gap-6 items-start">
+              <div className="rounded-[28px] border border-slate-100 bg-chef-cream/50 p-4 sm:p-6 overflow-hidden min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                  {t('branding.previewDesktop')}
+                </p>
+                <MenuHeroIdentityPreview
+                  logoUrl={logoUrl}
+                  logoPosition={logoPosition}
+                  logoScale={logoScale}
+                  restaurantTitle={restaurantName}
+                  coverUrl={coverUrl}
+                  coverPosition={coverPosition}
+                  coverScale={coverScale}
+                  primaryColor={primaryColor}
+                  compactCover
+                />
+              </div>
+
+              <div className="justify-self-center xl:justify-self-end">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-center">
+                  {t('branding.previewPhone')}
+                </p>
+                <div
+                  className="w-[min(100%,360px)] rounded-[2rem] border-[3px] border-slate-800 bg-slate-900 p-2.5 shadow-[0_20px_50px_rgba(15,23,42,0.25)]"
+                  aria-label={t('branding.previewPhoneAria')}
+                >
+                  <div className="mx-auto mb-2 h-1.5 w-16 rounded-full bg-slate-700" aria-hidden />
+                  <div className="overflow-hidden rounded-[1.35rem] bg-chef-cream">
+                    <div className="p-3 pb-5">
+                      <MenuHeroIdentityPreview
+                        logoUrl={logoUrl}
+                        logoPosition={logoPosition}
+                        logoScale={logoScale}
+                        restaurantTitle={restaurantName}
+                        coverUrl={coverUrl}
+                        coverPosition={coverPosition}
+                        coverScale={coverScale}
+                        primaryColor={primaryColor}
+                        phoneLayout
+                      />
+                    </div>
+                  </div>
+                </div>
+                <p className="mt-3 max-w-[360px] text-center text-[11px] leading-relaxed text-slate-500">
+                  {t('branding.previewPhoneHint')}
+                </p>
+              </div>
             </div>
           </div>
 

@@ -14,6 +14,8 @@ interface Props {
   logoScale?: number | null;
   restaurantTitle: string;
   className?: string;
+  /** Stały rozmiar jak na telefonie — bez breakpointu sm (podgląd w ustawieniach). */
+  phoneLayout?: boolean;
 }
 
 /** Ramka logo — te same wymiary i style co w PublicMenu (Live Menu). */
@@ -23,14 +25,16 @@ export const MenuLogoBadge: React.FC<Props> = ({
   logoScale,
   restaurantTitle,
   className = '',
+  phoneLayout = false,
 }) => {
   const position = normalizeLogoPosition(logoPosition ?? DEFAULT_LOGO_POSITION);
   const scale = normalizeLogoScale(logoScale ?? DEFAULT_LOGO_SCALE);
   const fallbackLetter = restaurantTitle.trim().slice(0, 1).toUpperCase() || '?';
+  const sizeClass = phoneLayout ? 'h-24 w-24' : 'h-24 w-24 sm:h-28 sm:w-28';
 
   return (
     <div
-      className={`h-24 w-24 sm:h-28 sm:w-28 rounded-3xl bg-white border-4 border-white shadow-xl overflow-hidden shrink-0 ${className}`}
+      className={`${sizeClass} rounded-3xl bg-white border-4 border-white shadow-xl overflow-hidden shrink-0 ${className}`}
     >
       {logoUrl ? (
         <img
