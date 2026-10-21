@@ -472,8 +472,8 @@ alter table public.profiles
               {t('branding.previewTitle')}
             </p>
             <p className="text-xs text-slate-500 mb-4">{t('branding.previewHint')}</p>
-            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_auto] gap-6 items-start">
-              <div className="rounded-[28px] border border-slate-100 bg-chef-cream/50 p-4 sm:p-6 overflow-hidden min-w-0">
+            <div className="flex flex-col gap-8">
+              <div className="rounded-[28px] border border-slate-100 bg-chef-cream/50 p-4 sm:p-6 overflow-hidden">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
                   {t('branding.previewDesktop')}
                 </p>
@@ -490,7 +490,7 @@ alter table public.profiles
                 />
               </div>
 
-              <div className="justify-self-center xl:justify-self-end">
+              <div className="flex flex-col items-center">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-center">
                   {t('branding.previewPhone')}
                 </p>
