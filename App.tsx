@@ -846,6 +846,11 @@ const App: React.FC = () => {
   };
 
   const handleSettingsSubClick = (tabId: AppTab) => {
+    if (tabId === 'settings-promo' && !hasGuestClubAccess) {
+      openPremiumUpsell();
+      setIsSidebarOpen(false);
+      return;
+    }
     setActiveTab(tabId);
     setSettingsExpanded(true);
     setIsSidebarOpen(false);
@@ -949,6 +954,8 @@ const App: React.FC = () => {
                   {SETTINGS_SUB_NAV.map((sub) => {
                     const subActive = activeTab === sub.id;
                     const waiterLocked = sub.id === 'settings-waiter' && !hasWaiterCallAccess;
+                    const guestClubLocked = sub.id === 'settings-promo' && !hasGuestClubAccess;
+                    const subLocked = waiterLocked || guestClubLocked;
                     return (
                       <button
                         key={sub.id}
@@ -965,7 +972,7 @@ const App: React.FC = () => {
                             ? tNav('settingsWaiter', { defaultValue: 'Kelner / rachunek' })
                             : tNav(sub.labelKey)}
                         </span>
-                        {waiterLocked ? (
+                        {subLocked ? (
                           <Lock size={12} className="shrink-0 text-zinc-500" aria-hidden />
                         ) : null}
                       </button>

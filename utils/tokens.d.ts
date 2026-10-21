@@ -15,7 +15,7 @@ export function hasProFeatures(subscriptionStatus: string | undefined): boolean;
 export function canUseHotelHub(row: Record<string, unknown> | null | undefined): boolean;
 /** Panel informacyjny restauracji — trial + Premium. */
 export function canUseRestaurantInfo(row: Record<string, unknown> | null | undefined): boolean;
-/** Pairingi i upselling — trial + Premium. */
+/** Pairingi i upselling — trial + Start + Premium. */
 export function canUsePairings(row: Record<string, unknown> | null | undefined): boolean;
 /** Kelner / rachunek — wyłącznie Premium. */
 export function canUseWaiterCall(row: Record<string, unknown> | null | undefined): boolean;

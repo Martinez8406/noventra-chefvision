@@ -1,7 +1,7 @@
 {
   "title": "Pairings & upselling",
-  "premiumRequired": "Pairings & upselling are available on the Premium plan.",
-  "unlockPremium": "Unlock Premium",
+  "premiumRequired": "Pairings & upselling are available on the Start and Premium plans.",
+  "unlockPremium": "View plans",
   "intro": "Subtle suggestions on menu cards — no order buttons. One dish = one recommendation type.",
   "loginRequired": "Sign in to manage recommendations.",
   "unknownDish": "Unknown dish",

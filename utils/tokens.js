@@ -98,10 +98,10 @@ export function canUseRestaurantInfo(row) {
   return plan === 'premium' || plan === 'trial';
 }
 
-/** Pairingi i upselling — tylko trial (aktywny) i Premium. */
+/** Pairingi i upselling — trial (aktywny), Start i Premium. */
 export function canUsePairings(row) {
   const plan = resolveEffectivePlan(row);
-  return plan === 'premium' || plan === 'trial';
+  return plan === 'premium' || plan === 'trial' || plan === 'start';
 }
 
 /** Kelner / rachunek — wyłącznie Premium (admin może podłączyć webhook za klienta). */

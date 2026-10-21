@@ -35,7 +35,7 @@ interface Props {
 const START_FEATURES = [
   'Menu bez znaku wodnego',
   'Tłumaczenia menu na 14 języków',
-  'Rekomendacje i promocje',
+  'Pairingi i upselling',
   'Statystyki otwarć menu',
   'Wiadomość do managera z poziomu menu',
   '10 tokenów AI miesięcznie',
@@ -44,6 +44,7 @@ const START_FEATURES = [
 const PREMIUM_FEATURES = [
   'Hotel Hub',
   'Panel informacyjny',
+  'Klub gości Premium',
   'Poproś kelnera / poproś o rachunek',
   'Ranking popularności dań',
   '50 tokenów AI miesięcznie',
