@@ -159,15 +159,19 @@ function normalizeAttractions(
   options?: { keepEmpty?: boolean },
 ): HotelHubInfoAttraction[] {
   if (!Array.isArray(raw)) return [];
+  const keepEmpty = options?.keepEmpty === true;
   return raw
     .map((item) => {
       if (!item || typeof item !== 'object') return null;
-      const name = String((item as HotelHubInfoAttraction).name ?? '').trim();
-      const mapsUrl = String((item as HotelHubInfoAttraction).mapsUrl ?? '').trim();
-      if (!name) {
+      // W edytorze nie trimujemy — inaczej spacja między słowami znika przy każdym znaku.
+      const rawName = String((item as HotelHubInfoAttraction).name ?? '');
+      const rawMaps = String((item as HotelHubInfoAttraction).mapsUrl ?? '');
+      const name = keepEmpty ? rawName : rawName.trim();
+      const mapsUrl = keepEmpty ? rawMaps : rawMaps.trim();
+      if (!name.trim()) {
         // W edytorze zostawiamy pusty wiersz po „Dodaj atrakcję”; przy zapisie / Live Menu — odrzucamy.
-        if (!options?.keepEmpty) return null;
-        return { name: '', mapsUrl: mapsUrl || '' };
+        if (!keepEmpty) return null;
+        return { name, mapsUrl };
       }
       return { name, mapsUrl: mapsUrl || undefined };
     })

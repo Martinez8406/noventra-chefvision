@@ -236,26 +236,31 @@ export const HotelInfoFieldsEditor: React.FC<{
               key={index}
               className="grid gap-3 p-4 rounded-2xl border border-slate-200 bg-slate-50/60 md:grid-cols-[1fr_1fr_auto]"
             >
-              <label className="block space-y-1.5">
+              <div className="block space-y-1.5">
                 <span className="text-xs font-bold text-slate-700">{t('infoFields.nameLabel')}</span>
                 <input
                   type="text"
-                  value={item.name}
+                  value={item.name ?? ''}
                   onChange={(e) => updateAttraction(index, { name: e.target.value })}
+                  onKeyDown={(e) => e.stopPropagation()}
                   placeholder={t('infoFields.namePlaceholder')}
+                  autoComplete="off"
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-chef-gold/40 outline-none"
                 />
-              </label>
-              <label className="block space-y-1.5">
+              </div>
+              <div className="block space-y-1.5">
                 <span className="text-xs font-bold text-slate-700">{t('infoFields.mapsLabel')}</span>
                 <input
-                  type="url"
+                  type="text"
+                  inputMode="url"
                   value={item.mapsUrl || ''}
                   onChange={(e) => updateAttraction(index, { mapsUrl: e.target.value })}
+                  onKeyDown={(e) => e.stopPropagation()}
                   placeholder={t('infoFields.mapsPlaceholder')}
+                  autoComplete="off"
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-chef-gold/40 outline-none"
                 />
-              </label>
+              </div>
               <button
                 type="button"
                 onClick={() => removeAttraction(index)}

@@ -351,11 +351,13 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
 
               {editingSection.sectionType === 'info' ? (
                 <HotelInfoFieldsEditor
-                  fields={normalizeHotelInfoFieldsForEdit(
-                    editingSection.infoFields ?? EMPTY_HOTEL_INFO_FIELDS,
-                  )}
+                  fields={{
+                    ...EMPTY_HOTEL_INFO_FIELDS,
+                    ...(editingSection.infoFields ?? {}),
+                    attractions: editingSection.infoFields?.attractions ?? [],
+                  }}
                   onChange={(infoFields: HotelHubInfoFields) =>
-                    setEditingSection({ ...editingSection, infoFields })
+                    setEditingSection((prev) => (prev ? { ...prev, infoFields } : prev))
                   }
                 />
               ) : (
@@ -499,7 +501,12 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
                       <button
                         type="button"
                         onClick={() => {
-                          setEditingSection({ ...section });
+                          setEditingSection({
+                            ...section,
+                            infoFields: isHotelInfoSection(section)
+                              ? normalizeHotelInfoFieldsForEdit(section.infoFields)
+                              : section.infoFields,
+                          });
                           setExpandedSectionId(null);
                         }}
                         className="px-4 py-2 rounded-xl text-xs font-black bg-slate-100 text-slate-700 hover:bg-slate-200"
