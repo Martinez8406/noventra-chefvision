@@ -48,7 +48,7 @@
     "deleteConfirm": "Delete this section along with its categories and assignments?",
     "categoriesTitle": "Section categories",
     "newCategoryPlaceholder": "New category…",
-    "assignHint": "Assign dishes to this section in Digital Menu — Hotel Hub column.",
+    "assignHint": "Assign dishes to this section in Live menu — Hotel Hub column.",
     "empty": "No sections — re-enable Hotel Hub or add a custom section."
   },
   "serviceNoteTemplates": {

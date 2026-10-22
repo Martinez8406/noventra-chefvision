@@ -48,7 +48,7 @@
     "deleteConfirm": "Usunąć sekcję wraz z kategoriami i przypisaniami?",
     "categoriesTitle": "Kategorie sekcji",
     "newCategoryPlaceholder": "Nowa kategoria…",
-    "assignHint": "Przypisz dania do tej sekcji w zakładce Menu Cyfrowe — kolumna Hotel Hub.",
+    "assignHint": "Przypisz dania do tej sekcji w zakładce Menu live — kolumna Hotel Hub.",
     "empty": "Brak sekcji — włącz Hotel Hub ponownie lub dodaj własną sekcję."
   },
   "serviceNoteTemplates": {
