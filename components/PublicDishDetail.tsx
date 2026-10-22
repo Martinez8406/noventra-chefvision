@@ -126,6 +126,7 @@ export const PublicDishDetail: React.FC<Props> = ({
         <DishDietaryBadges
           dietaryTags={dish.dietaryTags}
           spiceLevel={dish.spiceLevel}
+          menuLocale={menuLocale}
           size="md"
         />
 

@@ -241,6 +241,28 @@ export function getPublicMoreInfoLabel(locale: PublicMenuLocale): string {
   return locale === 'pl' ? 'Więcej info' : 'More info';
 }
 
+const GLUTEN_FREE_NOTE: Record<PublicMenuLocale, string> = {
+  pl: 'Danie nie zawiera glutenu (możliwe śladowe ilości)',
+  en: 'This dish does not contain gluten (trace amounts possible)',
+  he: 'המנה אינה מכילה גלוטן (ייתכנו שאריות)',
+  ar: 'الطبق لا يحتوي على الغلوتين (قد توجد كميات أثرية)',
+  uk: 'Страва не містить глютену (можливі слідові кількості)',
+  de: 'Das Gericht enthält kein Gluten (Spuren möglich)',
+  es: 'El plato no contiene gluten (posible presencia de trazas)',
+  it: 'Il piatto non contiene glutine (possibili tracce)',
+  ko: '이 요리는 글루텐을 포함하지 않습니다 (미량 가능)',
+  ja: 'この料理にはグルテンが含まれていません（微量の可能性あり）',
+  fr: 'Ce plat ne contient pas de gluten (traces possibles)',
+  cs: 'Pokrm neobsahuje lepek (možné stopové množství)',
+  nl: 'Dit gerecht bevat geen gluten (sporen mogelijk)',
+  zh: '本菜品不含麸质（可能含微量）',
+};
+
+/** Opis przy oznaczeniu GF w Live Menu. */
+export function getPublicGlutenFreeNote(locale: PublicMenuLocale): string {
+  return GLUTEN_FREE_NOTE[locale] || GLUTEN_FREE_NOTE.pl;
+}
+
 const MENU_CATEGORY_TITLE: Record<PublicMenuLocale, Record<string, string>> = {
   pl: {
     'Śniadania': 'Śniadania',

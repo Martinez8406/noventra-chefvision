@@ -121,6 +121,7 @@ export const PublicDishCard: React.FC<Props> = ({
         <DishDietaryBadges
           dietaryTags={dish.dietaryTags}
           spiceLevel={dish.spiceLevel}
+          menuLocale={menuLocale}
           className={`mb-4 ${isRtl ? 'justify-end' : ''}`}
         />
 
