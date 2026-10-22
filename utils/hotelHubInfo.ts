@@ -154,20 +154,30 @@ const FIELD_DEFS: Array<{
   },
 ];
 
-function normalizeAttractions(raw: unknown): HotelHubInfoAttraction[] {
+function normalizeAttractions(
+  raw: unknown,
+  options?: { keepEmpty?: boolean },
+): HotelHubInfoAttraction[] {
   if (!Array.isArray(raw)) return [];
   return raw
     .map((item) => {
       if (!item || typeof item !== 'object') return null;
       const name = String((item as HotelHubInfoAttraction).name ?? '').trim();
       const mapsUrl = String((item as HotelHubInfoAttraction).mapsUrl ?? '').trim();
-      if (!name) return null;
+      if (!name) {
+        // W edytorze zostawiamy pusty wiersz po „Dodaj atrakcję”; przy zapisie / Live Menu — odrzucamy.
+        if (!options?.keepEmpty) return null;
+        return { name: '', mapsUrl: mapsUrl || '' };
+      }
       return { name, mapsUrl: mapsUrl || undefined };
     })
     .filter((item): item is HotelHubInfoAttraction => item !== null);
 }
 
-export function normalizeHotelInfoFields(raw?: HotelHubInfoFields | null): HotelHubInfoFields {
+function buildHotelInfoFields(
+  raw: HotelHubInfoFields | null | undefined,
+  options?: { keepEmptyAttractions?: boolean },
+): HotelHubInfoFields {
   const base = { ...EMPTY_HOTEL_INFO_FIELDS, attractions: [] as HotelHubInfoAttraction[] };
   if (!raw || typeof raw !== 'object') return base;
   for (const key of Object.keys(base) as (keyof HotelHubInfoFields)[]) {
@@ -175,8 +185,20 @@ export function normalizeHotelInfoFields(raw?: HotelHubInfoFields | null): Hotel
     const v = raw[key];
     if (typeof v === 'string') (base as Record<string, string>)[key] = v;
   }
-  base.attractions = normalizeAttractions(raw.attractions);
+  base.attractions = normalizeAttractions(raw.attractions, {
+    keepEmpty: options?.keepEmptyAttractions === true,
+  });
   return base;
+}
+
+/** Zapis / Live Menu — bez pustych atrakcji. */
+export function normalizeHotelInfoFields(raw?: HotelHubInfoFields | null): HotelHubInfoFields {
+  return buildHotelInfoFields(raw);
+}
+
+/** Formularz edycji — zachowuje puste wiersze atrakcji podczas wpisywania. */
+export function normalizeHotelInfoFieldsForEdit(raw?: HotelHubInfoFields | null): HotelHubInfoFields {
+  return buildHotelInfoFields(raw, { keepEmptyAttractions: true });
 }
 
 export function getHotelInfoFieldDefs(locale: PublicMenuLocale = 'pl') {

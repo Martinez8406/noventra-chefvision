@@ -3,7 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { HotelHubCategory, HotelHubData, HotelHubInfoFields, HotelHubSection } from '../types';
 import { hotelHubDb } from '../services/hotelHubService';
 import { sortHotelHubCategories, sortHotelHubSections } from '../utils/hotelHub';
-import { EMPTY_HOTEL_INFO_FIELDS, isHotelInfoSection, normalizeHotelInfoFields } from '../utils/hotelHubInfo';
+import {
+  EMPTY_HOTEL_INFO_FIELDS,
+  isHotelInfoSection,
+  normalizeHotelInfoFields,
+  normalizeHotelInfoFieldsForEdit,
+} from '../utils/hotelHubInfo';
 import { HOTEL_HUB_ICON_SRC } from '../constants';
 import { compressImageForUpload } from '../services/imageService';
 import { HotelHubSectionIcon } from './HotelHubSectionIcon';
@@ -346,7 +351,9 @@ export const HotelHubManager: React.FC<Props> = ({ userId }) => {
 
               {editingSection.sectionType === 'info' ? (
                 <HotelInfoFieldsEditor
-                  fields={normalizeHotelInfoFields(editingSection.infoFields ?? EMPTY_HOTEL_INFO_FIELDS)}
+                  fields={normalizeHotelInfoFieldsForEdit(
+                    editingSection.infoFields ?? EMPTY_HOTEL_INFO_FIELDS,
+                  )}
                   onChange={(infoFields: HotelHubInfoFields) =>
                     setEditingSection({ ...editingSection, infoFields })
                   }
